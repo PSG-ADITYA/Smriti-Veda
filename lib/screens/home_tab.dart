@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../data/sample_data.dart';
 import '../providers/app_state.dart';
+import '../services/gemini_service.dart';
 import '../theme/app_theme.dart';
 import 'scripture_detail_screen.dart';
 
@@ -50,6 +51,71 @@ class HomeTab extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Personalized User Welcome Banner
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'नमस्ते, ${appState.userName}',
+                            style: GoogleFonts.cinzel(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primaryGold,
+                            ),
+                          ),
+                          Text(
+                            'ID: ${appState.credentialId} • Role: ${appState.userRole} • Lang: ${appState.selectedLanguage.toUpperCase()}',
+                            style: GoogleFonts.outfit(
+                              fontSize: 12,
+                              color: isDark ? AppColors.textDarkSecondary : AppColors.textLightSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    InkWell(
+                      onTap: () => appState.switchRole(),
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppColors.primarySaffron.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: AppColors.primarySaffron),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.swap_horiz, size: 14, color: AppColors.primarySaffron),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Switch to ${appState.userRole == 'Patient' ? 'Caregiver' : 'Patient'}',
+                              style: GoogleFonts.outfit(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primarySaffron,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Caregiver AI Progress Summary Card (when logged in as Caregiver)
+                if (appState.userRole == 'Caregiver')
+                  CaregiverSummaryCard(
+                    userName: appState.userName,
+                    streak: appState.dailyStreak,
+                    completedExercises: appState.versesMastered,
+                    language: appState.selectedLanguage,
+                  ),
+
                 // Daily Chanting Streak Banner
                 Container(
                   padding: const EdgeInsets.all(16),
@@ -88,7 +154,7 @@ class HomeTab extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '${appState.dailyStreak} Day Sacred Chanting Streak!',
+                              '${appState.dailyStreak} Day Daily Practice Streak!',
                               style: GoogleFonts.outfit(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -97,7 +163,7 @@ class HomeTab extends StatelessWidget {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              '${appState.versesMastered} Shlokas Mastered in Smriti Memory',
+                              '${appState.versesMastered} Exercises Completed in Memory Trainer',
                               style: GoogleFonts.outfit(
                                 fontSize: 13,
                                 color: Colors.white.withValues(alpha: 0.9),
@@ -202,7 +268,7 @@ class HomeTab extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              'Tap to chant & explore word breakdown',
+                              'Tap to listen & explore word breakdown',
                               style: GoogleFonts.outfit(
                                 fontSize: 12,
                                 color: AppColors.primarySaffron,
@@ -371,5 +437,111 @@ class HomeTab extends StatelessWidget {
       default:
         return Icons.book;
     }
+  }
+}
+
+class CaregiverSummaryCard extends StatefulWidget {
+  final String userName;
+  final int streak;
+  final int completedExercises;
+  final String language;
+
+  const CaregiverSummaryCard({
+    super.key,
+    required this.userName,
+    required this.streak,
+    required this.completedExercises,
+    required this.language,
+  });
+
+  @override
+  State<CaregiverSummaryCard> createState() => _CaregiverSummaryCardState();
+}
+
+class _CaregiverSummaryCardState extends State<CaregiverSummaryCard> {
+  final GeminiService _geminiService = GeminiService();
+  String? _summary;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSummary();
+  }
+
+  Future<void> _loadSummary() async {
+    setState(() => _isLoading = true);
+    final text = await _geminiService.generateCaregiverSummary(
+      patientName: widget.userName,
+      streakDays: widget.streak,
+      completedExercises: widget.completedExercises,
+      primaryLanguage: widget.language.toUpperCase(),
+    );
+    if (mounted) {
+      setState(() {
+        _summary = text;
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurfaceCard : AppColors.lightSurfaceCard,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.primaryGold, width: 1.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.psychology, color: AppColors.primaryGold, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'CAREGIVER AI PROGRESS SUMMARY',
+                style: GoogleFonts.cinzel(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primaryGold,
+                ),
+              ),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.refresh, size: 16, color: AppColors.primarySaffron),
+                onPressed: _loadSummary,
+                tooltip: 'Regenerate AI Summary',
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          if (_isLoading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Center(
+                child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primarySaffron),
+                ),
+              ),
+            )
+          else
+            Text(
+              _summary ?? '',
+              style: GoogleFonts.outfit(
+                fontSize: 13,
+                height: 1.4,
+                color: isDark ? Colors.white70 : Colors.black87,
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }

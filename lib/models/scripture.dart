@@ -60,8 +60,12 @@ class Suktam {
   final String rishi;
   final String meter;
   final String summary;
+  final String researchNotes;
+  final String cognitiveTarget;
   final List<Verse> verses;
   final bool isFeatured;
+  final String languageCode; // 'sa', 'hi', 'as', 'bn', 'en'
+  final String contentType; // 'Verse', 'Song', 'Proverb', 'Rhyme'
 
   const Suktam({
     required this.id,
@@ -73,8 +77,12 @@ class Suktam {
     required this.rishi,
     required this.meter,
     required this.summary,
+    this.researchNotes = 'Documented oral recitation pattern providing working memory chunking stimulus.',
+    this.cognitiveTarget = 'Auditory Sequential Working Memory',
     required this.verses,
     this.isFeatured = false,
+    this.languageCode = 'sa',
+    this.contentType = 'Verse',
   });
 }
 

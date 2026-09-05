@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'providers/app_state.dart';
+import 'screens/login_screen.dart';
 import 'screens/main_screen.dart';
 import 'theme/app_theme.dart';
 
@@ -31,12 +32,14 @@ class _SmritiVedaAppState extends State<SmritiVedaApp> {
         listenable: _appState,
         builder: (context, _) {
           return MaterialApp(
-            title: 'Smriti Veda - Sacred Scriptures & Chanting Companion',
+            title: 'Smriti Veda - AI Cognitive Memory Platform',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: _appState.themeMode,
-            home: const MainScreen(),
+            home: _appState.isLoggedIn
+                ? const MainScreen()
+                : LoginScreen(onLoginSuccess: () {}),
           );
         },
       ),

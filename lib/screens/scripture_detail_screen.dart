@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/scripture.dart';
 import '../providers/app_state.dart';
+import '../services/sanskrit_pronunciation_service.dart';
 import '../theme/app_theme.dart';
 
 class ScriptureDetailScreen extends StatefulWidget {
@@ -14,6 +15,34 @@ class ScriptureDetailScreen extends StatefulWidget {
 }
 
 class _ScriptureDetailScreenState extends State<ScriptureDetailScreen> {
+  final SanskritPronunciationService _pronunciationService = SanskritPronunciationService();
+  PronunciationMode _activeMode = PronunciationMode.continuous;
+  bool _isPlayingPronunciation = false;
+
+  @override
+  void dispose() {
+    _pronunciationService.stop();
+    super.dispose();
+  }
+
+  void _handlePronounce(Verse verse, PronunciationMode mode) async {
+    setState(() {
+      _activeMode = mode;
+      _isPlayingPronunciation = true;
+    });
+
+    await _pronunciationService.pronounceMantra(
+      text: verse.sanskritText,
+      mode: mode,
+    );
+
+    if (mounted) {
+      setState(() {
+        _isPlayingPronunciation = false;
+      });
+    }
+  }
+
   void _showWordBreakdownDialog(BuildContext context, Verse verse) {
     showModalBottomSheet(
       context: context,
@@ -268,6 +297,45 @@ class _ScriptureDetailScreenState extends State<ScriptureDetailScreen> {
                         _buildChip(Icons.music_note, 'Meter: ${widget.suktam.meter}'),
                       ],
                     ),
+                    const SizedBox(height: 12),
+
+                    // Research & Cognitive Domain Annotation Card
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryGold.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.primaryGold.withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.science, color: AppColors.primaryGold, size: 20),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Cognitive Domain: ${widget.suktam.cognitiveTarget}',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primaryGold,
+                                  ),
+                                ),
+                                Text(
+                                  widget.suktam.researchNotes,
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 11,
+                                    color: isDark ? AppColors.textDarkSecondary : AppColors.textLightSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -280,7 +348,6 @@ class _ScriptureDetailScreenState extends State<ScriptureDetailScreen> {
                   itemBuilder: (context, index) {
                     final verse = widget.suktam.verses[index];
                     final isBookmarked = appState.isBookmarked(verse.id);
-                    final isPlaying = appState.currentlyPlayingVerseId == verse.id && appState.isPlayingAudio;
                     final note = appState.getNote(verse.id);
 
                     return Card(
@@ -312,16 +379,6 @@ class _ScriptureDetailScreenState extends State<ScriptureDetailScreen> {
                                   children: [
                                     IconButton(
                                       icon: Icon(
-                                        isPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill,
-                                        color: AppColors.primaryGold,
-                                        size: 30,
-                                      ),
-                                      onPressed: () {
-                                        appState.playVerseAudio(verse.id);
-                                      },
-                                    ),
-                                    IconButton(
-                                      icon: Icon(
                                         isBookmarked ? Icons.bookmark : Icons.bookmark_border,
                                         color: isBookmarked ? AppColors.primaryGold : null,
                                       ),
@@ -337,6 +394,97 @@ class _ScriptureDetailScreenState extends State<ScriptureDetailScreen> {
                                   ],
                                 ),
                               ],
+                            ),
+                            const SizedBox(height: 12),
+
+                            // AI Traditional Sanskrit Pronunciation Controls Bar
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: AppColors.primaryGold.withValues(alpha: 0.3)),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.record_voice_over, size: 16, color: AppColors.primarySaffron),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            'AUDIO RECITATION GUIDANCE (TTS)',
+                                            style: GoogleFonts.cinzel(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.primarySaffron,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      if (_isPlayingPronunciation)
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.primarySaffron.withValues(alpha: 0.2),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Text(
+                                            'Playing ${_activeMode.name}...',
+                                            style: GoogleFonts.outfit(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.primarySaffron,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 6,
+                                    children: [
+                                      ElevatedButton.icon(
+                                        onPressed: () => _handlePronounce(verse, PronunciationMode.continuous),
+                                        icon: const Icon(Icons.volume_up, size: 14),
+                                        label: const Text('Full Chant'),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: AppColors.primarySaffron,
+                                          foregroundColor: Colors.white,
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                          textStyle: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                      OutlinedButton.icon(
+                                        onPressed: () => _handlePronounce(verse, PronunciationMode.padachhedaSyllable),
+                                        icon: const Icon(Icons.spellcheck, size: 14),
+                                        label: const Text('Spell-Out (पदच्छेद)'),
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: AppColors.primaryGold,
+                                          side: const BorderSide(color: AppColors.primaryGold),
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                          textStyle: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                      OutlinedButton.icon(
+                                        onPressed: () => _handlePronounce(verse, PronunciationMode.kramaPaired),
+                                        icon: const Icon(Icons.compare_arrows, size: 14),
+                                        label: const Text('Paired (क्रम)'),
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: AppColors.primaryGold,
+                                          side: const BorderSide(color: AppColors.primaryGold),
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                          textStyle: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
                             const SizedBox(height: 12),
 
@@ -379,54 +527,6 @@ class _ScriptureDetailScreenState extends State<ScriptureDetailScreen> {
                                   fontSize: 15 * appState.fontScale,
                                   color: isDark ? AppColors.textDarkPrimary : AppColors.textLightPrimary,
                                   height: 1.5,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                            ],
-
-                            // Commentary / Context if present
-                            if (verse.commentary.isNotEmpty) ...[
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: isDark ? Colors.black26 : Colors.orange.shade50,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Row(
-                                  children: [
-                                    const Icon(Icons.info_outline, size: 18, color: AppColors.primarySaffron),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        verse.commentary,
-                                        style: GoogleFonts.outfit(
-                                          fontSize: 12,
-                                          color: isDark ? AppColors.textDarkSecondary : AppColors.textLightSecondary,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                            ],
-
-                            // User Note if saved
-                            if (note.isNotEmpty) ...[
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primaryGold.withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: AppColors.primaryGold.withValues(alpha: 0.3)),
-                                ),
-                                child: Text(
-                                  'Note: $note',
-                                  style: GoogleFonts.outfit(
-                                    fontSize: 13,
-                                    fontStyle: FontStyle.italic,
-                                    color: AppColors.primaryGold,
-                                  ),
                                 ),
                               ),
                               const SizedBox(height: 12),

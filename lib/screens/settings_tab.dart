@@ -17,13 +17,99 @@ class SettingsTab extends StatelessWidget {
         return Scaffold(
           appBar: AppBar(
             title: Text(
-              'Settings & Options (विन्यास)',
+              'Settings & Profile (विन्यास)',
               style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
             ),
           ),
           body: ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              // User Account Profile Card
+              _buildSectionTitle('ACTIVE PRACTITIONER PROFILE'),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 28,
+                            backgroundColor: AppColors.primarySaffron.withValues(alpha: 0.2),
+                            child: Icon(
+                              appState.userRole == 'Caregiver' ? Icons.family_restroom : Icons.elderly,
+                              color: AppColors.primarySaffron,
+                              size: 32,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  appState.userName,
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: isDark ? Colors.white : Colors.black87,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'ID: ${appState.credentialId} • Role: ${appState.userRole}',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 13,
+                                    color: AppColors.primaryGold,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Text(
+                                  'Language: ${appState.selectedLanguage.toUpperCase()}',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 12,
+                                    color: isDark ? AppColors.textDarkSecondary : AppColors.textLightSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      const Divider(),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () => appState.switchRole(),
+                              icon: const Icon(Icons.swap_horiz, size: 18),
+                              label: Text('Switch Role (${appState.userRole == 'Patient' ? 'Caregiver' : 'Patient'})'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primarySaffron,
+                                foregroundColor: Colors.white,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          OutlinedButton.icon(
+                            onPressed: () => appState.logout(),
+                            icon: const Icon(Icons.logout, size: 16),
+                            label: const Text('Log Out'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.redAccent,
+                              side: const BorderSide(color: Colors.redAccent),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
               // Theme Section
               _buildSectionTitle('VISUAL THEME & APPEARANCE'),
               Card(
@@ -138,10 +224,10 @@ class SettingsTab extends StatelessWidget {
                 child: ListTile(
                   leading: const Icon(Icons.info_outline, color: AppColors.primaryGold),
                   title: Text(
-                    'Smriti Veda App v1.0.0',
+                    'Smriti Veda Platform v1.2.0',
                     style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
                   ),
-                  subtitle: const Text('Sacred Scripture Reader & Memorization Companion'),
+                  subtitle: const Text('AI-Based Cognitive Gaming & Memory Assistance for Seniors'),
                 ),
               ),
             ],

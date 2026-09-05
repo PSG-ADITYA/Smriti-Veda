@@ -10,6 +10,63 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Authentication & Profile State
+  bool _isLoggedIn = false;
+  String _userName = 'Dadi Ma / Grandpa';
+  String _credentialId = 'patient123';
+  String _userRole = 'Patient'; // 'Patient' or 'Caregiver'
+  String _selectedLanguage = 'hi'; // 'hi', 'as', 'bn', 'en'
+  int _currentTab = 0;
+
+  bool get isLoggedIn => _isLoggedIn;
+  String get userName => _userName;
+  String get credentialId => _credentialId;
+  String get userRole => _userRole;
+  String get selectedLanguage => _selectedLanguage;
+  int get currentTab => _currentTab;
+
+  void setCurrentTab(int index) {
+    _currentTab = index;
+    notifyListeners();
+  }
+
+  void login({
+    required String name,
+    required String credentialId,
+    required String role,
+    String language = 'hi',
+  }) {
+    _isLoggedIn = true;
+    _userName = name.trim().isEmpty ? (role == 'Caregiver' ? 'Dr. Sharma (Caregiver)' : 'Senior Patient') : name.trim();
+    _credentialId = credentialId.trim().isEmpty ? (role == 'Caregiver' ? 'caregiver456' : 'patient123') : credentialId.trim();
+    _userRole = role;
+    _selectedLanguage = language;
+    _currentTab = 0; // Guarantee return to Home Tab on login
+    notifyListeners();
+  }
+
+  void switchRole() {
+    if (_userRole == 'Patient') {
+      _userRole = 'Caregiver';
+      if (_userName == 'Senior Patient' || _userName == 'Dadi Ma / Grandpa') {
+        _userName = 'Dr. Sharma (Caregiver)';
+      }
+    } else {
+      _userRole = 'Patient';
+      if (_userName == 'Dr. Sharma (Caregiver)') {
+        _userName = 'Dadi Ma / Grandpa';
+      }
+    }
+    _currentTab = 0; // Return to Home Tab when switching role
+    notifyListeners();
+  }
+
+  void logout() {
+    _isLoggedIn = false;
+    _currentTab = 0;
+    notifyListeners();
+  }
+
   // Font scale multiplier (1.0 to 1.8)
   double _fontScale = 1.2;
   double get fontScale => _fontScale;
