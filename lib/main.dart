@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
 import 'providers/app_state.dart';
-import 'screens/login_screen.dart';
 import 'screens/main_screen.dart';
+import 'screens/welcome_screen.dart';
+import 'services/auth_service.dart';
+import 'services/db_service.dart';
 import 'theme/app_theme.dart';
+import 'widgets/confetti_overlay.dart';
+import 'widgets/smritiveda_splash_overlay.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await DbService().init();
+  await AuthService().init();
   runApp(const SmritiVedaApp());
 }
 
@@ -31,15 +38,24 @@ class _SmritiVedaAppState extends State<SmritiVedaApp> {
       child: ListenableBuilder(
         listenable: _appState,
         builder: (context, _) {
+          Widget initialScreen;
+          if (_appState.isLoggedIn) {
+            initialScreen = const MainScreen();
+          } else {
+            initialScreen = const WelcomeScreen();
+          }
+
           return MaterialApp(
-            title: 'Smriti Veda - AI Cognitive Memory Platform',
+            title: 'SmritiVeda - AI Cognitive Memory Platform',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: _appState.themeMode,
-            home: _appState.isLoggedIn
-                ? const MainScreen()
-                : LoginScreen(onLoginSuccess: () {}),
+            home: ConfettiOverlay(
+              child: SmritiVedaSplashOverlay(
+                child: initialScreen,
+              ),
+            ),
           );
         },
       ),

@@ -3,53 +3,32 @@ import '../models/scripture.dart';
 class SampleData {
   static const List<ScriptureCategory> categories = [
     ScriptureCategory(
-      id: 'rigveda',
-      title: 'Rigveda',
-      description: 'The ancient Veda of hymns, praise, and cosmic order.',
-      iconName: 'auto_stories',
-      count: 12,
-    ),
-    ScriptureCategory(
-      id: 'suktam',
-      title: 'Vedic Suktams',
-      description: 'Sacred invocation hymns including Gayatri & Purusha Suktam.',
-      iconName: 'temple_hindu',
-      count: 8,
-    ),
-    ScriptureCategory(
-      id: 'gita',
-      title: 'Bhagavad Gita',
-      description: 'The divine song of wisdom spoken by Bhagavan Krishna.',
-      iconName: 'menu_book',
-      count: 18,
-    ),
-    ScriptureCategory(
-      id: 'upanishad',
-      title: 'Upanishads',
-      description: 'Philosophical treatises exploring the nature of Self & Brahman.',
-      iconName: 'psychology',
-      count: 10,
-    ),
-    ScriptureCategory(
-      id: 'mantra',
-      title: 'Sacred Mantras',
-      description: 'Daily chants for peace, protection, and spiritual growth.',
-      iconName: 'self_improvement',
-      count: 15,
-    ),
-    ScriptureCategory(
       id: 'regional_rhyme',
       title: 'Regional Songs & Rhymes',
-      description: 'Folk songs, poems & traditional rhymes in Assamese, Bengali, and Hindi.',
-      iconName: 'auto_stories',
-      count: 6,
+      description: 'Folk songs, poems & traditional rhymes in Assamese, Bengali, Telugu & Hindi.',
+      iconName: 'music_note',
+      count: 12,
     ),
     ScriptureCategory(
       id: 'proverb',
       title: 'Proverbs & Dohe',
-      description: 'Traditional proverbs and Kabir Dohe for verbal recall & wisdom.',
+      description: 'Traditional proverbs, Vemana Padyams & Kabir Dohe for verbal recall.',
       iconName: 'menu_book',
-      count: 5,
+      count: 10,
+    ),
+    ScriptureCategory(
+      id: 'family_memory',
+      title: 'Personal & Family Recall',
+      description: 'Caregiver-added family stories, childhood memories & personal anchors.',
+      iconName: 'family_restroom',
+      count: 8,
+    ),
+    ScriptureCategory(
+      id: 'oral_tradition',
+      title: 'Structured Oral Recitation',
+      description: 'Pada, Krama, and Jata chunking exercises based on ancient oral techniques.',
+      iconName: 'record_voice_over',
+      count: 15,
     ),
   ];
 

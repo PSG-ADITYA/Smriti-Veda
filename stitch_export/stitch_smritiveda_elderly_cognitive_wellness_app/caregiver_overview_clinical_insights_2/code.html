@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "surface-tint": "#a13f18", "on-tertiary": "#ffffff", "on-secondary-fixed": "#002116", "secondary-fixed": "#bbedd5", "on-primary-container": "#fff2ee", "surface": "#f7faf6", "text-secondary": "#4E5450", "on-error": "#ffffff", "surface-bright": "#f7faf6", "tertiary-fixed-dim": "#edbd91", "surface-container": "#ecefeb", "background": "#f7faf6", "surface-cream": "#F7F4EE", "border-subtle": "#EAE6DF", "secondary-container": "#bbedd5", "card-white": "#FFFFFF", "secondary": "#396754", "text-primary": "#1F2421", "primary-fixed-dim": "#ffb59c", "inverse-on-surface": "#eef1ee", "on-error-container": "#93000a", "on-primary-fixed-variant": "#812901", "primary": "#983912", "on-tertiary-fixed-variant": "#60401d", "inverse-primary": "#ffb59c", "on-tertiary-fixed": "#2c1600", "on-secondary-container": "#3f6d5a", "terracotta-soft": "#F7ECE7", "on-background": "#181c1b", "secondary-fixed-dim": "#a0d1ba", "alert-soft": "#E0533C", "surface-container-highest": "#e0e3e0", "outline-variant": "#ddc0b7", "on-secondary-fixed-variant": "#204f3d", "on-surface-variant": "#57423b", "sage-soft": "#EBF2EE", "surface-dim": "#d8dbd7", "on-primary": "#ffffff", "on-tertiary-container": "#fff2e9", "amber-gentle": "#D97706", "primary-fixed": "#ffdbcf", "on-secondary": "#ffffff", "error": "#ba1a1a", "outline": "#8a726a", "primary-container": "#b85028", "surface-container-high": "#e6e9e5", "text-muted": "#6E7571", "error-container": "#ffdad6", "tertiary-container": "#8e6842", "on-primary-fixed": "#380c00", "canvas-ivory": "#FBF9F5", "tertiary-fixed": "#ffdcbe", "tertiary": "#73502c", "surface-container-lowest": "#ffffff", "on-surface": "#181c1b", "surface-container-low": "#f1f4f1", "surface-variant": "#e0e3e0", "inverse-surface": "#2d312f" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "gutter-desktop": "2.5rem", "space-xs": "0.5rem", "space-xl": "2rem", "space-sm": "0.75rem", "touch-comfort": "4rem", "max-content-width": "72rem", "space-2xs": "0.25rem", "touch-min": "3.5rem", "space-3xl": "4rem", "space-2xl": "3rem", "gutter-tablet": "2rem", "space-lg": "1.5rem", "gutter-mobile": "1.25rem", "space-md": "1rem" }, "fontFamily": { "label-lg": [ "Atkinson Hyperlegible Next" ], "label-md": [ "Atkinson Hyperlegible Next" ], "title-lg": [ "Atkinson Hyperlegible Next" ], "display-lg": [ "Newsreader" ], "body-md": [ "Atkinson Hyperlegible Next" ], "body-sm": [ "Atkinson Hyperlegible Next" ], "headline-lg": [ "Newsreader" ], "headline-md": [ "Newsreader" ], "body-lg": [ "Atkinson Hyperlegible Next" ], "headline-sm": [ "Newsreader" ], "label-sm": [ "Atkinson Hyperlegible Next" ], "title-md": [ "Atkinson Hyperlegible Next" ], "display-lg-mobile": [ "Newsreader" ] }, "fontSize": { "label-lg": [ "16px", { "lineHeight": "22px", "letterSpacing": "0.01em", "fontWeight": "600" } ], "label-md": [ "14px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600" } ], "title-lg": [ "20px", { "lineHeight": "28px", "fontWeight": "600" } ], "display-lg": [ "44px", { "lineHeight": "52px", "letterSpacing": "-0.01em", "fontWeight": "500" } ], "body-md": [ "16px", { "lineHeight": "26px", "fontWeight": "400" } ], "body-sm": [ "14px", { "lineHeight": "22px", "fontWeight": "500" } ], "headline-lg": [ "32px", { "lineHeight": "40px", "letterSpacing": "-0.005em", "fontWeight": "600" } ], "headline-md": [ "26px", { "lineHeight": "34px", "fontWeight": "600" } ], "body-lg": [ "18px", { "lineHeight": "28px", "fontWeight": "400" } ], "headline-sm": [ "22px", { "lineHeight": "30px", "fontWeight": "600" } ], "label-sm": [ "12px", { "lineHeight": "18px", "letterSpacing": "0.03em", "fontWeight": "700" } ], "title-md": [ "18px", { "lineHeight": "26px", "fontWeight": "600" } ], "display-lg-mobile": [ "34px", { "lineHeight": "42px", "letterSpacing": "-0.01em", "fontWeight": "500" } ] } } } };</script></head><body class="bg-canvas-ivory font-body-md text-on-surface"><aside class="fixed left-0 top-0 h-full w-72 bg-surface-cream z-50 flex flex-col justify-between shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="flex flex-col"><div class="h-20 px-space-lg flex items-center gap-space-sm bg-surface-cream"><img alt="Brand logo. - Primary color: #b85028
+- Font: newsreader
+- Mode: light
+- Roundness: rounded-md
+" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1WWG37J8Aa9CHmjWlxXUKKcYi8h6LoohmvrifU2bqoxVrebAxaWJ4rqiF8GzchF0srrntgZeIbzrySh-eBocVIDZHW1-d0gHUgCIsRUXyCugzps6q2f7pI__MJCTGNfKZWa_qCQrQy6arUltHl4KHKG5imbEvO7QMHNK6xuERhMqEswJUuCL1Iu21KzF2dGJMWROGbAP5REdHedsTA__qQM3JUHiZ3gUIFtvX_Eq9bXzHkGNtJ16uk"/><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-primary leading-tight">SmritiVeda</span><span class="font-label-sm text-label-sm text-secondary tracking-wide uppercase">Caregiver Portal</span></div></div><div class="px-space-md py-space-sm"><div class="bg-sage-soft rounded-lg p-space-sm flex items-center justify-between shadow-[0_1px_4px_0_rgba(45,36,28,0.03)]"><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-secondary text-[20px]">favorite</span><div class="flex flex-col"><span class="font-label-md text-label-md text-text-primary leading-none">Ravi Sharma, 71</span><span class="font-label-sm text-label-sm text-secondary mt-1 flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-secondary inline-block"></span>Connected</span></div></div><span class="material-symbols-outlined text-text-secondary text-[18px]">unfold_more</span></div></div><nav class="flex flex-col gap-space-2xs px-space-md mt-space-sm" data-active-classes="bg-primary-container text-on-primary-container font-label-md rounded-lg"><a aria-current="page" class="flex items-center gap-space-sm px-space-md py-space-sm transition-colors bg-primary-container text-on-primary-container font-label-md rounded-lg" data-path="overview" href="#"><span class="material-symbols-outlined text-[20px]">dashboard</span>Overview</a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-label-md text-label-md" data-path="progress-and-trends" href="#"><span class="material-symbols-outlined text-[20px]">monitoring</span>Progress &amp; Trends</a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-label-md text-label-md" data-path="activities-and-exercises" href="#"><span class="material-symbols-outlined text-[20px]">psychology</span>Activities &amp; Exercises</a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-label-md text-label-md" data-path="reminders-and-routine" href="#"><span class="material-symbols-outlined text-[20px]">schedule</span>Reminders &amp; Routine</a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-label-md text-label-md" data-path="caregiver-notes" href="#"><span class="material-symbols-outlined text-[20px]">edit_note</span>Caregiver Notes</a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-label-md text-label-md" data-path="settings" href="#"><span class="material-symbols-outlined text-[20px]">settings</span>Settings</a></nav></div><div class="p-space-md bg-surface-cream"><div class="bg-terracotta-soft rounded-lg p-space-md flex flex-col gap-space-xs"><div class="flex items-center gap-space-xs text-primary"><span class="material-symbols-outlined text-[20px]">mic</span><span class="font-label-md text-label-md">Voice Assistant</span></div><p class="font-body-sm text-body-sm text-text-secondary leading-tight">Tap to speak or review voice logs with Smriti</p></div></div></aside><div class="pl-72"><header class="fixed top-0 left-72 right-0 h-20 bg-canvas-ivory/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-space-xl"><div class="flex items-center gap-space-md"><span class="font-headline-sm text-headline-sm text-text-primary hidden sm:inline-block">Care Portal</span><div class="h-4 w-px bg-border-subtle hidden sm:inline-block"></div><span class="font-body-sm text-body-sm text-text-secondary">Observing: <strong class="font-label-md text-text-primary font-semibold">Ravi Sharma</strong></span></div><div class="flex items-center gap-space-md"><button aria-label="Notifications" class="w-10 h-10 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-container hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[22px]">notifications</span></button><button aria-label="Care Team Support" class="w-10 h-10 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-container hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[22px]">help_outline</span></button><div class="flex items-center gap-space-sm pl-space-xs"><div class="flex flex-col text-right"><span class="font-label-md text-label-md text-text-primary leading-none">Priya Sharma</span><span class="font-label-sm text-label-sm text-text-muted mt-1">Primary Caregiver</span></div><img alt="Profile" class="w-8 h-8 rounded-full object-cover ring-2 ring-primary-fixed" src="https://lh3.googleusercontent.com/aida/AEtjO1XAjBG2QhQw1s8iLk1DXEDAksC2MuSBD6N0iqxxsX63mk3s_tmMkFFGBaqpLoQncXOWiI78ffxc8Hm-e7gBHroSD_wyY_lnev7IMKClEIFFuDGTUEg6IoJDGi45RQ82-OywAUYa_aTARC7LrZP8RQgu0siRJjxcDP5b-uBmyDXIP98f-lvmlnGWwJ38Nzeuo2QeIHEGvJqdjTAT4GlfTbug6wI5Z5SJ3lVn5FLQalQ3rUYHp8JWa0I"/></div></div></header><main class="relative pt-20 bg-canvas-ivory min-h-screen px-space-xl py-space-xl max-w-max-content-width mx-auto"><div class="flex flex-col w-full gap-space-xl">
+<!-- Top Banner / Clinical Cadence Strip -->
+<section class="w-full bg-surface-cream rounded-xl p-space-lg shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-space-md">
+<div class="flex flex-col md:flex-row md:items-center gap-space-md">
+<div class="relative w-16 h-16 rounded-xl overflow-hidden shadow-sm flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="Dignified Indian elder gentleman in soft beige linen kurta reading near a sunlit veranda garden surrounded by warm terracotta pottery and green indoor foliage, quiet calm atmosphere, soft diffused morning sunlight." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDC5zTyqf3dR3dsHPnbz30eAyqOp_Qgb1hOM3aid1SI2BV2vHKkeNdm4KXRFVuKHB4q9k__AOHa23McNV59Zl6lGEMXT8-eAIZTnh983JO3FePXt3lGbBZJ6L3bF4sysKTaqALa04zaIhKfcc89GPSBN1MSc4_qXi5fNGm8EqHyrS8JupLWYNKMbiyCtcrtH4erKSfAikan5kMPykBYWT5HeTkiO-l4fyuY_8kkA0uHmeHQo-QBVQ"/>
+<span class="absolute bottom-1 right-1 w-3.5 h-3.5 rounded-full bg-secondary ring-2 ring-card-white"></span>
+</div>
+<div class="flex flex-col">
+<div class="flex flex-wrap items-center gap-space-xs">
+<h1 class="font-headline-sm text-headline-sm text-text-primary">Ravi Sharma, 71</h1>
+<span class="inline-flex items-center gap-1.5 px-space-xs py-0.5 rounded-full bg-sage-soft text-secondary font-label-sm text-label-sm">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+            On Track • Routine cadence steady
+          </span>
+</div>
+<p class="font-body-sm text-body-sm text-text-secondary mt-1">
+          Active Today: <span class="font-semibold text-text-primary">18 mins</span> • 6 exercises completed • Synchronized 14 mins ago via Smriti Hub
+        </p>
+</div>
+</div>
+<!-- Actions -->
+<div class="flex flex-wrap items-center gap-space-sm">
+<button class="h-12 px-space-md rounded-lg bg-terracotta-soft text-primary font-label-md text-label-md flex items-center gap-space-xs hover:bg-primary/10 transition-colors" id="btnAudioNote" type="button">
+<span class="material-symbols-outlined text-[20px]">mic</span>
+        Send Voice Note
+      </button>
+<button class="h-12 px-space-md rounded-lg bg-card-white text-text-primary font-label-md text-label-md shadow-sm flex items-center gap-space-xs hover:bg-surface-container transition-colors" id="btnPdfReport" type="button">
+<span class="material-symbols-outlined text-[20px] text-text-secondary">summarize</span>
+        Clinical Summary (PDF)
+      </button>
+<button class="h-12 px-space-md rounded-lg bg-primary text-on-primary font-label-md text-label-md shadow-sm flex items-center gap-space-xs hover:bg-primary-container transition-all" type="button">
+<span class="material-symbols-outlined text-[20px]">add_alarm</span>
+        Manage Reminders
+      </button>
+</div>
+</section>
+<!-- Key Metrics Row (Screen 16 Anchor) -->
+<section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md">
+<!-- Active Practice Card -->
+<div class="bg-card-white p-space-lg rounded-xl shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-text-secondary uppercase tracking-wider">Active Practice</span>
+<span class="w-9 h-9 rounded-lg bg-sage-soft flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[20px]">hourglass_top</span>
+</span>
+</div>
+<div class="mt-space-md flex items-baseline gap-2">
+<span class="font-display-lg text-display-lg text-text-primary font-semibold">18</span>
+<span class="font-title-md text-title-md text-text-muted">/ 20 min</span>
+</div>
+<div class="mt-space-sm">
+<div class="w-full bg-surface-container rounded-full h-2 overflow-hidden">
+<div class="bg-secondary h-full rounded-full transition-all duration-700" style="width: 90%"></div>
+</div>
+<p class="font-body-sm text-body-sm text-text-secondary mt-2 flex items-center justify-between">
+<span>90% of daily target reached</span>
+<span class="font-semibold text-secondary">+3 min vs yesterday</span>
+</p>
+</div>
+</div>
+<!-- Exercises Completed Card -->
+<div class="bg-card-white p-space-lg rounded-xl shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-text-secondary uppercase tracking-wider">Scheduled Sessions</span>
+<span class="w-9 h-9 rounded-lg bg-terracotta-soft flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">task_alt</span>
+</span>
+</div>
+<div class="mt-space-md flex items-baseline gap-2">
+<span class="font-display-lg text-display-lg text-text-primary font-semibold">6</span>
+<span class="font-title-md text-title-md text-text-muted">/ 6 Done</span>
+</div>
+<div class="mt-space-sm flex items-center justify-between pt-2">
+<div class="flex items-center -space-x-1">
+<span class="w-5 h-5 rounded-full bg-secondary text-on-secondary flex items-center justify-center text-[10px]"><span class="material-symbols-outlined text-[12px]">done</span></span>
+<span class="w-5 h-5 rounded-full bg-secondary text-on-secondary flex items-center justify-center text-[10px]"><span class="material-symbols-outlined text-[12px]">done</span></span>
+<span class="w-5 h-5 rounded-full bg-secondary text-on-secondary flex items-center justify-center text-[10px]"><span class="material-symbols-outlined text-[12px]">done</span></span>
+<span class="w-5 h-5 rounded-full bg-secondary text-on-secondary flex items-center justify-center text-[10px]"><span class="material-symbols-outlined text-[12px]">done</span></span>
+<span class="w-5 h-5 rounded-full bg-secondary text-on-secondary flex items-center justify-center text-[10px]"><span class="material-symbols-outlined text-[12px]">done</span></span>
+<span class="w-5 h-5 rounded-full bg-secondary text-on-secondary flex items-center justify-center text-[10px]"><span class="material-symbols-outlined text-[12px]">done</span></span>
+</div>
+<span class="font-label-sm text-label-sm text-secondary font-semibold">100% completion</span>
+</div>
+</div>
+<!-- Recall Vitality Score -->
+<div class="bg-card-white p-space-lg rounded-xl shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-text-secondary uppercase tracking-wider">Recall Vitality</span>
+<span class="w-9 h-9 rounded-lg bg-surface-cream flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-[20px]">vital_signs</span>
+</span>
+</div>
+<div class="mt-space-md flex items-baseline gap-2">
+<span class="font-display-lg text-display-lg text-primary font-semibold">82%</span>
+<span class="font-label-md text-label-md text-secondary flex items-center">
+<span class="material-symbols-outlined text-[16px]">trending_up</span> Steady
+        </span>
+</div>
+<div class="mt-space-sm flex items-center justify-between">
+<p class="font-body-sm text-body-sm text-text-secondary">Consistent baseline across 30 days</p>
+</div>
+</div>
+<!-- Rhythm Streak -->
+<div class="bg-card-white p-space-lg rounded-xl shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-text-secondary uppercase tracking-wider">Rhythm Cadence</span>
+<span class="w-9 h-9 rounded-lg bg-amber-gentle/10 flex items-center justify-center text-amber-gentle">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+</span>
+</div>
+<div class="mt-space-md flex items-baseline gap-2">
+<span class="font-display-lg text-display-lg text-text-primary font-semibold">5</span>
+<span class="font-title-md text-title-md text-text-muted">Day Streak</span>
+</div>
+<div class="mt-space-sm flex items-center gap-1.5">
+<span class="w-6 h-6 rounded-md bg-secondary text-on-secondary flex items-center justify-center font-label-sm text-label-sm">M</span>
+<span class="w-6 h-6 rounded-md bg-secondary text-on-secondary flex items-center justify-center font-label-sm text-label-sm">T</span>
+<span class="w-6 h-6 rounded-md bg-secondary text-on-secondary flex items-center justify-center font-label-sm text-label-sm">W</span>
+<span class="w-6 h-6 rounded-md bg-secondary text-on-secondary flex items-center justify-center font-label-sm text-label-sm">T</span>
+<span class="w-6 h-6 rounded-md bg-secondary text-on-secondary flex items-center justify-center font-label-sm text-label-sm">F</span>
+<span class="w-6 h-6 rounded-md bg-surface-container text-text-muted flex items-center justify-center font-label-sm text-label-sm">S</span>
+<span class="w-6 h-6 rounded-md bg-surface-container text-text-muted flex items-center justify-center font-label-sm text-label-sm">S</span>
+</div>
+</div>
+</section>
+<!-- Middle Tier: Domain Breakdown Cards & 7-Day Trend Chart -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg">
+<!-- 7-Day Practice vs Retention Multi-day Trend Visualization -->
+<div class="lg:col-span-8 bg-card-white p-space-lg rounded-xl shadow-sm flex flex-col justify-between">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm pb-space-md">
+<div>
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Multi-Day Longitudinal Flow</span>
+<h2 class="font-headline-sm text-headline-sm text-text-primary mt-0.5">Practice Minutes &amp; Auditory Recall Accuracy</h2>
+</div>
+<div class="flex items-center gap-space-md">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-secondary"></span>
+<span class="font-label-sm text-label-sm text-text-secondary">Practice Time (min)</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-primary"></span>
+<span class="font-label-sm text-label-sm text-text-secondary">Recall Accuracy (%)</span>
+</div>
+</div>
+</div>
+<!-- Vector Data Visualization (No library needed, crisp inline SVG chart) -->
+<div class="w-full h-64 relative mt-2 flex flex-col justify-end">
+<svg class="w-full h-full overflow-visible" preserveaspectratio="none" viewbox="0 0 700 200">
+<defs>
+<lineargradient id="barGrad" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#396754" stop-opacity="0.85"></stop>
+<stop offset="100%" stop-color="#396754" stop-opacity="0.25"></stop>
+</lineargradient>
+<lineargradient id="lineGrad" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#983912" stop-opacity="0.2"></stop>
+<stop offset="100%" stop-color="#983912" stop-opacity="0.0"></stop>
+</lineargradient>
+</defs>
+<!-- Horizontal Reference Gridlines -->
+<line stroke="#ecefeb" stroke-dasharray="3 3" x1="0" x2="700" y1="20" y2="20"></line>
+<line stroke="#ecefeb" stroke-dasharray="3 3" x1="0" x2="700" y1="70" y2="70"></line>
+<line stroke="#ecefeb" stroke-dasharray="3 3" x1="0" x2="700" y1="120" y2="120"></line>
+<line stroke="#ecefeb" stroke-dasharray="3 3" x1="0" x2="700" y1="170" y2="170"></line>
+<!-- Days: Sat, Sun, Mon, Tue, Wed, Thu, Fri -->
+<!-- Bars: Practice Minutes (scale 0-30min -> height) -->
+<!-- Sat (14 min -> h=70) -->
+<rect fill="url(#barGrad)" height="70" rx="4" width="28" x="40" y="100"></rect>
+<!-- Sun (12 min -> h=60) -->
+<rect fill="url(#barGrad)" height="60" rx="4" width="28" x="135" y="110"></rect>
+<!-- Mon (20 min -> h=100) -->
+<rect fill="url(#barGrad)" height="100" rx="4" width="28" x="230" y="70"></rect>
+<!-- Tue (22 min -> h=110) -->
+<rect fill="url(#barGrad)" height="110" rx="4" width="28" x="325" y="60"></rect>
+<!-- Wed (16 min -> h=80) -->
+<rect fill="url(#barGrad)" height="80" rx="4" width="28" x="420" y="90"></rect>
+<!-- Thu (24 min -> h=120) -->
+<rect fill="url(#barGrad)" height="120" rx="4" width="28" x="515" y="50"></rect>
+<!-- Fri/Today (18 min -> h=90) -->
+<rect fill="#983912" fill-opacity="0.8" height="90" rx="4" width="28" x="610" y="80"></rect>
+<!-- Accuracy Spline Line Overlay (Sat: 78, Sun: 76, Mon: 84, Tue: 85, Wed: 80, Thu: 88, Fri: 82) -->
+<!-- y = 170 - (val - 50) * 2.8 -->
+<path d="M 54 92 L 149 97 L 244 74 L 339 72 L 434 86 L 529 63 L 624 80" fill="none" stroke="#983912" stroke-linecap="round" stroke-width="3"></path>
+<!-- Spline points -->
+<circle cx="54" cy="92" fill="#FFFFFF" r="4.5" stroke="#983912" stroke-width="2.5"></circle>
+<circle cx="149" cy="97" fill="#FFFFFF" r="4.5" stroke="#983912" stroke-width="2.5"></circle>
+<circle cx="244" cy="74" fill="#FFFFFF" r="4.5" stroke="#983912" stroke-width="2.5"></circle>
+<circle cx="339" cy="72" fill="#FFFFFF" r="4.5" stroke="#983912" stroke-width="2.5"></circle>
+<circle cx="434" cy="86" fill="#FFFFFF" r="4.5" stroke="#983912" stroke-width="2.5"></circle>
+<circle cx="529" cy="63" fill="#FFFFFF" r="4.5" stroke="#983912" stroke-width="2.5"></circle>
+<circle cx="624" cy="80" fill="#983912" r="5" stroke="#FFFFFF" stroke-width="2"></circle>
+</svg>
+<div class="flex justify-between items-center text-text-muted font-label-sm text-label-sm pt-2 px-6">
+<span>Sat (14m)</span>
+<span>Sun (12m)</span>
+<span>Mon (20m)</span>
+<span>Tue (22m)</span>
+<span>Wed (16m)</span>
+<span>Thu (24m)</span>
+<span class="text-primary font-bold">Today (18m)</span>
+</div>
+</div>
+<div class="mt-space-md p-space-sm bg-surface-cream rounded-lg flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[20px]">verified</span>
+<span class="font-body-sm text-body-sm text-text-primary">Auditory response time averaged <strong>1.4 seconds faster</strong> during morning routines.</span>
+</div>
+<span class="font-label-sm text-label-sm text-secondary font-semibold">Longitudinal Stability: 94%</span>
+</div>
+</div>
+<!-- Cognitive Domain Breakdown (5 Key Cognitive Facets) -->
+<div class="lg:col-span-4 flex flex-col gap-space-sm">
+<div class="bg-card-white p-space-lg rounded-xl shadow-sm flex flex-col justify-between h-full">
+<div>
+<div class="flex items-center justify-between pb-space-sm">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Cognitive Domains</span>
+<span class="material-symbols-outlined text-text-muted text-[18px]">psychology</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-text-primary">Target Domain Vitality</h3>
+<p class="font-body-sm text-body-sm text-text-secondary mt-1">Multi-modal observation tracking</p>
+</div>
+<div class="flex flex-col gap-space-md my-space-md">
+<!-- Traditional Practice (Sloka/Shruti) -->
+<div class="flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-secondary"></span>
+<span class="font-label-md text-label-md text-text-primary">Traditional Practice (Shruti)</span>
+</div>
+<span class="font-label-md text-label-md text-secondary font-bold">87%</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-1.5 overflow-hidden">
+<div class="bg-secondary h-full rounded-full" style="width: 87%"></div>
+</div>
+<span class="font-label-sm text-label-sm text-secondary">Highest retention &amp; engagement domain</span>
+</div>
+<!-- Memory Recall -->
+<div class="flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
+<span class="font-label-md text-label-md text-text-primary">Memory Recall</span>
+</div>
+<span class="font-label-md text-label-md text-text-primary font-bold">82%</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-1.5 overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 82%"></div>
+</div>
+<span class="font-label-sm text-label-sm text-text-muted">Steady • Consistent with 30-day baseline</span>
+</div>
+<!-- Pattern Recognition -->
+<div class="flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-tertiary"></span>
+<span class="font-label-md text-label-md text-text-primary">Pattern Recognition</span>
+</div>
+<span class="font-label-md text-label-md text-text-primary font-bold">91%</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-1.5 overflow-hidden">
+<div class="bg-tertiary h-full rounded-full" style="width: 91%"></div>
+</div>
+<span class="font-label-sm text-label-sm text-text-muted">Visual pair recognition swift</span>
+</div>
+<!-- Sequence Recall -->
+<div class="flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-amber-gentle"></span>
+<span class="font-label-md text-label-md text-text-primary">Sequence Recall</span>
+</div>
+<span class="font-label-md text-label-md text-amber-gentle font-bold">74%</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-1.5 overflow-hidden">
+<div class="bg-amber-gentle h-full rounded-full" style="width: 74%"></div>
+</div>
+<span class="font-label-sm text-label-sm text-secondary">+4% improvement this week</span>
+</div>
+<!-- Attention & Focus -->
+<div class="flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-text-muted"></span>
+<span class="font-label-md text-label-md text-text-primary">Attention &amp; Focus</span>
+</div>
+<span class="font-label-md text-label-md text-text-primary font-bold">68%</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-1.5 overflow-hidden">
+<div class="bg-text-secondary h-full rounded-full" style="width: 68%"></div>
+</div>
+<span class="font-label-sm text-label-sm text-text-muted">Balanced • Afternoon dip observed</span>
+</div>
+</div>
+<button class="w-full py-2.5 rounded-lg bg-surface-container text-text-primary font-label-md text-label-md flex items-center justify-center gap-2 hover:bg-surface-container-high transition-colors" type="button">
+<span>Detailed Domain History</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</section>
+<!-- SCREEN 17: Objective Clinical Observations & Neutral Insights -->
+<section class="flex flex-col gap-space-md">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-lg bg-terracotta-soft flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[24px]">cognition</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-text-primary">Observational Insights &amp; Cadence Dynamics</h2>
+<p class="font-body-sm text-body-sm text-text-secondary">Screen 17 • Caregiver Longitudinal Telemetry</p>
+</div>
+</div>
+<!-- Critical Regulatory/Ethics Non-diagnostic Pill -->
+<div class="px-space-md py-space-xs rounded-lg bg-surface-cream text-text-secondary font-label-sm text-label-sm flex items-center gap-space-xs shadow-sm">
+<span class="material-symbols-outlined text-secondary text-[18px]">info</span>
+<span>Neutral, non-diagnostic observational insights based on cognitive interaction mechanics</span>
+</div>
+</div>
+<!-- 4 Objective Observation Cards Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-space-md">
+<!-- Observation 1: Sequence Recall Baseline -->
+<div class="bg-card-white p-space-lg rounded-xl shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between text-primary">
+<span class="font-label-sm text-label-sm uppercase tracking-wider font-semibold">Timing Variance</span>
+<span class="material-symbols-outlined text-[20px]">timelapse</span>
+</div>
+<h3 class="font-title-md text-title-md text-text-primary mt-space-sm">Sequence recall baseline</h3>
+<p class="font-body-md text-body-md text-text-secondary mt-2 leading-relaxed">
+            Sequence recall performance has decreased slightly (-6%) compared with the 30-day baseline during afternoon sessions, while morning sessions maintain peak stability (81%).
+          </p>
+</div>
+<div class="mt-space-md pt-space-sm bg-surface-cream -mx-space-lg -mb-space-lg p-space-md rounded-b-xl flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-text-muted">Impact: Cadence Tuning</span>
+<span class="font-label-sm text-label-sm text-primary font-bold">Shift Scheduled</span>
+</div>
+</div>
+<!-- Observation 2: Traditional Practice Resonance -->
+<div class="bg-card-white p-space-lg rounded-xl shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between text-secondary">
+<span class="font-label-sm text-label-sm uppercase tracking-wider font-semibold">Resonance Anchor</span>
+<span class="material-symbols-outlined text-[20px]">menu_book</span>
+</div>
+<h3 class="font-title-md text-title-md text-text-primary mt-space-sm">Traditional practice resonance</h3>
+<p class="font-body-md text-body-md text-text-secondary mt-2 leading-relaxed">
+            Traditional rhythmic recitation sessions increased this week (+22 min total). High auditory recall accuracy (89%) observed during structured sloka cadence.
+          </p>
+</div>
+<div class="mt-space-md pt-space-sm bg-sage-soft -mx-space-lg -mb-space-lg p-space-md rounded-b-xl flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-secondary">Engagement: Exceptional</span>
+<span class="font-label-sm text-label-sm text-secondary font-bold">Sloka Cadence</span>
+</div>
+</div>
+<!-- Observation 3: Daily Engagement Pattern -->
+<div class="bg-card-white p-space-lg rounded-xl shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between text-tertiary">
+<span class="font-label-sm text-label-sm uppercase tracking-wider font-semibold">Habitual Rhythm</span>
+<span class="material-symbols-outlined text-[20px]">wb_sunny</span>
+</div>
+<h3 class="font-title-md text-title-md text-text-primary mt-space-sm">Daily engagement pattern</h3>
+<p class="font-body-md text-body-md text-text-secondary mt-2 leading-relaxed">
+            3 activities completed before 11:00 AM. Practice adherence is 40% higher when paired with morning tea and calm garden seating.
+          </p>
+</div>
+<div class="mt-space-md pt-space-sm bg-surface-cream -mx-space-lg -mb-space-lg p-space-md rounded-b-xl flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-text-muted">Anchor: Morning Tea</span>
+<span class="font-label-sm text-label-sm text-text-primary font-bold">+40% Adherence</span>
+</div>
+</div>
+<!-- Observation 4: Caregiver Prompt / Recommendation -->
+<div class="bg-terracotta-soft/50 p-space-lg rounded-xl shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between text-primary">
+<span class="font-label-sm text-label-sm uppercase tracking-wider font-semibold">Caregiver Action</span>
+<span class="material-symbols-outlined text-[20px]">lightbulb</span>
+</div>
+<h3 class="font-title-md text-title-md text-text-primary mt-space-sm">Caregiver prompt</h3>
+<p class="font-body-md text-body-md text-text-primary mt-2 leading-relaxed">
+<strong>Recommendation:</strong> Suggest shifting sequence exercises to 9:30 AM slot after breakfast to leverage peak focus windows.
+          </p>
+</div>
+<div class="mt-space-md pt-space-sm flex items-center gap-space-xs">
+<button class="w-full py-2.5 px-space-sm rounded-lg bg-primary text-on-primary font-label-md text-label-md text-center hover:bg-primary-container transition-all" id="btnAutoShift" onclick="applyScheduleOptimization()" type="button">
+            Apply Routine Shift
+          </button>
+</div>
+</div>
+</div>
+</section>
+<!-- Split Bottom Grid: Activity Timeline & Anchor Management -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg">
+<!-- Today's Activity & Exercise Log (Timeline style) -->
+<div class="lg:col-span-7 bg-card-white p-space-lg rounded-xl shadow-sm flex flex-col">
+<div class="flex items-center justify-between pb-space-md">
+<div>
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Chronological Log</span>
+<h3 class="font-headline-sm text-headline-sm text-text-primary">Today's Activity Cadence</h3>
+</div>
+<span class="font-label-sm text-label-sm px-space-xs py-1 rounded-md bg-surface-cream text-text-secondary">
+          Friday, 25 Oct
+        </span>
+</div>
+<div class="flex flex-col mt-space-sm relative">
+<!-- Vertical connector line -->
+<div class="absolute left-6 top-4 bottom-8 w-0.5 bg-surface-container-high -z-0"></div>
+<!-- Timeline item 1 -->
+<div class="flex items-start gap-space-md py-space-sm relative z-10">
+<div class="w-12 h-12 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center flex-shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-[20px]">record_voice_over</span>
+</div>
+<div class="flex-grow bg-surface-cream p-space-sm rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+<div>
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-secondary font-bold">9:15 AM</span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-sage-soft text-secondary">Completed</span>
+</div>
+<h4 class="font-title-md text-title-md text-text-primary mt-0.5">Traditional Practice - Recitation &amp; Chanting</h4>
+<p class="font-body-sm text-body-sm text-text-secondary">Duration: 6 mins • Auditory Accuracy: 91%</p>
+</div>
+<button class="self-start sm:self-center p-2 text-text-secondary hover:text-primary transition-colors" title="Listen to session audio sample" type="button">
+<span class="material-symbols-outlined text-[22px]">play_circle</span>
+</button>
+</div>
+</div>
+<!-- Timeline item 2 -->
+<div class="flex items-start gap-space-md py-space-sm relative z-10">
+<div class="w-12 h-12 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center flex-shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-[20px]">view_carousel</span>
+</div>
+<div class="flex-grow bg-surface-cream p-space-sm rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+<div>
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-secondary font-bold">10:30 AM</span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-sage-soft text-secondary">Completed</span>
+</div>
+<h4 class="font-title-md text-title-md text-text-primary mt-0.5">Memory Match - Serene Nature Pairs</h4>
+<p class="font-body-sm text-body-sm text-text-secondary">Duration: 4 mins • 3 of 3 pairs identified smoothly</p>
+</div>
+<span class="self-start sm:self-center font-label-sm text-label-sm text-secondary font-semibold">100% Score</span>
+</div>
+</div>
+<!-- Timeline item 3 -->
+<div class="flex items-start gap-space-md py-space-sm relative z-10">
+<div class="w-12 h-12 rounded-full bg-surface-container text-secondary flex items-center justify-center flex-shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-[20px]">water_drop</span>
+</div>
+<div class="flex-grow bg-surface-cream p-space-sm rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+<div>
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-text-muted font-semibold">1:15 PM</span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-surface-container text-text-secondary">Anchor Log</span>
+</div>
+<h4 class="font-title-md text-title-md text-text-primary mt-0.5">Hydration &amp; Mid-day Rest Anchor</h4>
+<p class="font-body-sm text-body-sm text-text-secondary">Confirmed via Smriti Companion speaker button</p>
+</div>
+<span class="material-symbols-outlined text-secondary text-[20px]">check_circle</span>
+</div>
+</div>
+<!-- Timeline item 4 -->
+<div class="flex items-start gap-space-md py-space-sm relative z-10">
+<div class="w-12 h-12 rounded-full bg-amber-gentle/20 text-amber-gentle flex items-center justify-center flex-shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-[20px]">format_list_numbered</span>
+</div>
+<div class="flex-grow bg-surface-cream p-space-sm rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+<div>
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-amber-gentle font-bold">3:45 PM</span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-terracotta-soft text-primary">Completed</span>
+</div>
+<h4 class="font-title-md text-title-md text-text-primary mt-0.5">Sequence Recall Level 2 (Vegetable Garden)</h4>
+<p class="font-body-sm text-body-sm text-text-secondary">Duration: 5 mins • 72% Accuracy (Minor hesitation on step 4)</p>
+</div>
+<span class="self-start sm:self-center font-label-sm text-label-sm text-primary font-medium">Review Notes</span>
+</div>
+</div>
+<!-- Timeline item 5: Upcoming -->
+<div class="flex items-start gap-space-md py-space-sm relative z-10">
+<div class="w-12 h-12 rounded-full bg-terracotta-soft text-primary flex items-center justify-center flex-shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-[20px]">medical_services</span>
+</div>
+<div class="flex-grow bg-card-white p-space-sm rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-sm">
+<div>
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-primary font-bold">5:00 PM</span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-terracotta-soft text-primary">Upcoming</span>
+</div>
+<h4 class="font-title-md text-title-md text-text-primary mt-0.5">Dr. Mehta Routine Checkup Reminder</h4>
+<p class="font-body-sm text-body-sm text-text-secondary">Push reminder queued to home chime &amp; Priya's phone</p>
+</div>
+<span class="font-label-sm text-label-sm text-primary font-semibold">Chime Active</span>
+</div>
+</div>
+<!-- Timeline item 6: Scheduled -->
+<div class="flex items-start gap-space-md py-space-sm relative z-10">
+<div class="w-12 h-12 rounded-full bg-surface-container text-text-muted flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">auto_stories</span>
+</div>
+<div class="flex-grow bg-surface-cream/70 p-space-sm rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+<div>
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-text-muted font-medium">7:30 PM</span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-surface-container text-text-muted">Scheduled</span>
+</div>
+<h4 class="font-title-md text-title-md text-text-primary mt-0.5">Associative Katha Memory (Family Stories)</h4>
+<p class="font-body-sm text-body-sm text-text-secondary">Photo-cued recall session with childhood photos</p>
+</div>
+<span class="font-label-sm text-label-sm text-text-muted">In 2 hours</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Routine & Reminder Quick Management Widget -->
+<div class="lg:col-span-5 flex flex-col gap-space-md">
+<!-- Caregiver Memory Anchors Card -->
+<div class="bg-card-white p-space-lg rounded-xl shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between pb-space-sm">
+<div>
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Environmental Stability</span>
+<h3 class="font-headline-sm text-headline-sm text-text-primary">Daily Memory Anchors</h3>
+</div>
+<button class="w-10 h-10 rounded-lg bg-surface-cream text-text-primary flex items-center justify-center hover:bg-surface-container transition-colors" onclick="toggleModalAnchor()" title="Add New Anchor" type="button">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</button>
+</div>
+<p class="font-body-sm text-body-sm text-text-secondary">Predictable daily cues ground orientation and prevent sundowning agitation.</p>
+<!-- Anchors List -->
+<div class="flex flex-col gap-space-sm mt-space-md">
+<!-- Anchor 1: Evening Medication -->
+<div class="p-space-sm bg-surface-cream rounded-lg flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-lg bg-card-white flex items-center justify-center text-primary shadow-sm">
+<span class="material-symbols-outlined text-[20px]">medication</span>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-text-primary">Evening Medication</h4>
+<p class="font-body-sm text-body-sm text-text-secondary">8:00 PM • Voice chime in Hindi &amp; English</p>
+</div>
+</div>
+<div class="flex items-center gap-space-xs">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-card-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"></div>
+</label>
+<button class="p-1.5 text-text-secondary hover:text-text-primary" type="button">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Anchor 2: Hydration Rhythm -->
+<div class="p-space-sm bg-surface-cream rounded-lg flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-lg bg-card-white flex items-center justify-center text-secondary shadow-sm">
+<span class="material-symbols-outlined text-[20px]">water_full</span>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-text-primary">Gentle Hydration Bell</h4>
+<p class="font-body-sm text-body-sm text-text-secondary">Every 45 min • Ambient temple sound</p>
+</div>
+</div>
+<div class="flex items-center gap-space-xs">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-card-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"></div>
+</label>
+<button class="p-1.5 text-text-secondary hover:text-text-primary" type="button">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Anchor 3: Evening Sandhya Lamp Lighting -->
+<div class="p-space-sm bg-surface-cream rounded-lg flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-lg bg-card-white flex items-center justify-center text-amber-gentle shadow-sm">
+<span class="material-symbols-outlined text-[20px]">local_fire_department</span>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-text-primary">Diyas &amp; Evening Walk</h4>
+<p class="font-body-sm text-body-sm text-text-secondary">6:30 PM • High sensory calm trigger</p>
+</div>
+</div>
+<div class="flex items-center gap-space-xs">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-card-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"></div>
+</label>
+<button class="p-1.5 text-text-secondary hover:text-text-primary" type="button">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<button class="w-full mt-space-md py-3 rounded-lg bg-card-white text-primary font-label-md text-label-md shadow-sm hover:bg-surface-cream transition-colors flex items-center justify-center gap-2" onclick="toggleModalAnchor()" type="button">
+<span class="material-symbols-outlined text-[20px]">add_circle</span>
+          Add New Memory Anchor
+        </button>
+</div>
+<!-- Quick Audio Check-in Card (Caregiver reassurance) -->
+<div class="bg-sage-soft p-space-lg rounded-xl shadow-sm flex items-center justify-between">
+<div class="flex items-center gap-space-md">
+<div class="w-12 h-12 rounded-xl bg-card-white text-secondary flex items-center justify-center shadow-sm flex-shrink-0">
+<span class="material-symbols-outlined text-[26px]">hearing</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-text-primary">Ravi's Voice Vitality</h4>
+<p class="font-body-sm text-body-sm text-text-secondary mt-0.5">Steady pacing (104 wpm), pleasant warm timbre recorded this morning.</p>
+</div>
+</div>
+<button class="w-10 h-10 rounded-full bg-secondary text-on-secondary flex items-center justify-center hover:bg-on-secondary-container transition-colors flex-shrink-0" title="Play sample" type="button">
+<span class="material-symbols-outlined text-[20px]">volume_up</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Interactive Modal: Add Memory Anchor (Hidden by default, controlled by vanilla JS) -->
+<div class="fixed inset-0 bg-text-primary/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-space-md" id="anchorModal">
+<div class="bg-card-white rounded-xl max-w-lg w-full p-space-xl shadow-xl flex flex-col gap-space-md">
+<div class="flex items-center justify-between pb-space-xs">
+<div>
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Cognitive Anchor Setup</span>
+<h3 class="font-headline-sm text-headline-sm text-text-primary">New Daily Cadence Trigger</h3>
+</div>
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-text-muted hover:bg-surface-container" onclick="toggleModalAnchor()" type="button">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<div class="flex flex-col gap-space-sm">
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-text-primary">Anchor Name</label>
+<input class="w-full h-12 px-space-md rounded-lg bg-surface-cream text-text-primary font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary" placeholder="e.g. Afternoon Tulsi Tea &amp; Sunning" type="text"/>
+</div>
+<div class="grid grid-cols-2 gap-space-sm">
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-text-primary">Target Time</label>
+<input class="w-full h-12 px-space-md rounded-lg bg-surface-cream text-text-primary font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary" type="time" value="16:00"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-text-primary">Chime Modality</label>
+<select class="w-full h-12 px-space-md rounded-lg bg-surface-cream text-text-primary font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary">
+<option>Temple Bell Tone</option>
+<option>Gentle Flute Whisper</option>
+<option>Priya's Recorded Voice</option>
+</select>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-text-primary">Spoken Prompt for Smriti</label>
+<input class="w-full h-12 px-space-md rounded-lg bg-surface-cream text-text-primary font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary" placeholder='"Babuji, it is time for tea on the balcony."' type="text"/>
+</div>
+</div>
+<div class="flex items-center justify-end gap-space-sm pt-space-sm">
+<button class="h-12 px-space-md rounded-lg bg-surface-cream text-text-primary font-label-md text-label-md hover:bg-surface-container transition-colors" onclick="toggleModalAnchor()" type="button">
+          Cancel
+        </button>
+<button class="h-12 px-space-lg rounded-lg bg-primary text-on-primary font-label-md text-label-md hover:bg-primary-container shadow-sm transition-all" onclick="saveNewAnchor()" type="button">
+          Save Anchor
+        </button>
+</div>
+</div>
+</div>
+<!-- Audio Note Recorder Toast / Prompt Bar -->
+<div class="fixed bottom-6 right-6 max-w-sm w-full bg-surface-cream rounded-xl p-space-md shadow-xl border-none hidden z-50 flex flex-col gap-2" id="audioToast">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2 text-primary font-label-md text-label-md">
+<span class="w-2.5 h-2.5 rounded-full bg-alert-soft animate-ping"></span>
+<span>Voice Note Sent</span>
+</div>
+<button class="text-text-muted hover:text-text-primary" onclick="dismissAudioToast()">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<p class="font-body-sm text-body-sm text-text-secondary">
+      Your voice reminder has been queued for Ravi's companion hub: <em>"Papa, remember to drink some warm water after your walk."</em>
+</p>
+</div>
+</div>
+<script>
+  function toggleModalAnchor() {
+    const modal = document.getElementById('anchorModal');
+    if (modal.classList.contains('hidden')) {
+      modal.classList.remove('hidden');
+    } else {
+      modal.classList.add('hidden');
+    }
+  }
+
+  function saveNewAnchor() {
+    toggleModalAnchor();
+    showAudioFeedback("New memory anchor saved to Ravi's daily routine.");
+  }
+
+  function applyScheduleOptimization() {
+    const btn = document.getElementById('btnAutoShift');
+    btn.innerHTML = `<span class="material-symbols-outlined text-[18px] inline align-middle mr-1">check</span> Shift Applied (9:30 AM)`;
+    btn.classList.remove('bg-primary');
+    btn.classList.add('bg-secondary');
+    showAudioFeedback("Sequence recall sessions moved to 9:30 AM starting tomorrow.");
+  }
+
+  function showAudioFeedback(msg) {
+    const toast = document.getElementById('audioToast');
+    if (toast) {
+      if (msg) {
+        toast.querySelector('p').textContent = msg;
+      }
+      toast.classList.remove('hidden');
+      setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 4000);
+    }
+  }
+
+  function dismissAudioToast() {
+    const toast = document.getElementById('audioToast');
+    if (toast) toast.classList.add('hidden');
+  }
+
+  document.getElementById('btnAudioNote')?.addEventListener('click', () => {
+    showAudioFeedback("Audio connection active. Sending warm check-in to Smriti Hub.");
+  });
+
+  document.getElementById('btnPdfReport')?.addEventListener('click', () => {
+    showAudioFeedback("Compiling 30-day non-diagnostic summary for Dr. Mehta (PDF).");
+  });
+</script></main></div></body></html>

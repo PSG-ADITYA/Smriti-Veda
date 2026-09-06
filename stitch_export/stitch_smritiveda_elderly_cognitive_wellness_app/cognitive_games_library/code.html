@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-surface" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><title>SmritiVeda</title><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&amp;family=Atkinson+Hyperlegible+Next:ital,wght@0,400..700;1,400..700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24..48,400..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100%;min-height:100%;margin:0;padding:0;background-color:#f7faf6;color:#181c1b;-webkit-font-smoothing:antialiased;}body{overscroll-behavior-y:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"surface-tint":"#a13f18","surface-cream":"#F7F4EE","surface-container":"#ecefeb","on-secondary":"#ffffff","on-error-container":"#93000a","primary-fixed":"#ffdbcf","tertiary":"#73502c","surface-dim":"#d8dbd7","on-secondary-container":"#3f6d5a","tertiary-fixed-dim":"#edbd91","secondary-fixed":"#bbedd5","on-background":"#181c1b","on-surface":"#181c1b","surface-bright":"#f7faf6","surface-container-lowest":"#ffffff","on-surface-variant":"#57423b","outline-variant":"#ddc0b7","sage-soft":"#EBF2EE","inverse-primary":"#ffb59c","surface":"#f7faf6","on-primary-fixed":"#380c00","on-tertiary-container":"#fff2e9","secondary":"#396754","amber-gentle":"#D97706","background":"#f7faf6","border-subtle":"#EAE6DF","text-secondary":"#4E5450","primary-container":"#b85028","secondary-container":"#bbedd5","tertiary-fixed":"#ffdcbe","outline":"#8a726a","error-container":"#ffdad6","alert-soft":"#E0533C","on-error":"#ffffff","surface-container-low":"#f1f4f1","canvas-ivory":"#FBF9F5","surface-container-highest":"#e0e3e0","on-secondary-fixed-variant":"#204f3d","error":"#ba1a1a","tertiary-container":"#8e6842","primary":"#983912","secondary-fixed-dim":"#a0d1ba","text-muted":"#6E7571","terracotta-soft":"#F7ECE7","surface-container-high":"#e6e9e5","on-tertiary-fixed":"#2c1600","on-tertiary-fixed-variant":"#60401d","text-primary":"#1F2421","on-tertiary":"#ffffff","inverse-on-surface":"#eef1ee","surface-variant":"#e0e3e0","inverse-surface":"#2d312f","on-primary-container":"#fff2ee","primary-fixed-dim":"#ffb59c","card-white":"#FFFFFF","on-secondary-fixed":"#002116","on-primary-fixed-variant":"#812901","on-primary":"#ffffff"},borderRadius:{DEFAULT:"0.25rem",lg:"0.5rem",xl:"0.75rem",full:"9999px"},spacing:{"space-3xl":"4rem","space-2xs":"0.25rem","gutter-mobile":"1.25rem","space-md":"1rem","space-xl":"2rem","touch-comfort":"4rem","space-lg":"1.5rem","space-sm":"0.75rem","touch-min":"3.5rem","gutter-tablet":"2rem","space-xs":"0.5rem","space-2xl":"3rem","gutter-desktop":"2.5rem","max-content-width":"72rem"},fontFamily:{"title-md":["Atkinson Hyperlegible Next"],"label-lg":["Atkinson Hyperlegible Next"],"body-lg":["Atkinson Hyperlegible Next"],"headline-lg":["Newsreader"],"headline-sm":["Newsreader"],"title-lg":["Atkinson Hyperlegible Next"],"headline-md":["Newsreader"],"body-sm":["Atkinson Hyperlegible Next"],"label-md":["Atkinson Hyperlegible Next"],"display-lg":["Newsreader"],"label-sm":["Atkinson Hyperlegible Next"],"body-md":["Atkinson Hyperlegible Next"],"display-lg-mobile":["Newsreader"]},fontSize:{"title-md":["18px",{lineHeight:"26px",fontWeight:"600"}],"label-lg":["16px",{lineHeight:"22px",letterSpacing:"0.01em",fontWeight:"600"}],"body-lg":["18px",{lineHeight:"28px",fontWeight:"400"}],"headline-lg":["32px",{lineHeight:"40px",letterSpacing:"-0.005em",fontWeight:"600"}],"headline-sm":["22px",{lineHeight:"30px",fontWeight:"600"}],"title-lg":["20px",{lineHeight:"28px",fontWeight:"600"}],"headline-md":["26px",{lineHeight:"34px",fontWeight:"600"}],"body-sm":["14px",{lineHeight:"22px",fontWeight:"500"}],"label-md":["14px",{lineHeight:"20px",letterSpacing:"0.02em",fontWeight:"600"}],"display-lg":["44px",{lineHeight:"52px",letterSpacing:"-0.01em",fontWeight:"500"}],"label-sm":["12px",{lineHeight:"18px",letterSpacing:"0.03em",fontWeight:"700"}],"body-md":["16px",{lineHeight:"26px",fontWeight:"400"}],"display-lg-mobile":["34px",{lineHeight:"42px",letterSpacing:"-0.01em",fontWeight:"500"}]}}}};</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col min-h-full antialiased"><header class="fixed top-0 inset-x-0 z-50 bg-canvas-ivory/90 backdrop-blur-xl pt-safe shadow-[0_1px_8px_rgba(45,36,28,0.04)]"><div class="h-20 px-gutter-mobile flex items-center justify-between gap-space-sm"><div class="flex items-center gap-space-sm min-w-0"><img alt="SmritiVeda Logo Mark" class="h-8 w-auto object-contain flex-shrink-0" src="https://lh3.googleusercontent.com/aida/AEtjO1WWG37J8Aa9CHmjWlxXUKKcYi8h6LoohmvrifU2bqoxVrebAxaWJ4rqiF8GzchF0srrntgZeIbzrySh-eBocVIDZHW1-d0gHUgCIsRUXyCugzps6q2f7pI__MJCTGNfKZWa_qCQrQy6arUltHl4KHKG5imbEvO7QMHNK6xuERhMqEswJUuCL1Iu21KzF2dGJMWROGbAP5REdHedsTA__qQM3JUHiZ3gUIFtvX_Eq9bXzHkGNtJ16uk"/><div class="flex flex-col min-w-0"><span class="font-headline-sm text-headline-sm text-primary leading-tight truncate">SmritiVeda</span><span class="font-label-sm text-label-sm text-text-secondary truncate tracking-normal">Games</span></div></div><div class="flex items-center gap-space-xs flex-shrink-0"><button aria-label="Quick audio spoken guidance" class="w-11 h-11 rounded-full bg-surface-cream text-primary flex items-center justify-center transition-colors hover:bg-terracotta-soft active:scale-95"><span class="material-symbols-outlined text-[24px]">volume_up</span></button><button aria-label="Text size and visual accessibility toggles" class="w-11 h-11 rounded-full bg-surface-cream text-secondary flex items-center justify-center transition-colors hover:bg-sage-soft active:scale-95"><span class="material-symbols-outlined text-[24px]">format_size</span></button><div class="pl-1"><img alt="Profile" class="w-8 h-8 rounded-full object-cover ring-2 ring-primary/20" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCNxPWRHXWC8Fm8fZcrJ4oy18rwkgDgtqLamdQSq-taWtZeV_g1KbhUOH6M6rqtJf68NSP5Cu-f3_4yV5vXPVBjfVYTU6ExKxQ4ttq1V8k47FRqyeQ-hMNgCwk4-2PHVXjjAGP856CNBOy3fYIYEeGcbN7QsEq-EOftPqxNuyQsP9nJyrBReY-g6He-i_kUL_xRkyfNFsqKDYdQQ-pLHjSync5UJiV9QUgp_EomD9FNj862dh13Lg"/></div></div></div></header><main class="flex-1 flex flex-col relative w-full pt-20 pb-28 bg-surface"><div class="flex flex-col w-full">
+<div class="px-gutter-mobile pt-space-md pb-space-lg flex flex-col gap-space-md">
+<!-- Gentle Welcoming Context & Spoken Anchor -->
+<div class="bg-surface-cream rounded-xl p-space-md shadow-sm flex items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="w-12 h-12 rounded-full bg-terracotta-soft text-primary flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">neurology</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-headline-sm text-text-primary truncate">Cognitive Sanctuary</span>
+<span class="font-body-sm text-body-sm text-text-secondary truncate">Daily mindful exercises for sharp recall</span>
+</div>
+</div>
+<button aria-label="Spoken audio explanation of exercises" class="h-11 px-space-sm rounded-full bg-card-white shadow-sm flex items-center gap-1 text-primary hover:bg-terracotta-soft active:scale-95 transition-all flex-shrink-0" id="guideAudioBtn">
+<span class="material-symbols-outlined text-[22px]">volume_up</span>
+<span class="font-label-sm text-label-sm pr-1 hidden xs:inline">Listen</span>
+</button>
+</div>
+<!-- Category Pill Filter -->
+<div class="flex items-center gap-space-xs overflow-x-auto py-1 no-scrollbar">
+<button class="filter-pill h-[42px] px-space-md rounded-full bg-secondary-container text-on-secondary-container font-label-lg text-label-lg flex items-center gap-1 shadow-sm whitespace-nowrap active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">check</span>
+        All (4)
+      </button>
+<button class="filter-pill h-[42px] px-space-md rounded-full bg-surface-cream text-text-secondary font-label-lg text-label-lg flex items-center whitespace-nowrap active:scale-95 hover:bg-sage-soft transition-all">
+        Memory
+      </button>
+<button class="filter-pill h-[42px] px-space-md rounded-full bg-surface-cream text-text-secondary font-label-lg text-label-lg flex items-center whitespace-nowrap active:scale-95 hover:bg-sage-soft transition-all">
+        Attention
+      </button>
+<button class="filter-pill h-[42px] px-space-md rounded-full bg-surface-cream text-text-secondary font-label-lg text-label-lg flex items-center whitespace-nowrap active:scale-95 hover:bg-sage-soft transition-all">
+        Sequence
+      </button>
+<button class="filter-pill h-[42px] px-space-md rounded-full bg-surface-cream text-text-secondary font-label-lg text-label-lg flex items-center whitespace-nowrap active:scale-95 hover:bg-sage-soft transition-all">
+        Traditional
+      </button>
+</div>
+<!-- ACTIVE FEATURED GAME: Memory Match -->
+<section class="bg-card-white rounded-xl shadow-md p-space-md sm:p-space-lg flex flex-col gap-space-md relative overflow-hidden">
+<!-- Subtle top decorative aura -->
+<div class="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-terracotta-soft/50 blur-2xl pointer-events-none"></div>
+<!-- Game Header & Tier Info -->
+<div class="flex items-start justify-between gap-space-sm relative z-10">
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2 mb-1">
+<span class="px-2.5 py-0.5 rounded-md bg-secondary-container text-on-secondary-container font-label-sm text-label-sm uppercase tracking-wide">
+              Active Session
+            </span>
+<span class="text-text-muted font-body-sm text-body-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+              4 min duration
+            </span>
+</div>
+<h2 class="font-headline-md text-headline-md text-text-primary leading-tight">Memory Match</h2>
+<p class="font-body-md text-body-md text-text-secondary mt-0.5">Find serene natural pairs at an unhurried, comfortable pace.</p>
+</div>
+<div class="flex flex-col items-end flex-shrink-0">
+<span class="px-3 py-1 rounded-full bg-surface-cream text-tertiary font-label-sm text-label-sm font-semibold">
+            Level 1 • Gentle
+          </span>
+<span class="font-label-md text-label-md text-secondary mt-1 flex items-center gap-1" id="scoreTracker">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+            2 of 3 pairs found
+          </span>
+</div>
+</div>
+<!-- Spoken Audio Prompt Bar -->
+<div class="bg-surface-cream rounded-lg p-space-sm flex items-center justify-between gap-space-sm relative z-10">
+<div class="flex items-center gap-space-xs min-w-0">
+<div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center text-primary flex-shrink-0">
+<span class="material-symbols-outlined text-[18px]">record_voice_over</span>
+</div>
+<p class="font-body-sm text-body-sm text-text-primary italic truncate">
+            "Observe the revealed card, then uncover its soothing twin."
+          </p>
+</div>
+<button aria-label="Mute or repeat spoken prompt" class="w-10 h-10 rounded-full bg-card-white shadow-sm flex items-center justify-center text-primary hover:bg-terracotta-soft active:scale-95 transition-all flex-shrink-0" id="toggleAudioGuide">
+<span class="material-symbols-outlined text-[20px]" id="audioIcon">volume_up</span>
+</button>
+</div>
+<!-- Tactile 2x3 Memory Grid -->
+<div class="grid grid-cols-2 gap-space-sm my-1 relative z-10" id="cardsGrid">
+<!-- Card 1: Lotus (Matched Pair A - Revealed) -->
+<button aria-label="Matched card: Sacred Pink Lotus" class="tactile-card h-28 sm:h-32 rounded-xl bg-sage-soft shadow-sm p-space-sm flex flex-col items-center justify-center gap-1 transition-all" data-card-id="1" data-pair="lotus">
+<div class="w-12 h-12 rounded-full bg-card-white flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-secondary text-[32px]" style="font-variation-settings: 'FILL' 1;">spa</span>
+</div>
+<span class="font-label-md text-label-md text-secondary">Sacred Lotus</span>
+<span class="font-label-sm text-label-sm text-on-secondary-container flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[14px]">check</span> Paired
+          </span>
+</button>
+<!-- Card 2: Lotus (Matched Pair A - Revealed) -->
+<button aria-label="Matched card: Sacred Pink Lotus" class="tactile-card h-28 sm:h-32 rounded-xl bg-sage-soft shadow-sm p-space-sm flex flex-col items-center justify-center gap-1 transition-all" data-card-id="2" data-pair="lotus">
+<div class="w-12 h-12 rounded-full bg-card-white flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-secondary text-[32px]" style="font-variation-settings: 'FILL' 1;">spa</span>
+</div>
+<span class="font-label-md text-label-md text-secondary">Sacred Lotus</span>
+<span class="font-label-sm text-label-sm text-on-secondary-container flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[14px]">check</span> Paired
+          </span>
+</button>
+<!-- Card 3: Bell (Matched Pair B - Revealed) -->
+<button aria-label="Matched card: Temple Bell" class="tactile-card h-28 sm:h-32 rounded-xl bg-terracotta-soft shadow-sm p-space-sm flex flex-col items-center justify-center gap-1 transition-all" data-card-id="3" data-pair="bell">
+<div class="w-12 h-12 rounded-full bg-card-white flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-primary text-[32px]" style="font-variation-settings: 'FILL' 1;">notifications_active</span>
+</div>
+<span class="font-label-md text-label-md text-primary">Temple Bell</span>
+<span class="font-label-sm text-label-sm text-primary flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[14px]">check</span> Paired
+          </span>
+</button>
+<!-- Card 4: Bell (Matched Pair B - Revealed) -->
+<button aria-label="Matched card: Temple Bell" class="tactile-card h-28 sm:h-32 rounded-xl bg-terracotta-soft shadow-sm p-space-sm flex flex-col items-center justify-center gap-1 transition-all" data-card-id="4" data-pair="bell">
+<div class="w-12 h-12 rounded-full bg-card-white flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-primary text-[32px]" style="font-variation-settings: 'FILL' 1;">notifications_active</span>
+</div>
+<span class="font-label-md text-label-md text-primary">Temple Bell</span>
+<span class="font-label-sm text-label-sm text-primary flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[14px]">check</span> Paired
+          </span>
+</button>
+<!-- Card 5: Peepal Leaf (Active Face-Up Card) -->
+<button aria-label="Card uncovered: Peepal Leaf. Find its matching pair." class="tactile-card h-28 sm:h-32 rounded-xl bg-surface-cream shadow-md p-space-sm flex flex-col items-center justify-center gap-1 transition-all ring-2 ring-primary/30" data-card-id="5" data-pair="peepal">
+<div class="w-12 h-12 rounded-full bg-card-white flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-amber-gentle text-[32px]" style="font-variation-settings: 'FILL' 1;">eco</span>
+</div>
+<span class="font-label-md text-label-md text-text-primary">Peepal Leaf</span>
+<span class="font-label-sm text-label-sm text-amber-gentle font-medium">Revealed</span>
+</button>
+<!-- Card 6: Covered / Face Down Tactile Tile -->
+<button aria-label="Covered card: Tap gently to uncover and test memory" class="tactile-card h-28 sm:h-32 rounded-xl bg-surface-container-high hover:bg-surface-dim active:scale-95 shadow-sm p-space-sm flex flex-col items-center justify-center gap-2 cursor-pointer transition-all" data-card-id="6" data-pair="peepal" id="unrevealedCard">
+<div class="w-12 h-12 rounded-full bg-card-white/80 flex items-center justify-center shadow-inner text-text-muted">
+<span class="material-symbols-outlined text-[28px]">touch_app</span>
+</div>
+<span class="font-label-md text-label-md text-text-secondary">Tap to Turn</span>
+<span class="font-label-sm text-label-sm text-text-muted">Final Match</span>
+</button>
+</div>
+<!-- Playback and Accessibility Controls (56px touch target compliant) -->
+<div class="flex items-center justify-between gap-space-sm pt-2 relative z-10">
+<button aria-label="Pause the ongoing exercise" class="h-14 px-space-md rounded-xl bg-surface-cream text-text-primary font-label-lg text-label-lg flex items-center justify-center gap-2 hover:bg-surface-container active:scale-95 transition-all min-w-[120px]" id="pauseGameBtn">
+<span class="material-symbols-outlined text-[24px]">pause_circle</span>
+<span>Pause</span>
+</button>
+<button aria-label="Restart this board fresh" class="h-14 px-space-md rounded-xl bg-surface-cream text-text-secondary font-label-lg text-label-lg flex items-center justify-center gap-2 hover:bg-surface-container active:scale-95 transition-all" id="restartGameBtn">
+<span class="material-symbols-outlined text-[24px]">refresh</span>
+<span class="hidden sm:inline">Restart</span>
+</button>
+<button class="h-14 px-space-lg rounded-xl bg-primary text-on-primary font-label-lg text-label-lg flex items-center justify-center gap-2 shadow-md hover:bg-primary-container active:scale-95 transition-all flex-1" id="finishCardBtn">
+<span class="material-symbols-outlined text-[24px]">arrow_forward</span>
+<span>Next Round</span>
+</button>
+</div>
+</section>
+<!-- Warm Encouragement Callout -->
+<div class="bg-sage-soft rounded-xl p-space-md flex items-center gap-space-sm shadow-sm">
+<img class="w-14 h-14 rounded-lg object-cover flex-shrink-0 shadow-sm" data-alt="Close-up serene photograph of a warm cup of herbal tulsi tea resting beside an open linen journal and fresh green peepal leaves under soft morning sunlight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVy6wpFwNE1U_EtP4jhdU_t5ZrzvIXNeEsUJwhVn9ScLq1ZW1GPY79k7hmPUtnXM7y-0aJ9ZdyaMHMN3IlBg2hDt8crDAR0R74wgIyOEdwdGE3oo2JUBzI7PY02N-Hp8GRSu1nxAglpIAsktii_I9ksf64eUlpgJRZls_iz35DqqvmwDdA92Rg_m_1NBjXvCmj4sUShYVwC8RHt4UNmMP4r7J5zYmZEQaIVavpKwtYXdUgeph4PA"/>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-headline-sm text-secondary leading-tight">Deliberate &amp; Unhurried</span>
+<p class="font-body-sm text-body-sm text-text-secondary leading-snug mt-0.5">
+          There are no penalties or rushing countdowns. Every connection nurtures synaptic pathways with tranquility.
+        </p>
+</div>
+</div>
+<!-- OTHER COGNITIVE GAMES LIST -->
+<div class="flex flex-col gap-space-sm pt-space-xs">
+<div class="flex items-center justify-between">
+<h3 class="font-headline-sm text-headline-sm text-text-primary">More Mindful Exercises</h3>
+<span class="font-label-sm text-label-sm text-text-muted">3 Activities</span>
+</div>
+<!-- Game 1: Sequence Recall -->
+<article class="bg-card-white rounded-xl p-space-md shadow-sm flex items-center justify-between gap-space-sm hover:shadow-md transition-shadow">
+<div class="flex items-center gap-space-md min-w-0">
+<div class="w-14 h-14 rounded-xl bg-terracotta-soft text-primary flex items-center justify-center flex-shrink-0 shadow-inner">
+<span class="material-symbols-outlined text-[32px]">music_note</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2 mb-0.5">
+<span class="font-headline-sm text-headline-sm text-text-primary truncate">Sequence Recall</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-cream text-text-secondary font-label-sm text-label-sm flex-shrink-0">
+                Level 2
+              </span>
+</div>
+<p class="font-body-sm text-body-sm text-text-secondary line-clamp-1">
+              Listen and repeat melodic temple bells and numbered tones.
+            </p>
+<div class="flex items-center gap-space-sm mt-1 text-text-muted font-body-sm text-body-sm">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">timer</span> 5 min
+              </span>
+<span>•</span>
+<span class="text-secondary font-medium">Auditory Working Memory</span>
+</div>
+</div>
+</div>
+<button aria-label="Begin Sequence Recall exercise" class="w-12 h-12 rounded-full bg-surface-cream text-primary flex items-center justify-center hover:bg-terracotta-soft active:scale-95 transition-all flex-shrink-0">
+<span class="material-symbols-outlined text-[26px]">play_arrow</span>
+</button>
+</article>
+<!-- Game 2: Pattern Recall -->
+<article class="bg-card-white rounded-xl p-space-md shadow-sm flex items-center justify-between gap-space-sm hover:shadow-md transition-shadow">
+<div class="flex items-center gap-space-md min-w-0">
+<div class="w-14 h-14 rounded-xl bg-secondary-container text-on-secondary-container flex items-center justify-center flex-shrink-0 shadow-inner">
+<span class="material-symbols-outlined text-[32px]">grain</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2 mb-0.5">
+<span class="font-headline-sm text-headline-sm text-text-primary truncate">Pattern Recall</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-cream text-text-secondary font-label-sm text-label-sm flex-shrink-0">
+                Level 1
+              </span>
+</div>
+<p class="font-body-sm text-body-sm text-text-secondary line-clamp-1">
+              Reconstruct gentle traditional Rangoli visual geometric arrangements.
+            </p>
+<div class="flex items-center gap-space-sm mt-1 text-text-muted font-body-sm text-body-sm">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">timer</span> 4 min
+              </span>
+<span>•</span>
+<span class="text-secondary font-medium">Spatial Orientation</span>
+</div>
+</div>
+</div>
+<button aria-label="Begin Pattern Recall exercise" class="w-12 h-12 rounded-full bg-surface-cream text-primary flex items-center justify-center hover:bg-terracotta-soft active:scale-95 transition-all flex-shrink-0">
+<span class="material-symbols-outlined text-[26px]">play_arrow</span>
+</button>
+</article>
+<!-- Game 3: Word Association -->
+<article class="bg-card-white rounded-xl p-space-md shadow-sm flex items-center justify-between gap-space-sm hover:shadow-md transition-shadow">
+<div class="flex items-center gap-space-md min-w-0">
+<div class="w-14 h-14 rounded-xl bg-tertiary-fixed text-tertiary flex items-center justify-center flex-shrink-0 shadow-inner">
+<span class="material-symbols-outlined text-[32px]">auto_stories</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2 mb-0.5">
+<span class="font-headline-sm text-headline-sm text-text-primary truncate">Word Association</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-cream text-text-secondary font-label-sm text-label-sm flex-shrink-0">
+                Level 1
+              </span>
+</div>
+<p class="font-body-sm text-body-sm text-text-secondary line-clamp-1">
+              Connect enduring ayurvedic flora, seasons, and evocative proverbs.
+            </p>
+<div class="flex items-center gap-space-sm mt-1 text-text-muted font-body-sm text-body-sm">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">timer</span> 6 min
+              </span>
+<span>•</span>
+<span class="text-secondary font-medium">Semantic Vitality</span>
+</div>
+</div>
+</div>
+<button aria-label="Begin Word Association exercise" class="w-12 h-12 rounded-full bg-surface-cream text-primary flex items-center justify-center hover:bg-terracotta-soft active:scale-95 transition-all flex-shrink-0">
+<span class="material-symbols-outlined text-[26px]">play_arrow</span>
+</button>
+</article>
+</div>
+<!-- Conversational Voice Guidance Dock -->
+<div class="bg-canvas-ivory rounded-xl p-space-md shadow-sm flex items-center gap-space-sm mt-space-xs">
+<button aria-label="Tap to ask Smriti assistant questions" class="w-14 h-14 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-md active:scale-95 transition-transform flex-shrink-0">
+<span class="material-symbols-outlined text-[28px]">mic</span>
+</button>
+<div class="flex flex-col min-w-0">
+<span class="font-title-md text-title-md text-text-primary leading-tight">Need gentle guidance?</span>
+<span class="font-body-sm text-body-sm text-text-muted">Tap the microphone anytime to speak or hear instructions spoken aloud.</span>
+</div>
+</div>
+</div>
+</div>
+<script>
+  (function() {
+    // Dynamic interactive tap to complete final card pair
+    const unrevealed = document.getElementById('unrevealedCard');
+    const scoreTracker = document.getElementById('scoreTracker');
+    const audioBtn = document.getElementById('toggleAudioGuide');
+    const audioIcon = document.getElementById('audioIcon');
+    const restartBtn = document.getElementById('restartGameBtn');
+    const pauseBtn = document.getElementById('pauseGameBtn');
+
+    if (unrevealed) {
+      unrevealed.addEventListener('click', function() {
+        // Morph the unrevealed card into the matching Peepal Leaf
+        unrevealed.classList.remove('bg-surface-container-high', 'hover:bg-surface-dim');
+        unrevealed.classList.add('bg-sage-soft', 'ring-2', 'ring-secondary/40');
+        unrevealed.innerHTML = `
+          <div class="w-12 h-12 rounded-full bg-card-white flex items-center justify-center shadow-sm">
+            <span class="material-symbols-outlined text-secondary text-[32px]" style="font-variation-settings: 'FILL' 1;">eco</span>
+          </div>
+          <span class="font-label-md text-label-md text-secondary">Peepal Leaf</span>
+          <span class="font-label-sm text-label-sm text-on-secondary-container flex items-center gap-0.5">
+            <span class="material-symbols-outlined text-[14px]">check</span> Paired!
+          </span>
+        `;
+        
+        if (scoreTracker) {
+          scoreTracker.innerHTML = `
+            <span class="material-symbols-outlined text-[18px] text-secondary" style="font-variation-settings: 'FILL' 1;">stars</span>
+            All 3 of 3 pairs found!
+          `;
+          scoreTracker.classList.add('font-bold');
+        }
+      });
+    }
+
+    if (audioBtn && audioIcon) {
+      let isMuted = false;
+      audioBtn.addEventListener('click', function() {
+        isMuted = !isMuted;
+        audioIcon.textContent = isMuted ? 'volume_off' : 'volume_up';
+      });
+    }
+
+    if (restartBtn) {
+      restartBtn.addEventListener('click', function() {
+        window.location.reload();
+      });
+    }
+
+    if (pauseBtn) {
+      let isPaused = false;
+      pauseBtn.addEventListener('click', function() {
+        isPaused = !isPaused;
+        const iconSpan = pauseBtn.querySelector('.material-symbols-outlined');
+        const textSpan = pauseBtn.querySelector('span:not(.material-symbols-outlined)');
+        if (iconSpan) iconSpan.textContent = isPaused ? 'play_circle' : 'pause_circle';
+        if (textSpan) textSpan.textContent = isPaused ? 'Resume' : 'Pause';
+      });
+    }
+
+    // Category filter interactions
+    const pills = document.querySelectorAll('.filter-pill');
+    pills.forEach(pill => {
+      pill.addEventListener('click', function() {
+        pills.forEach(p => {
+          p.classList.remove('bg-secondary-container', 'text-on-secondary-container', 'shadow-sm');
+          p.classList.add('bg-surface-cream', 'text-text-secondary');
+          const check = p.querySelector('.material-symbols-outlined');
+          if (check) check.remove();
+        });
+        pill.classList.remove('bg-surface-cream', 'text-text-secondary');
+        pill.classList.add('bg-secondary-container', 'text-on-secondary-container', 'shadow-sm');
+        pill.insertAdjacentHTML('afterbegin', '<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: \'FILL\' 1;">check</span> ');
+      });
+    });
+  })();
+</script></main><nav class="fixed bottom-0 inset-x-0 z-50 pb-safe bg-canvas-ivory/95 backdrop-blur-xl shadow-[0_-4px_20px_-2px_rgba(45,36,28,0.06)]" data-active-classes="text-primary font-bold"><div class="flex justify-around items-center h-20 px-space-xs max-w-lg mx-auto"><a class="flex flex-col items-center justify-center gap-1 min-w-[56px] h-touch-min py-1 px-2 rounded-xl text-text-muted hover:text-text-primary transition-all duration-150" data-path="home" href="#"><span class="material-symbols-outlined text-[26px]">cottage</span><span class="font-label-sm text-label-sm tracking-tight">Home</span></a><a class="flex flex-col items-center justify-center gap-1 min-w-[56px] h-touch-min py-1 px-2 rounded-xl text-text-muted hover:text-text-primary transition-all duration-150" data-path="practice" href="#"><span class="material-symbols-outlined text-[26px]">self_improvement</span><span class="font-label-sm text-label-sm tracking-tight">Practice</span></a><a aria-current="page" class="flex flex-col items-center justify-center gap-1 min-w-[56px] h-touch-min py-1 px-2 rounded-xl transition-all duration-150 text-primary font-bold" data-path="games" href="#"><span class="material-symbols-outlined text-[26px]">extension</span><span class="font-label-sm text-label-sm tracking-tight">Games</span></a><a class="flex flex-col items-center justify-center gap-1 min-w-[56px] h-touch-min py-1 px-2 rounded-xl text-text-muted hover:text-text-primary transition-all duration-150" data-path="reminders" href="#"><span class="material-symbols-outlined text-[26px]">alarm_on</span><span class="font-label-sm text-label-sm tracking-tight">Reminders</span></a><a class="flex flex-col items-center justify-center gap-1 min-w-[56px] h-touch-min py-1 px-2 rounded-xl text-text-muted hover:text-text-primary transition-all duration-150" data-path="progress" href="#"><span class="material-symbols-outlined text-[26px]">monitoring</span><span class="font-label-sm text-label-sm tracking-tight">Progress</span></a></div></nav></body></html>

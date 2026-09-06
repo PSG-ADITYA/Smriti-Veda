@@ -9,7 +9,10 @@ import '../models/voice_assessment.dart';
 import '../providers/app_state.dart';
 import '../services/sanskrit_pronunciation_service.dart';
 import '../services/voice_recall_service.dart';
+import '../services/sound_service.dart';
 import '../theme/app_theme.dart';
+import 'recognition_exercise_screen.dart';
+import 'sequence_recall_screen.dart';
 
 class SmritiTrainerTab extends StatefulWidget {
   const SmritiTrainerTab({super.key});
@@ -34,7 +37,9 @@ class _SmritiTrainerTabState extends State<SmritiTrainerTab> with SingleTickerPr
   late stt.SpeechToText _speech;
   bool _isSpeechAvailable = false;
   bool _isListening = false;
+  bool _isMicPaused = false;
   String _spokenText = '';
+  String _accumulatedText = '';
   VoiceAssessmentResult? _assessmentResult;
   final Stopwatch _recitationTimer = Stopwatch();
 
@@ -114,10 +119,13 @@ class _SmritiTrainerTabState extends State<SmritiTrainerTab> with SingleTickerPr
 
   // Voice Recitation Methods
   void _startListening(String targetText) async {
+    SoundService.playTap();
     setState(() {
       _spokenText = '';
+      _accumulatedText = '';
       _assessmentResult = null;
       _isListening = true;
+      _isMicPaused = false;
     });
     _recitationTimer.reset();
     _recitationTimer.start();
@@ -137,32 +145,81 @@ class _SmritiTrainerTabState extends State<SmritiTrainerTab> with SingleTickerPr
         ),
       );
     } else {
-      // Fallback timer for testing
       Timer(const Duration(seconds: 4), () {
-        if (_isListening) {
+        if (_isListening && !_isMicPaused) {
           _simulateRecitation(targetText);
         }
       });
     }
   }
 
+  void _pauseListening() {
+    SoundService.playTap();
+    if (_speech.isListening) {
+      _speech.stop();
+    }
+    _recitationTimer.stop();
+    setState(() {
+      _isMicPaused = true;
+      if (_spokenText.isNotEmpty) {
+        _accumulatedText = _spokenText;
+      }
+    });
+  }
+
+  void _resumeListening(String targetText) async {
+    SoundService.playTap();
+    setState(() {
+      _isMicPaused = false;
+      _isListening = true;
+    });
+    _recitationTimer.start();
+
+    if (_isSpeechAvailable) {
+      _speech.listen(
+        onResult: (val) {
+          setState(() {
+            final prefix = _accumulatedText.isEmpty ? '' : '$_accumulatedText ';
+            _spokenText = '$prefix${val.recognizedWords}';
+            if (val.finalResult) {
+              _stopListeningAndEvaluate(targetText);
+            }
+          });
+        },
+        listenOptions: stt.SpeechListenOptions(
+          partialResults: true,
+        ),
+      );
+    }
+  }
+
   void _stopListeningAndEvaluate(String targetText) {
-    _speech.stop();
+    if (_speech.isListening) {
+      _speech.stop();
+    }
     _recitationTimer.stop();
     setState(() {
       _isListening = false;
+      _isMicPaused = false;
       _assessmentResult = VoiceRecallService.evaluateRecitation(
         targetText: targetText,
         spokenText: _spokenText.isEmpty ? targetText : _spokenText,
         duration: _recitationTimer.elapsed,
       );
     });
+
+    if (_assessmentResult != null && _assessmentResult!.isPassed) {
+      SoundService.playFanfare();
+    } else {
+      SoundService.playSuccess();
+    }
   }
 
   void _simulateRecitation(String targetText) {
     _recitationTimer.stop();
     setState(() {
       _isListening = false;
+      _isMicPaused = false;
       _spokenText = targetText.replaceAll('_____', 'प्रचोदयात्');
       _assessmentResult = VoiceRecallService.evaluateRecitation(
         targetText: targetText.replaceAll('_____', 'प्रचोदयात्'),
@@ -170,6 +227,7 @@ class _SmritiTrainerTabState extends State<SmritiTrainerTab> with SingleTickerPr
         duration: const Duration(seconds: 3),
       );
     });
+    SoundService.playFanfare();
   }
 
   @override
@@ -188,7 +246,136 @@ class _SmritiTrainerTabState extends State<SmritiTrainerTab> with SingleTickerPr
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Universal Cognitive Memory Games Section (Task 4)
+            Row(
+              children: [
+                const Icon(Icons.psychology_outlined, color: AppColors.primaryGold),
+                const SizedBox(width: 8),
+                Text(
+                  'UNIVERSAL COGNITIVE EXERCISES',
+                  style: GoogleFonts.cinzel(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.1,
+                    color: AppColors.primaryGold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+
+            Row(
+              children: [
+                // Sequence Recall Game Launcher
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const SequenceRecallScreen(),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.darkSurfaceCard : AppColors.lightSurface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFF3D6B58).withValues(alpha: 0.5), width: 1.5),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF3D6B58).withValues(alpha: 0.2),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.format_list_numbered, color: Color(0xFF3D6B58), size: 20),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            'Sequence Recall',
+                            style: GoogleFonts.cinzel(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.white : AppColors.textLightPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Ordered item memory',
+                            style: GoogleFonts.outfit(
+                              fontSize: 11,
+                              color: isDark ? Colors.white60 : AppColors.textLightSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+
+                // Recognition Game Launcher
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const RecognitionExerciseScreen(),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.darkSurfaceCard : AppColors.lightSurface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFB85028).withValues(alpha: 0.5), width: 1.5),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFB85028).withValues(alpha: 0.2),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.grid_view, color: Color(0xFFB85028), size: 20),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            'Recognition',
+                            style: GoogleFonts.cinzel(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.white : AppColors.textLightPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Target vs distractors',
+                            style: GoogleFonts.outfit(
+                              fontSize: 11,
+                              color: isDark ? Colors.white60 : AppColors.textLightSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
             // 3-Stage Cognitive Mode Selector Bar
             Container(
               decoration: BoxDecoration(
@@ -528,59 +715,119 @@ class _SmritiTrainerTabState extends State<SmritiTrainerTab> with SingleTickerPr
               ),
               const SizedBox(height: 24),
 
-              // Mic Button
+              // Mic & Pause Controls Column
               Column(
                 children: [
-                  GestureDetector(
-                    onTap: () {
-                      if (_isListening) {
-                        _stopListeningAndEvaluate(card.sanskritText);
-                      } else {
-                        _startListening(card.sanskritText);
-                      }
-                    },
-                    child: Container(
-                      width: 90,
-                      height: 90,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: _isListening
-                              ? [Colors.red, Colors.deepOrange]
-                              : [AppColors.primarySaffron, AppColors.deepAmber],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: (_isListening ? Colors.red : AppColors.primarySaffron).withValues(alpha: 0.4),
-                            blurRadius: 20,
-                            spreadRadius: 4,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Pause to Think Button (Visible when listening or paused)
+                      if (_isListening || _isMicPaused) ...[
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            if (_isMicPaused) {
+                              _resumeListening(card.sanskritText);
+                            } else {
+                              _pauseListening();
+                            }
+                          },
+                          icon: Icon(_isMicPaused ? Icons.play_arrow : Icons.pause, size: 20),
+                          label: Text(_isMicPaused ? '▶ Resume' : '⏸ Pause to Think'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _isMicPaused ? Colors.orange.shade800 : AppColors.sageSecondary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
-                        ],
+                        ),
+                        const SizedBox(width: 14),
+                      ],
+
+                      // Main Recording / Stop Button
+                      GestureDetector(
+                        onTap: () {
+                          if (_isListening || _isMicPaused) {
+                            _stopListeningAndEvaluate(card.sanskritText);
+                          } else {
+                            _startListening(card.sanskritText);
+                          }
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 250),
+                          width: 86,
+                          height: 86,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              colors: _isListening
+                                  ? [Colors.red, Colors.deepOrange]
+                                  : _isMicPaused
+                                      ? [Colors.amber.shade700, Colors.orange]
+                                      : [AppColors.terracottaPrimary, AppColors.sandalwoodGold],
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: (_isListening ? Colors.red : AppColors.terracottaPrimary).withValues(alpha: 0.4),
+                                blurRadius: 20,
+                                spreadRadius: 4,
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            _isListening || _isMicPaused ? Icons.stop_rounded : Icons.mic_rounded,
+                            color: Colors.white,
+                            size: 42,
+                          ),
+                        ),
                       ),
-                      child: Icon(
-                        _isListening ? Icons.stop : Icons.mic,
-                        color: Colors.white,
-                        size: 44,
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Mic Status Banner
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: _isMicPaused
+                          ? Colors.amber.shade50
+                          : _isListening
+                              ? Colors.red.shade50
+                              : AppColors.canvasIvory,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: _isMicPaused
+                            ? Colors.amber
+                            : _isListening
+                                ? Colors.red.shade300
+                                : AppColors.borderSubtle,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    _isListening ? 'Listening to your voice... Tap to finish' : 'Tap Microphone to Begin Recitation',
-                    style: GoogleFonts.outfit(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: _isListening ? Colors.red : AppColors.primaryGold,
+                    child: Text(
+                      _isMicPaused
+                          ? '⏸ Microphone Paused — Take your time to think! Tap Resume when ready.'
+                          : _isListening
+                              ? '🎙️ Listening to your recitation... Tap ⏸ Pause to Think or Stop when done.'
+                              : 'Tap Microphone to Begin Recitation (Vocal Assessment)',
+                      style: GoogleFonts.atkinsonHyperlegible(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: _isMicPaused
+                            ? Colors.amber.shade900
+                            : _isListening
+                                ? Colors.red.shade900
+                                : AppColors.charcoalText,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
 
                   TextButton.icon(
                     onPressed: () => _simulateRecitation(card.sanskritText),
                     icon: const Icon(Icons.play_arrow, size: 16),
-                    label: const Text('Simulate Voice Recitation (SIH Demo Mode)'),
+                    label: const Text('Simulate Voice Recitation (Fast Demo)'),
                     style: TextButton.styleFrom(
-                      foregroundColor: AppColors.primarySaffron,
+                      foregroundColor: AppColors.terracottaPrimary,
                     ),
                   ),
                 ],

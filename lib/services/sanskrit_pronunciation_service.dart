@@ -7,6 +7,11 @@ enum PronunciationMode {
   kramaPaired,
 }
 
+enum VoiceStyle {
+  sanskritPandit,  // Deep, calm, measured, rhythmic traditional recitation
+  modernNarrator,  // Clear, neutral modern narrator
+}
+
 class SanskritPronunciationService {
   final FlutterTts _tts = FlutterTts();
   bool _isSpeaking = false;
@@ -19,8 +24,8 @@ class SanskritPronunciationService {
   void _initTts() async {
     try {
       await _tts.setLanguage('hi-IN');
-      await _tts.setSpeechRate(0.35); // Slow, clear rate for elderly ears
-      await _tts.setPitch(1.0);
+      await _tts.setSpeechRate(0.38);
+      await _tts.setPitch(0.85); // Deep, calm, traditional voice timbre
 
       _tts.setStartHandler(() {
         _isSpeaking = true;
@@ -39,26 +44,39 @@ class SanskritPronunciationService {
     }
   }
 
-  /// Pronounces the mantra according to traditional Sanskrit chanting modes
+  /// Configures voice style parameters
+  Future<void> setVoiceStyle(VoiceStyle style) async {
+    if (style == VoiceStyle.sanskritPandit) {
+      await _tts.setLanguage('hi-IN');
+      await _tts.setSpeechRate(0.38); // Measured, rhythmic chanting pace
+      await _tts.setPitch(0.85);      // Resonant, deep traditional tone
+    } else {
+      await _tts.setLanguage('en-IN');
+      await _tts.setSpeechRate(0.50); // Standard modern narrator rate
+      await _tts.setPitch(1.00);      // Neutral pitch
+    }
+  }
+
+  /// Pronounces traditional recitation according to Sanskrit chanting modes
   Future<void> pronounceMantra({
     required String text,
     required PronunciationMode mode,
+    VoiceStyle voiceStyle = VoiceStyle.sanskritPandit,
     VoidCallback? onWordSpoken,
   }) async {
     await stop();
+    await setVoiceStyle(voiceStyle);
 
     final cleanText = text.replaceAll(RegExp(r'[।॥\.\,\-\?\!]'), ' ').trim();
 
     switch (mode) {
       case PronunciationMode.continuous:
-        await _tts.setSpeechRate(0.38);
         await _tts.speak(cleanText);
         break;
 
       case PronunciationMode.padachhedaSyllable:
-        // Word-by-Word slow spell-out
         final words = cleanText.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
-        await _tts.setSpeechRate(0.28); // Extra slow syllable pacing
+        await _tts.setSpeechRate(0.28);
         for (var word in words) {
           await _tts.speak(word);
           await Future.delayed(const Duration(milliseconds: 900));
@@ -66,7 +84,6 @@ class SanskritPronunciationService {
         break;
 
       case PronunciationMode.kramaPaired:
-        // Paired Krama Step Pronunciation (AB, BC, CD)
         final words = cleanText.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
         await _tts.setSpeechRate(0.32);
         for (int i = 0; i < words.length - 1; i++) {
@@ -76,6 +93,14 @@ class SanskritPronunciationService {
         }
         break;
     }
+  }
+
+  /// Speaks modern app instructions using narrator voice
+  Future<void> speakInstruction(String text, {String lang = 'en-IN'}) async {
+    await stop();
+    await setVoiceStyle(VoiceStyle.modernNarrator);
+    await _tts.setLanguage(lang);
+    await _tts.speak(text);
   }
 
   Future<void> stop() async {

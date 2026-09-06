@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/app_state.dart';
+import '../services/db_service.dart';
 import '../theme/app_theme.dart';
 
 class SettingsTab extends StatelessWidget {
@@ -218,6 +219,29 @@ class SettingsTab extends StatelessWidget {
 
               const SizedBox(height: 20),
 
+              const SizedBox(height: 20),
+
+              // DBMS & SQL Console Section
+              _buildSectionTitle('LOCAL DBMS & SQL QUERY ENGINE'),
+              Card(
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.storage, color: AppColors.terracottaPrimary),
+                      title: Text(
+                        'Open DBMS SQL Management Console',
+                        style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: const Text('Execute real SQL queries on patient records, files, and logs'),
+                      trailing: const Icon(Icons.code),
+                      onTap: () => _showSqlConsoleModal(context),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
               // About Section
               _buildSectionTitle('ABOUT SMRITI VEDA'),
               Card(
@@ -235,6 +259,133 @@ class SettingsTab extends StatelessWidget {
         );
       },
     );
+  }
+
+  void _showSqlConsoleModal(BuildContext context) {
+    final queryController = TextEditingController(text: 'SELECT * FROM patient_files;');
+    String sqlResult = DbService().executeSql(queryController.text);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.charcoalText,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+            top: 20,
+            left: 20,
+            right: 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.terminal, color: Colors.greenAccent),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Interactive SQL Language Engine',
+                    style: GoogleFonts.newsreader(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white),
+                    onPressed: () {
+                      FocusManager.instance.primaryFocus?.unfocus();
+                      Navigator.pop(ctx);
+                    },
+                  ),
+                ],
+              ),
+              const Divider(color: Colors.white24),
+              Text(
+                'Enter SQL Query Statement:',
+                style: GoogleFonts.atkinsonHyperlegible(fontSize: 12, color: Colors.greenAccent),
+              ),
+              const SizedBox(height: 6),
+              TextField(
+                controller: queryController,
+                style: const TextStyle(fontFamily: 'monospace', color: Colors.greenAccent),
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.black,
+                  hintText: 'SELECT * FROM patient_files;',
+                  hintStyle: TextStyle(color: Colors.greenAccent.withValues(alpha: 0.5)),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      setModalState(() {
+                        sqlResult = DbService().executeSql(queryController.text);
+                      });
+                    },
+                    icon: const Icon(Icons.play_arrow, size: 18),
+                    label: const Text('Execute SQL'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green.shade700,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  OutlinedButton(
+                    onPressed: () {
+                      setModalState(() {
+                        queryController.text = 'SELECT * FROM user_profile;';
+                        sqlResult = DbService().executeSql(queryController.text);
+                      });
+                    },
+                    style: OutlinedButton.styleFrom(foregroundColor: Colors.amber),
+                    child: const Text('Users Table'),
+                  ),
+                  const SizedBox(width: 8),
+                  OutlinedButton(
+                    onPressed: () {
+                      setModalState(() {
+                        queryController.text = 'SELECT * FROM appointments;';
+                        sqlResult = DbService().executeSql(queryController.text);
+                      });
+                    },
+                    style: OutlinedButton.styleFrom(foregroundColor: Colors.cyan),
+                    child: const Text('Appointments'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Text(
+                'SQL Output Data Stream:',
+                style: GoogleFonts.atkinsonHyperlegible(fontSize: 12, color: Colors.white70),
+              ),
+              const SizedBox(height: 6),
+              Container(
+                width: double.infinity,
+                constraints: const BoxConstraints(maxHeight: 220),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.black,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.white12),
+                ),
+                child: SingleChildScrollView(
+                  child: SelectableText(
+                    sqlResult,
+                    style: const TextStyle(fontFamily: 'monospace', color: Colors.amberAccent, fontSize: 12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ).then((_) => queryController.dispose());
   }
 
   Widget _buildSectionTitle(String title) {

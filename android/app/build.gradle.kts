@@ -7,7 +7,6 @@ plugins {
 android {
     namespace = "com.example.smriti_veda"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -27,6 +26,12 @@ android {
         // flag during build.
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+    }
+
+        packaging {
+        jniLibs {
+            keepDebugSymbols.add("**/*.so")
+        }
     }
 
     buildTypes {
