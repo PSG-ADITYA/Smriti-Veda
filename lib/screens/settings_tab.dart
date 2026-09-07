@@ -19,7 +19,7 @@ class SettingsTab extends StatelessWidget {
           appBar: AppBar(
             title: Text(
               'Settings & Profile (विन्यास)',
-              style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
+              style: GoogleFonts.newsreader(fontWeight: FontWeight.bold),
             ),
           ),
           body: ListView(
@@ -50,7 +50,7 @@ class SettingsTab extends StatelessWidget {
                               children: [
                                 Text(
                                   appState.userName,
-                                  style: GoogleFonts.outfit(
+                                  style: GoogleFonts.atkinsonHyperlegible(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                     color: isDark ? Colors.white : Colors.black87,
@@ -59,7 +59,7 @@ class SettingsTab extends StatelessWidget {
                                 const SizedBox(height: 2),
                                 Text(
                                   'ID: ${appState.credentialId} • Role: ${appState.userRole}',
-                                  style: GoogleFonts.outfit(
+                                  style: GoogleFonts.atkinsonHyperlegible(
                                     fontSize: 13,
                                     color: AppColors.primaryGold,
                                     fontWeight: FontWeight.w600,
@@ -67,7 +67,7 @@ class SettingsTab extends StatelessWidget {
                                 ),
                                 Text(
                                   'Language: ${appState.selectedLanguage.toUpperCase()}',
-                                  style: GoogleFonts.outfit(
+                                  style: GoogleFonts.atkinsonHyperlegible(
                                     fontSize: 12,
                                     color: isDark ? AppColors.textDarkSecondary : AppColors.textLightSecondary,
                                   ),
@@ -119,7 +119,7 @@ class SettingsTab extends StatelessWidget {
                     SwitchListTile(
                       title: Text(
                         'Temple Obsidian Dark Mode',
-                        style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+                        style: GoogleFonts.atkinsonHyperlegible(fontWeight: FontWeight.w600),
                       ),
                       subtitle: const Text('Deep dark obsidian background with golden accents'),
                       secondary: const Icon(Icons.dark_mode, color: AppColors.primaryGold),
@@ -145,11 +145,11 @@ class SettingsTab extends StatelessWidget {
                         children: [
                           Text(
                             'Sanskrit Font Scale',
-                            style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+                            style: GoogleFonts.atkinsonHyperlegible(fontWeight: FontWeight.w600),
                           ),
                           Text(
                             '${(appState.fontScale * 100).round()}%',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.atkinsonHyperlegible(
                               fontWeight: FontWeight.bold,
                               color: AppColors.primarySaffron,
                             ),
@@ -230,7 +230,7 @@ class SettingsTab extends StatelessWidget {
                       leading: const Icon(Icons.storage, color: AppColors.terracottaPrimary),
                       title: Text(
                         'Open DBMS SQL Management Console',
-                        style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+                        style: GoogleFonts.atkinsonHyperlegible(fontWeight: FontWeight.bold),
                       ),
                       subtitle: const Text('Execute real SQL queries on patient records, files, and logs'),
                       trailing: const Icon(Icons.code),
@@ -249,7 +249,7 @@ class SettingsTab extends StatelessWidget {
                   leading: const Icon(Icons.info_outline, color: AppColors.primaryGold),
                   title: Text(
                     'Smriti Veda Platform v1.2.0',
-                    style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+                    style: GoogleFonts.atkinsonHyperlegible(fontWeight: FontWeight.bold),
                   ),
                   subtitle: const Text('AI-Based Cognitive Gaming & Memory Assistance for Seniors'),
                 ),
@@ -393,7 +393,7 @@ class SettingsTab extends StatelessWidget {
       padding: const EdgeInsets.only(left: 4, bottom: 8),
       child: Text(
         title,
-        style: GoogleFonts.cinzel(
+        style: GoogleFonts.newsreader(
           fontSize: 12,
           fontWeight: FontWeight.bold,
           letterSpacing: 1.2,

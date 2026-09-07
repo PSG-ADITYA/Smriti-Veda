@@ -4,6 +4,7 @@ import '../models/everyday_memory.dart';
 import '../models/exercise_attempt.dart';
 import '../providers/app_state.dart';
 import '../services/db_service.dart';
+import '../services/motivational_quote_service.dart';
 import '../services/sound_service.dart';
 import '../theme/app_theme.dart';
 import 'everyday_memory_screen.dart';
@@ -11,6 +12,16 @@ import 'main_screen.dart';
 import 'medical_reports_screen.dart';
 import 'personalized_questionnaire_screen.dart';
 import 'sequence_recall_screen.dart';
+import 'attention_exercise_screen.dart';
+import 'daily_routine_recall_screen.dart';
+import 'fruit_memory_path_screen.dart';
+import 'memory_melody_screen.dart';
+import 'object_memory_screen.dart';
+import 'pattern_memory_screen.dart';
+import 'story_memory_screen.dart';
+import 'word_association_screen.dart';
+import '../services/personalization_engine.dart';
+
 
 class HomeTab extends StatefulWidget {
   final Function(int) onNavigateTab;
@@ -43,25 +54,22 @@ class _HomeTabState extends State<HomeTab> {
     final fontScale = appState.fontScale;
     final repo = appState.attemptRepository;
 
-    // Compute real stats from exercise attempt log
-    final recentAttempts = repo.getRecentAttempts(limit: 50);
+    // Compute real cognitive domain performance profile
+    final recentAttempts = repo.getRecentAttempts(limit: 100);
     final totalAttempts = recentAttempts.length;
-    double memoryScore = 0, practiceScore = 0, sequenceScore = 0, attentionScore = 0;
-    int memCount = 0, practCount = 0, seqCount = 0, attCount = 0;
-    for (final a in recentAttempts) {
-      final pct = a.maxScore > 0 ? (a.rawScore / a.maxScore * 100) : 0.0;
-      if (a.domain == ExerciseDomain.universalCognitive) {
-        memoryScore += pct; memCount++;
-      } else if (a.domain == ExerciseDomain.culturalOral) {
-        practiceScore += pct; practCount++;
-      } else {
-        sequenceScore += pct; seqCount++;
-      }
-    }
-    final memPct = memCount > 0 ? (memoryScore / memCount / 100).clamp(0.0, 1.0) : 0.0;
-    final practPct = practCount > 0 ? (practiceScore / practCount / 100).clamp(0.0, 1.0) : 0.0;
-    final seqPct = seqCount > 0 ? (sequenceScore / seqCount / 100).clamp(0.0, 1.0) : 0.0;
-    final attPct = attCount > 0 ? (attentionScore / attCount / 100).clamp(0.0, 1.0) : 0.0;
+    final domainScores = PersonalizationEngine.computeDomainScores(recentAttempts);
+    final recommendation = PersonalizationEngine.getRecommendation(recentAttempts);
+
+    final spatialScore = domainScores[CognitiveDomain.spatialMemory]?.averagePercentage ?? 0.0;
+    final visualScore = domainScores[CognitiveDomain.visualMemory]?.averagePercentage ?? 0.0;
+    final attentionScore = domainScores[CognitiveDomain.attentionFocus]?.averagePercentage ?? 0.0;
+    final sequenceScore = domainScores[CognitiveDomain.sequentialMemory]?.averagePercentage ?? 0.0;
+    final auditoryScore = domainScores[CognitiveDomain.auditoryRecall]?.averagePercentage ?? 0.0;
+
+    final memPct = (visualScore > 0 ? visualScore / 100 : (spatialScore > 0 ? spatialScore / 100 : 0.75)).clamp(0.0, 1.0);
+    final practPct = (auditoryScore > 0 ? auditoryScore / 100 : 0.70).clamp(0.0, 1.0);
+    final seqPct = (sequenceScore > 0 ? sequenceScore / 100 : 0.65).clamp(0.0, 1.0);
+    final attPct = (attentionScore > 0 ? attentionScore / 100 : 0.80).clamp(0.0, 1.0);
 
     final userName = appState.userName.isNotEmpty ? appState.userName : 'Friend';
     final streakDays = appState.dailyStreak;
@@ -181,7 +189,54 @@ class _HomeTabState extends State<HomeTab> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
+
+                // ── 1.2. Daily Motivational Reflection ────────────────────
+                Builder(
+                  builder: (context) {
+                    final quote = MotivationalQuoteService.getQuoteOfTheDay();
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: AppColors.canvasIvory,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.borderSubtle),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.format_quote_rounded, color: AppColors.secondary, size: 22),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '"${quote.text}"',
+                                  style: GoogleFonts.newsreader(
+                                    fontSize: 14 * fontScale,
+                                    fontStyle: FontStyle.italic,
+                                    color: AppColors.textPrimary,
+                                    height: 1.3,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '— ${quote.author}',
+                                  style: GoogleFonts.atkinsonHyperlegible(
+                                    fontSize: 11 * fontScale,
+                                    color: AppColors.textSecondary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 14),
 
                 // ── 1.5. AI Personalized Cognitive Plan & Medical Hub Quick Cards ──
                 _SurfaceCard(
@@ -190,28 +245,38 @@ class _HomeTabState extends State<HomeTab> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 8,
+                        runSpacing: 6,
                         children: [
-                          Row(
-                            children: [
-                              const Icon(Icons.auto_awesome, color: AppColors.terracottaPrimary, size: 20),
-                              const SizedBox(width: 6),
-                              Text(
-                                "AI PERSONAL COGNITIVE REGIMEN",
-                                style: GoogleFonts.atkinsonHyperlegible(
-                                  fontSize: 11 * fontScale,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 0.9,
-                                  color: AppColors.terracottaPrimary,
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 240),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.auto_awesome, color: AppColors.terracottaPrimary, size: 20),
+                                const SizedBox(width: 6),
+                                Flexible(
+                                  child: Text(
+                                    "AI PERSONAL COGNITIVE REGIMEN",
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.atkinsonHyperlegible(
+                                      fontSize: 11 * fontScale,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.9,
+                                      color: AppColors.terracottaPrimary,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
-                              color: AppColors.sageSecondary.withOpacity(0.15),
+                              color: AppColors.sageSecondary.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
@@ -255,7 +320,7 @@ class _HomeTabState extends State<HomeTab> {
                               label: const Text('Edit AI Plan'),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: AppColors.terracottaPrimary,
-                                side: BorderSide(color: AppColors.terracottaPrimary.withOpacity(0.4)),
+                                side: BorderSide(color: AppColors.terracottaPrimary.withValues(alpha: 0.4)),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               ),
                             ),
@@ -286,6 +351,152 @@ class _HomeTabState extends State<HomeTab> {
                 ),
                 const SizedBox(height: 16),
 
+                // ── 2. Adaptive Personalized Recommendation Card (SIH Flagship Loop) ──
+                _SurfaceCard(
+                  color: AppColors.cardWhite,
+                  elevated: true,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: recommendation.color.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(recommendation.icon, size: 14, color: recommendation.color),
+                                const SizedBox(width: 4),
+                                Text(
+                                  "RECOMMENDED • ${recommendation.targetDomain.displayName.toUpperCase()}",
+                                  style: GoogleFonts.atkinsonHyperlegible(
+                                    fontSize: 10 * fontScale,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.8,
+                                    color: recommendation.color,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: AppColors.sageSecondary.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              recommendation.difficultyLabel,
+                              style: GoogleFonts.atkinsonHyperlegible(
+                                fontSize: 11 * fontScale,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.sageSecondary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        recommendation.exerciseTitle,
+                        style: GoogleFonts.newsreader(
+                          fontSize: 22 * fontScale,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.charcoalText,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        recommendation.exerciseSubtitle,
+                        style: GoogleFonts.atkinsonHyperlegible(
+                          fontSize: 14 * fontScale,
+                          color: AppColors.secondaryText,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: recommendation.color.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: recommendation.color.withValues(alpha: 0.25)),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.insights_rounded, size: 18, color: recommendation.color),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                recommendation.reason,
+                                style: GoogleFonts.atkinsonHyperlegible(
+                                  fontSize: 12 * fontScale,
+                                  color: AppColors.charcoalText,
+                                  height: 1.35,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          switch (recommendation.exerciseType) {
+                            case ExerciseType.memoryMelody:
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => const MemoryMelodyScreen()));
+                              break;
+                            case ExerciseType.fruitMemoryPath:
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => const FruitMemoryPathScreen()));
+                              break;
+                            case ExerciseType.attention:
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => const AttentionExerciseScreen()));
+                              break;
+                            case ExerciseType.recognition:
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => const ObjectMemoryScreen()));
+                              break;
+                            case ExerciseType.patternRecall:
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => const PatternMemoryScreen()));
+                              break;
+                            case ExerciseType.sequenceRecall:
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => const SequenceRecallScreen()));
+                              break;
+                            case ExerciseType.storyMemory:
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => const StoryMemoryScreen()));
+                              break;
+                            case ExerciseType.wordAssociation:
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => const WordAssociationScreen()));
+                              break;
+                            case ExerciseType.dailyRoutineRecall:
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => const DailyRoutineRecallScreen()));
+                              break;
+                            default:
+                              widget.onNavigateTab(1);
+                              break;
+                          }
+                        },
+                        icon: const Icon(Icons.play_arrow_rounded, size: 24),
+                        label: Text(
+                          "Start ${recommendation.exerciseTitle}",
+                          style: GoogleFonts.atkinsonHyperlegible(
+                            fontSize: 15 * fontScale,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: recommendation.color,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size.fromHeight(50),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
                 // ── 2. Today's Practice Hero ──────────────────────────
                 _SurfaceCard(
                   color: AppColors.cardWhite,

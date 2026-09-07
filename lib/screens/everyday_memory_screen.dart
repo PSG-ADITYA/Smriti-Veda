@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/everyday_memory.dart';
 import '../providers/app_state.dart';
 import '../theme/app_theme.dart';
+import 'daily_routine_recall_screen.dart';
+
 import '../widgets/top_right_user_menu.dart';
 
 class EverydayMemoryScreen extends StatefulWidget {
@@ -556,7 +558,30 @@ class _RoutineTab extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+                        const SizedBox(height: 12),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const DailyRoutineRecallScreen()),
+                );
+              },
+              icon: const Icon(Icons.psychology_rounded, size: 20),
+              label: Text(
+                'Practice Daily Routine Recall Game',
+                style: GoogleFonts.atkinsonHyperlegible(
+                  fontSize: 14 * appState.fontScale,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.terracottaPrimary,
+                foregroundColor: Colors.white,
+                minimumSize: const Size.fromHeight(48),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 16),
 
             if (steps.isEmpty)
               Container(

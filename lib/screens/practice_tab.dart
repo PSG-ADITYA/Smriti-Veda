@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'main_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/app_state.dart';
 import '../theme/app_theme.dart';
 import 'attention_exercise_screen.dart';
 import 'cultural_pipeline_screen.dart';
-import 'delayed_recall_screen.dart';
+import 'daily_routine_recall_screen.dart';
+import 'fruit_memory_path_screen.dart';
+import 'memory_melody_screen.dart';
 import 'object_memory_screen.dart';
 import 'pattern_memory_screen.dart';
 import 'sequence_recall_screen.dart';
@@ -33,20 +36,20 @@ class _PracticeTabState extends State<PracticeTab> {
 
   String _getLanguageFlag(String code) {
     switch (code) {
-      case 'te':
-        return '🇮🇳 Telugu';
-      case 'hi':
-        return '🇮🇳 Hindi';
-      case 'ta':
-        return '🇮🇳 Tamil';
       case 'as':
         return '🇮🇳 Assamese';
       case 'bn':
         return '🇮🇳 Bengali';
+      case 'hi':
+        return '🇮🇳 Hindi';
+      case 'te':
+        return '🇮🇳 Telugu';
+      case 'ta':
+        return '🇮🇳 Tamil';
       case 'en':
         return '🏡 English';
       case 'sa':
-        return '📜 Sanskrit';
+        return '📜 Traditional';
       default:
         return '🇮🇳 Regional';
     }
@@ -67,7 +70,7 @@ class _PracticeTabState extends State<PracticeTab> {
       selectedColor: AppColors.terracottaPrimary,
       backgroundColor: Colors.white,
       side: BorderSide(
-        color: isSelected ? AppColors.terracottaPrimary : AppColors.terracottaPrimary.withOpacity(0.3),
+        color: isSelected ? AppColors.terracottaPrimary : AppColors.terracottaPrimary.withValues(alpha: 0.3),
       ),
       onSelected: (selected) {
         setState(() {
@@ -84,50 +87,303 @@ class _PracticeTabState extends State<PracticeTab> {
 
     return Scaffold(
       backgroundColor: AppColors.canvasIvory,
-      appBar: AppBar(
-        backgroundColor: AppColors.canvasIvory,
-        elevation: 0,
-        title: Text(
-          'Practice Sanctuary',
-          style: GoogleFonts.newsreader(
-            fontWeight: FontWeight.bold,
-            color: AppColors.terracottaPrimary,
-            fontSize: 22 * fontScale,
+      body: CustomScrollView(
+        slivers: [
+          const SliverToBoxAdapter(
+            child: SmritiAppBar(screenLabel: 'Practice'),
           ),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // SECTION 1: UNIVERSAL COGNITIVE MEMORY GAMES
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 120),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+            // SECTION 1: FLAGSHIP GAME
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFFF7ED), Color(0xFFFDEEE0)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.terracottaPrimary.withValues(alpha: 0.35), width: 1.8),
+                boxShadow: const [BoxShadow(color: Color(0x0A000000), blurRadius: 6, offset: Offset(0, 3))],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.terracottaPrimary,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '🌟 FLAGSHIP COGNITIVE GAME',
+                          style: GoogleFonts.atkinsonHyperlegible(
+                            fontSize: 11 * fontScale,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.0,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 240),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.explore_rounded, size: 16, color: AppColors.terracottaPrimary),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                'Spatial & Working Memory',
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.atkinsonHyperlegible(
+                                  fontSize: 12 * fontScale,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.terracottaPrimary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Fruit Memory Path',
+                    style: GoogleFonts.newsreader(
+                      fontSize: 22 * fontScale,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.charcoalText,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Memorize fruit locations in the garden paver grid before they vanish, then navigate your character step-by-step along the remembered path.',
+                    style: GoogleFonts.atkinsonHyperlegible(
+                      fontSize: 13 * fontScale,
+                      color: AppColors.secondaryText,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const FruitMemoryPathScreen()),
+                      );
+                    },
+                    icon: const Icon(Icons.play_circle_fill_rounded, size: 22),
+                    label: Text(
+                      'Play Fruit Memory Path (4 Tiers)',
+                      style: GoogleFonts.atkinsonHyperlegible(
+                        fontSize: 15 * fontScale,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.terracottaPrimary,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size.fromHeight(50),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // SECTION 1B: MEMORY MELODY HERO CARD
+            Container(
+              margin: const EdgeInsets.only(top: 16),
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFAF5FF), Color(0xFFF3E8FF)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFF8F5C86).withValues(alpha: 0.35), width: 1.8),
+                boxShadow: const [BoxShadow(color: Color(0x0A000000), blurRadius: 6, offset: Offset(0, 3))],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF8F5C86),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '🎵 AI RHYTHMIC MEMORY',
+                          style: GoogleFonts.atkinsonHyperlegible(
+                            fontSize: 11 * fontScale,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.0,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 240),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.music_note_rounded, size: 16, color: Color(0xFF8F5C86)),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                'Auditory & Delayed Recall',
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.atkinsonHyperlegible(
+                                  fontSize: 12 * fontScale,
+                                  fontWeight: FontWeight.bold,
+                                  color: const Color(0xFF8F5C86),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Memory Melody',
+                    style: GoogleFonts.newsreader(
+                      fontSize: 22 * fontScale,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.charcoalText,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Listen to an AI-crafted 25-second melodic verse. Recall the items, chronological sequence, and surprise delayed details through voice or tap.',
+                    style: GoogleFonts.atkinsonHyperlegible(
+                      fontSize: 13 * fontScale,
+                      color: AppColors.secondaryText,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const MemoryMelodyScreen()),
+                      );
+                    },
+                    icon: const Icon(Icons.play_arrow_rounded, size: 22),
+                    label: Text(
+                      'Play Memory Melody',
+                      style: GoogleFonts.atkinsonHyperlegible(
+                        fontSize: 15 * fontScale,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF8F5C86),
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size.fromHeight(50),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // SECTION 2: ADAPTIVE COGNITIVE EXERCISES (7 Domain-Mapped Games)
             Row(
               children: [
                 const Icon(Icons.psychology_outlined, color: AppColors.terracottaPrimary),
                 const SizedBox(width: 8),
-                Text(
-                  'UNIVERSAL COGNITIVE GAMES',
-                  style: GoogleFonts.newsreader(
-                    fontSize: 16 * fontScale,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.1,
-                    color: AppColors.terracottaPrimary,
+                Expanded(
+                  child: Text(
+                    'DOMAIN-TARGETED COGNITIVE GAMES',
+                    style: GoogleFonts.newsreader(
+                      fontSize: 16 * fontScale,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.1,
+                      color: AppColors.terracottaPrimary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Each exercise targets a specific cognitive domain to maintain mental vitality and recall.',
+              style: GoogleFonts.atkinsonHyperlegible(
+                fontSize: 12 * fontScale,
+                color: AppColors.secondaryText,
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            // Pair 1: Object Recall Matrix & Pattern Memory Grid
+            Row(
+              children: [
+                Expanded(
+                  child: _buildGameCard(
+                    title: 'Object Recall Matrix',
+                    domainLabel: 'Visual Memory',
+                    subtitle: 'Recall household room items',
+                    icon: Icons.visibility_rounded,
+                    color: const Color(0xFF3D5A80),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ObjectMemoryScreen()),
+                    ),
+                    fontScale: fontScale,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildGameCard(
+                    title: 'Pattern Memory Grid',
+                    domainLabel: 'Working Memory',
+                    subtitle: 'Reconstruct visual patterns',
+                    icon: Icons.grid_on_rounded,
+                    color: const Color(0xFF4A7C59),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const PatternMemoryScreen()),
+                    ),
+                    fontScale: fontScale,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
 
-            // Game Grid 1: Sequence Recall & Recognition
+            // Pair 2: Sequence Recall & Attention & Focus
             Row(
               children: [
                 Expanded(
                   child: _buildGameCard(
-                    title: '1. Sequence Recall',
-                    subtitle: 'Memorize & order sequences',
+                    title: 'Sequence Recall',
+                    domainLabel: 'Sequential Memory',
+                    subtitle: 'Order symbols & rivers',
                     icon: Icons.format_list_numbered_rounded,
-                    color: AppColors.sageSecondary,
+                    color: const Color(0xFF5B8E7D),
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => const SequenceRecallScreen()),
@@ -138,78 +394,11 @@ class _PracticeTabState extends State<PracticeTab> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildGameCard(
-                    title: '2. Object Memory',
-                    subtitle: 'Recall items from a scene',
-                    icon: Icons.grid_view_rounded,
-                    color: AppColors.terracottaPrimary,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const ObjectMemoryScreen()),
-                    ),
-                    fontScale: fontScale,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            // Game Grid 2: Pattern Memory & Story Recall
-            Row(
-              children: [
-                Expanded(
-                  child: _buildGameCard(
-                    title: '3. Pattern Memory',
-                    subtitle: 'Reconstruct visual grid',
-                    icon: Icons.pattern_rounded,
-                    color: AppColors.sandalwoodGold,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const PatternMemoryScreen()),
-                    ),
-                    fontScale: fontScale,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildGameCard(
-                    title: '4. Story Recall',
-                    subtitle: 'Read story & answer quiz',
-                    icon: Icons.auto_stories_rounded,
-                    color: AppColors.sageSecondary,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const StoryMemoryScreen()),
-                    ),
-                    fontScale: fontScale,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            // Game Grid 3: Word Association & Attention
-            Row(
-              children: [
-                Expanded(
-                  child: _buildGameCard(
-                    title: '5. Word Association',
-                    subtitle: 'Link semantic concepts',
-                    icon: Icons.link_rounded,
-                    color: AppColors.terracottaPrimary,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const WordAssociationScreen()),
-                    ),
-                    fontScale: fontScale,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildGameCard(
-                    title: '6. Attention & Focus',
-                    subtitle: 'Target vs distractor grid',
+                    title: 'Attention & Focus',
+                    domainLabel: 'Attention / Focus',
+                    subtitle: 'Find targets among distractors',
                     icon: Icons.center_focus_strong_rounded,
-                    color: AppColors.sandalwoodGold,
+                    color: const Color(0xFFD4A373),
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => const AttentionExerciseScreen()),
@@ -221,22 +410,59 @@ class _PracticeTabState extends State<PracticeTab> {
             ),
             const SizedBox(height: 12),
 
-            // Game Row 4: Delayed Recall
+            // Pair 3: Story Recall & Word Association
+            Row(
+              children: [
+                Expanded(
+                  child: _buildGameCard(
+                    title: 'Story Recall',
+                    domainLabel: 'Auditory Recall',
+                    subtitle: 'Read/listen to folk stories',
+                    icon: Icons.auto_stories_rounded,
+                    color: const Color(0xFF8F5C86),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const StoryMemoryScreen()),
+                    ),
+                    fontScale: fontScale,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildGameCard(
+                    title: 'Word Association',
+                    domainLabel: 'Semantic Memory',
+                    subtitle: 'Connect related concepts',
+                    icon: Icons.menu_book_rounded,
+                    color: const Color(0xFF386641),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const WordAssociationScreen()),
+                    ),
+                    fontScale: fontScale,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Full Width: Daily Routine Recall
             _buildGameCard(
-              title: '7. Delayed Recall Exercise',
-              subtitle: 'Memorize 3 items, complete intermediate task, then recall later',
-              icon: Icons.history_toggle_off_rounded,
-              color: AppColors.sageSecondary,
+              title: 'Daily Routine Recall',
+              domainLabel: 'Everyday & Prospective Memory',
+              subtitle: 'Sequence your morning routine, hydration, and medication habits',
+              icon: Icons.access_time_filled_rounded,
+              color: const Color(0xFFB85028),
               onTap: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const DelayedRecallScreen()),
+                MaterialPageRoute(builder: (_) => const DailyRoutineRecallScreen()),
               ),
               fontScale: fontScale,
             ),
 
             const SizedBox(height: 32),
 
-            // SECTION 2: CULTURAL & ORAL MEMORY SYSTEM
+            // SECTION 3: CULTURAL & ORAL MEMORY SYSTEM
             Row(
               children: [
                 const Icon(Icons.record_voice_over_rounded, color: AppColors.sageSecondary),
@@ -256,7 +482,7 @@ class _PracticeTabState extends State<PracticeTab> {
             ),
             const SizedBox(height: 6),
             Text(
-              'Practicing structured recall inspired by Indian oral memory traditions (Listen ➔ Pada Chunk ➔ Krama Overlap ➔ Reverse ➔ Missing Element ➔ Delayed Recall). Works with familiar poems, regional rhymes, family stories, and proverbs.',
+              'Practicing structured recall inspired by Indian oral memory traditions (Listen ➔ Pada Chunk ➔ Krama Overlap ➔ Reverse ➔ Missing Element ➔ Delayed Recall). Works with regional folk songs, North Eastern poems, family stories, and sayings.',
               style: GoogleFonts.atkinsonHyperlegible(
                 fontSize: 13 * fontScale,
                 color: AppColors.secondaryText,
@@ -270,21 +496,21 @@ class _PracticeTabState extends State<PracticeTab> {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  _buildLanguageFilterChip('all', 'All Languages (${_allCulturalItems.length})'),
-                  const SizedBox(width: 8),
-                  _buildLanguageFilterChip('te', 'Telugu 🇮🇳'),
-                  const SizedBox(width: 8),
-                  _buildLanguageFilterChip('hi', 'Hindi 🇮🇳'),
-                  const SizedBox(width: 8),
-                  _buildLanguageFilterChip('ta', 'Tamil 🇮🇳'),
+                  _buildLanguageFilterChip('all', 'All Regions (${_allCulturalItems.length})'),
                   const SizedBox(width: 8),
                   _buildLanguageFilterChip('as', 'Assamese 🇮🇳'),
                   const SizedBox(width: 8),
                   _buildLanguageFilterChip('bn', 'Bengali 🇮🇳'),
                   const SizedBox(width: 8),
+                  _buildLanguageFilterChip('hi', 'Hindi 🇮🇳'),
+                  const SizedBox(width: 8),
+                  _buildLanguageFilterChip('te', 'Telugu 🇮🇳'),
+                  const SizedBox(width: 8),
+                  _buildLanguageFilterChip('ta', 'Tamil 🇮🇳'),
+                  const SizedBox(width: 8),
                   _buildLanguageFilterChip('en', 'English / Family 🏡'),
                   const SizedBox(width: 8),
-                  _buildLanguageFilterChip('sa', 'Sanskrit 📜'),
+                  _buildLanguageFilterChip('sa', 'Traditional 📜'),
                 ],
               ),
             ),
@@ -326,7 +552,7 @@ class _PracticeTabState extends State<PracticeTab> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: AppColors.terracottaPrimary.withOpacity(0.12),
+                                    color: AppColors.terracottaPrimary.withValues(alpha: 0.12),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
@@ -381,7 +607,7 @@ class _PracticeTabState extends State<PracticeTab> {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: AppColors.sageSecondary.withOpacity(0.08),
+                                color: AppColors.sageSecondary.withValues(alpha: 0.08),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Row(
@@ -411,8 +637,8 @@ class _PracticeTabState extends State<PracticeTab> {
                                   ),
                                 );
                               },
-                              icon: const Icon(Icons.play_circle_fill, size: 20),
-                              label: const Text('Start 7-Stage Recitation Progression'),
+                              icon: const Icon(Icons.record_voice_over_rounded, size: 20),
+                              label: const Text('Start 7-Stage Recitation & Recall'),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.sageSecondary,
                                 foregroundColor: Colors.white,
@@ -430,14 +656,17 @@ class _PracticeTabState extends State<PracticeTab> {
                 );
               },
             ),
-          ],
-        ),
+              ]),
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildGameCard({
     required String title,
+    required String domainLabel,
     required String subtitle,
     required IconData icon,
     required Color color,
@@ -445,55 +674,77 @@ class _PracticeTabState extends State<PracticeTab> {
     required double fontScale,
   }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: color.withOpacity(0.3), width: 1.5),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
+        boxShadow: const [BoxShadow(color: Color(0x06000000), blurRadius: 4, offset: Offset(0, 2))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: color, size: 24),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: color, size: 22),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  domainLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.atkinsonHyperlegible(
+                    fontSize: 11 * fontScale,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Text(
             title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: GoogleFonts.newsreader(
               fontSize: 16 * fontScale,
               fontWeight: FontWeight.bold,
               color: AppColors.charcoalText,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
             subtitle,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: GoogleFonts.atkinsonHyperlegible(
               fontSize: 12 * fontScale,
               color: AppColors.secondaryText,
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
-            height: 44,
+            height: 42,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: color,
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
               onPressed: onTap,
               child: Text(
                 'Play Game',
                 style: GoogleFonts.atkinsonHyperlegible(
-                  fontSize: 14 * fontScale,
+                  fontSize: 13 * fontScale,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),

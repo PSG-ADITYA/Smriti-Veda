@@ -1,3 +1,5 @@
+import '../services/caregiver_service.dart';
+import '../models/caregiver_info.dart';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import '../models/everyday_memory.dart';
@@ -63,12 +65,18 @@ class AppState extends ChangeNotifier {
   final List<EverydayReminder> _reminders = [];
   final List<RoutineStep> _routineSteps = [];
   final List<FamiliarPerson> _familiarPeople = [];
+  CaregiverInfo? _connectedCaregiver;
 
   AppState() {
     _restoreSession();
   }
 
   void _restoreSession() {
+    if (!DbService().hasActiveSession) {
+      _isLoggedIn = false;
+      _reloadUserData();
+      return;
+    }
     final activeUid = DbService().activeUserId;
     if (activeUid.isNotEmpty) {
       final profile = DbService().getUserProfile(activeUid);
@@ -93,6 +101,7 @@ class AppState extends ChangeNotifier {
 
     _familiarPeople.clear();
     _familiarPeople.addAll(db.getFamiliarPeople());
+    _connectedCaregiver = db.getConnectedCaregiver();
 
     // If demo mode is active and routine steps are empty, initialize demo routine
     _routineSteps.clear();
@@ -118,6 +127,37 @@ class AppState extends ChangeNotifier {
         ),
       ]);
     }
+  }
+
+  
+  CaregiverInfo? get connectedCaregiver => _connectedCaregiver;
+
+  void connectCaregiver({
+    required String name,
+    required String relationship,
+    required String email,
+    required String phoneNumber,
+  }) {
+    final newCaregiver = CaregiverInfo(
+      id: 'caregiver_',
+      name: name.trim(),
+      relationship: relationship.trim(),
+      email: email.trim(),
+      phoneNumber: phoneNumber.trim(),
+      isConnected: true,
+      connectedAt: DateTime.now(),
+      lastSyncedAt: DateTime.now(),
+      syncStatusNote: 'Connected locally & synced with daily progress digests',
+    );
+    _connectedCaregiver = newCaregiver;
+    DbService().saveConnectedCaregiver(newCaregiver);
+    notifyListeners();
+  }
+
+  void disconnectCaregiver() {
+    _connectedCaregiver = null;
+    DbService().disconnectCaregiver();
+    notifyListeners();
   }
 
   String get profileAvatarEmoji => _profileAvatarEmoji;
@@ -279,9 +319,20 @@ class AppState extends ChangeNotifier {
     _emergencyContact = null;
     _medicalNotes = null;
     _aiPersonalPlanText = null;
+    _connectedCaregiver = null;
+    _customProfileImageBytes = null;
+    _profileAvatarEmoji = '👴';
     _reminders.clear();
     _familiarPeople.clear();
     _routineSteps.clear();
+    CaregiverService().setActiveSeniorId(null);
+    notifyListeners();
+  }
+
+  CaregiverService get caregiverService => CaregiverService();
+  String? get activeCaregiverSeniorId => CaregiverService().activeSeniorId;
+  void setActiveCaregiverSeniorId(String? id) {
+    CaregiverService().setActiveSeniorId(id);
     notifyListeners();
   }
 

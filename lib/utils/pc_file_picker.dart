@@ -8,44 +8,44 @@ class PickedPcFile {
   final Uint8List? bytes;
   final int size;
   final String extension;
+  final String? path;
 
   PickedPcFile({
     required this.name,
     required this.bytes,
     required this.size,
     required this.extension,
+    this.path,
   });
 }
 
 class PcFilePicker {
-  static const int maxFileSizeBytes = 15 * 1024 * 1024; // 15MB limit
+  static const int maxFileSizeBytes = 25 * 1024 * 1024; // 25MB limit
 
   static Future<PickedPcFile?> pickFileFromPc() async {
     try {
-      final file = await FilePicker.pickFile(
+      final files = await FilePickerPlatform.instance.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
       );
 
-      if (file != null) {
+      if (files.isNotEmpty) {
+        final file = files.first;
+        final path = file.path;
         Uint8List? bytes;
-        try {
-          bytes = await file.readAsBytes();
-        } catch (_) {
-          if (!kIsWeb && file.path != null) {
-            try {
-              bytes = await File(file.path!).readAsBytes();
-            } catch (e) {
-              debugPrint('Failed to read file bytes from path: $e');
-            }
-          }
-        }
+        int size = 0;
 
-        int size = bytes?.lengthInBytes ?? (file.lengthSync() ?? 0);
-        if (size == 0) {
+        // If bytes are not loaded directly (common on native Android/iOS), read from path
+        if (path != null && !kIsWeb) {
           try {
-            size = await file.length();
-          } catch (_) {}
+            final f = File(path);
+            if (await f.exists()) {
+              bytes = await f.readAsBytes();
+              size = await f.length();
+            }
+          } catch (e) {
+            debugPrint('Failed to read file bytes from path: $e');
+          }
         }
 
         if (size > maxFileSizeBytes) {
@@ -53,13 +53,15 @@ class PcFilePicker {
           return null;
         }
 
-        final ext = (file.extension ?? (file.name.contains('.') ? file.name.split('.').last : '')).toLowerCase();
+        final fileName = file.name;
+        final ext = (fileName.contains('.') ? fileName.split('.').last : '').toLowerCase();
 
         return PickedPcFile(
-          name: file.name,
+          name: fileName,
           bytes: bytes,
-          size: size,
+          size: size > 0 ? size : (bytes?.lengthInBytes ?? 0),
           extension: ext,
+          path: path,
         );
       }
     } catch (e) {

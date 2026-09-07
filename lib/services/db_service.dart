@@ -1,3 +1,4 @@
+import '../models/caregiver_info.dart';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -41,9 +42,12 @@ class DbService {
     debugPrint('Smriti Veda DBMS Persistent Storage Service Initialized on ${kIsWeb ? "Web" : "Android/Native"}.');
   }
 
-  // ── Active Session / Ownership ID ───────────────────────────────────────
-  String get activeUserId => _getPersistentItem('active_user_uid') ?? '';
-  bool get hasActiveSession => activeUserId.isNotEmpty;
+  String get activeUserId {
+    final uid = _getPersistentItem('active_user_uid');
+    if (uid != null && uid.isNotEmpty) return uid;
+    return 'patient123';
+  }
+  bool get hasActiveSession => (_getPersistentItem('active_user_uid') ?? '').isNotEmpty;
 
   void setActiveUserId(String uid) {
     _setPersistentItem('active_user_uid', uid);
@@ -295,7 +299,6 @@ class DbService {
       'localPath': f.localPath,
       'originalFileName': f.originalFileName,
       'fileSize': f.fileSize,
-      'base64Bytes': f.fileBytes != null ? base64Encode(f.fileBytes!) : null,
     }).toList();
 
     _setPersistentItem('patient_files_db_$targetUid', jsonEncode(serializable));
@@ -318,7 +321,6 @@ class DbService {
       'localPath': f.localPath,
       'originalFileName': f.originalFileName,
       'fileSize': f.fileSize,
-      'base64Bytes': f.fileBytes != null ? base64Encode(f.fileBytes!) : null,
     }).toList();
 
     _setPersistentItem('patient_files_db_$targetUid', jsonEncode(serializable));
@@ -732,6 +734,90 @@ class DbService {
   void saveAiConfig({required String apiKey, required bool isAiEnabled}) {
     _setPersistentItem('gemini_api_key', apiKey);
     _setPersistentItem('ai_enabled', isAiEnabled ? 'true' : 'false');
+  }
+
+  
+  // ── Connected Caregiver Management ─────────────────────────────────────
+  CaregiverInfo? getConnectedCaregiver([String? userId]) {
+    final uid = userId ?? activeUserId;
+    final str = _getPersistentItem('caregiver_info_$uid');
+    if (str != null && str.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(str);
+        if (decoded is Map<String, dynamic>) {
+          return CaregiverInfo.fromMap(decoded);
+        } else if (decoded is Map) {
+          return CaregiverInfo.fromMap(Map<String, dynamic>.from(decoded));
+        }
+      } catch (e) {
+        debugPrint('Error decoding caregiver info: $e');
+      }
+    }
+    // Default fallback for demo user
+    if (isDemoModeActive) {
+      return CaregiverInfo(
+        id: 'caregiver_demo_1',
+        name: 'Dr. Priya Sharma',
+        relationship: 'Lead Family Physician',
+        email: 'priya.sharma@care.smritiveda.in',
+        phoneNumber: '+91 98765 43210',
+        isConnected: true,
+        connectedAt: DateTime.now().subtract(const Duration(days: 14)),
+        lastSyncedAt: DateTime.now(),
+        syncStatusNote: 'Daily progress digest shared via family secure link',
+      );
+    }
+    return null;
+  }
+
+  void saveConnectedCaregiver(CaregiverInfo caregiver, [String? userId]) {
+    final uid = userId ?? activeUserId;
+    _setPersistentItem('caregiver_info_$uid', jsonEncode(caregiver.toMap()));
+  }
+
+  void disconnectCaregiver([String? userId]) {
+    final uid = userId ?? activeUserId;
+    _removePersistentItem('caregiver_info_$uid');
+  }
+
+
+  // ── Caregiver-to-Senior Connections (Caregiver perspective) ─────────────
+  List<Map<String, dynamic>> getCaregiverConnectedSeniors(String caregiverId) {
+    final str = _getPersistentItem('caregiver_seniors_$caregiverId');
+    if (str != null && str.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(str);
+        if (decoded is List) {
+          return decoded.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+        }
+      } catch (e) {
+        debugPrint('Error decoding caregiver connected seniors: $e');
+      }
+    }
+    return [];
+  }
+
+  void saveCaregiverConnectedSeniors(String caregiverId, List<Map<String, dynamic>> seniors) {
+    _setPersistentItem('caregiver_seniors_$caregiverId', jsonEncode(seniors));
+  }
+
+  List<String> getAuthorizedElderlyIds(String caregiverId) {
+    final str = _getPersistentItem('caregiver_auth_elderly_$caregiverId');
+    if (str != null && str.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(str);
+        if (decoded is List) {
+          return decoded.map((e) => e.toString()).toList();
+        }
+      } catch (e) {
+        debugPrint('Error decoding authorized elderly IDs: $e');
+      }
+    }
+    return [];
+  }
+
+  void saveAuthorizedElderlyIds(String caregiverId, List<String> ids) {
+    _setPersistentItem('caregiver_auth_elderly_$caregiverId', jsonEncode(ids));
   }
 
   String get geminiApiKey =>

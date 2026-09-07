@@ -19,14 +19,16 @@ class LocalExerciseAttemptRepository implements ExerciseAttemptRepository {
           userId: item['userId'] ?? 'patient123',
           domain: _parseDomain(item['domain']),
           type: _parseType(item['type']),
+          cognitiveDomain: _parseCognitiveDomain(item['cognitiveDomain']),
           exerciseId: item['exerciseId'] ?? 'ex_1',
           timestamp: DateTime.tryParse(item['timestamp'] ?? '') ?? DateTime.now(),
           stage: item['stage'],
-          responseMode: item['responseMode'],
+          responseMode: item['responseMode'] ?? 'choice',
           rawScore: (item['rawScore'] as num?)?.toDouble() ?? 0.0,
           maxScore: (item['maxScore'] as num?)?.toDouble() ?? 100.0,
-          timeTakenMs: item['timeTakenMs'],
+          timeTakenMs: item['timeTakenMs'] ?? 0,
           transcript: item['transcript'],
+          metadata: item['metadata'] is Map ? Map<String, dynamic>.from(item['metadata']) : null,
         ));
       }
     } catch (_) {}
@@ -38,10 +40,21 @@ class LocalExerciseAttemptRepository implements ExerciseAttemptRepository {
     return ExerciseDomain.universalCognitive;
   }
 
+  CognitiveDomain? _parseCognitiveDomain(dynamic val) {
+    if (val == null) return null;
+    final str = val.toString().replaceAll('CognitiveDomain.', '');
+    for (final d in CognitiveDomain.values) {
+      if (d.name == str) return d;
+    }
+    return null;
+  }
+
   ExerciseType _parseType(dynamic val) {
-    if (val == 'ExerciseType.familiarPersonRecall' || val == 'familiarPersonRecall') return ExerciseType.familiarPersonRecall;
-    if (val == 'ExerciseType.reminderCheck' || val == 'reminderCheck') return ExerciseType.reminderCheck;
-    if (val == 'ExerciseType.sequenceRecall' || val == 'sequenceRecall') return ExerciseType.sequenceRecall;
+    if (val == null) return ExerciseType.structuredRecallPipeline;
+    final str = val.toString().replaceAll('ExerciseType.', '');
+    for (final t in ExerciseType.values) {
+      if (t.name == str) return t;
+    }
     return ExerciseType.structuredRecallPipeline;
   }
 
@@ -53,6 +66,7 @@ class LocalExerciseAttemptRepository implements ExerciseAttemptRepository {
       'userId': attempt.userId,
       'domain': attempt.domain.name,
       'type': attempt.type.name,
+      'cognitiveDomain': attempt.cognitiveDomain.name,
       'exerciseId': attempt.exerciseId,
       'timestamp': attempt.timestamp.toIso8601String(),
       'stage': attempt.stage,
@@ -61,6 +75,7 @@ class LocalExerciseAttemptRepository implements ExerciseAttemptRepository {
       'maxScore': attempt.maxScore,
       'timeTakenMs': attempt.timeTakenMs,
       'transcript': attempt.transcript,
+      'metadata': attempt.metadata,
     });
   }
 
@@ -74,6 +89,15 @@ class LocalExerciseAttemptRepository implements ExerciseAttemptRepository {
     return _inMemoryAttempts.where((a) {
       if (domain != null && a.domain != domain) return false;
       if (type != null && a.type != type) return false;
+      if (userId != null && a.userId != userId) return false;
+      return true;
+    }).toList();
+  }
+
+  List<ExerciseAttempt> getAttemptsForCognitiveDomain(CognitiveDomain domain, {String? userId}) {
+    _loadFromDb();
+    return _inMemoryAttempts.where((a) {
+      if (a.cognitiveDomain != domain) return false;
       if (userId != null && a.userId != userId) return false;
       return true;
     }).toList();

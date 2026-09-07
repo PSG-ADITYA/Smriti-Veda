@@ -1,3 +1,4 @@
+import 'caregiver_profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/everyday_memory.dart';
@@ -433,6 +434,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final appState = AppStateScope.of(context);
     final user = appState.activeUser;
     final isCaregiver = appState.isCaregiverMode;
+
+    if (isCaregiver) {
+      return const CaregiverProfileScreen();
+    }
 
     return Scaffold(
       backgroundColor: AppColors.canvasIvory,

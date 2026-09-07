@@ -1,3 +1,8 @@
+import 'caregiver_dashboard_screen.dart';
+import 'connected_seniors_screen.dart';
+import 'caregiver_insights_screen.dart';
+import 'caregiver_profile_screen.dart';
+import 'medical_reports_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/app_state.dart';
@@ -29,14 +34,24 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
     return ListenableBuilder(
       listenable: appState,
       builder: (context, _) {
-        final currentIndex = appState.currentTab.clamp(0, 3);
+        final isCaregiver = appState.isCaregiverMode;
+        final maxIndex = isCaregiver ? 4 : 3;
+        final currentIndex = appState.currentTab.clamp(0, maxIndex);
 
-        final tabs = [
-          HomeTab(onNavigateTab: (index) => appState.setCurrentTab(index)),
-          const PracticeTab(),
-          const EverydayMemoryScreen(),
-          const ProgressTab(),
-        ];
+        final List<Widget> tabs = isCaregiver
+            ? [
+                CaregiverDashboardScreen(onNavigateTab: (index) => appState.setCurrentTab(index)),
+                ConnectedSeniorsScreen(onNavigateTab: (index) => appState.setCurrentTab(index)),
+                const CaregiverInsightsScreen(),
+                const MedicalReportsScreen(),
+                CaregiverProfileScreen(onNavigateTab: (index) => appState.setCurrentTab(index)),
+              ]
+            : [
+                HomeTab(onNavigateTab: (index) => appState.setCurrentTab(index)),
+                const PracticeTab(),
+                const EverydayMemoryScreen(),
+                const ProgressTab(),
+              ];
 
         return PopScope(
           canPop: currentIndex == 0,
@@ -56,6 +71,7 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
             bottomNavigationBar: _StitchBottomNav(
               currentIndex: currentIndex,
               fontScale: fontScale,
+              isCaregiver: isCaregiver,
               onTap: (index) => appState.setCurrentTab(index),
             ),
           ),
@@ -68,11 +84,13 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
 class _StitchBottomNav extends StatelessWidget {
   final int currentIndex;
   final double fontScale;
+  final bool isCaregiver;
   final ValueChanged<int> onTap;
 
   const _StitchBottomNav({
     required this.currentIndex,
     required this.fontScale,
+    required this.isCaregiver,
     required this.onTap,
   });
 
@@ -97,44 +115,92 @@ class _StitchBottomNav extends StatelessWidget {
         child: SizedBox(
           height: 72,
           child: Row(
-            children: [
-              _NavItem(
-                index: 0,
-                currentIndex: currentIndex,
-                icon: Icons.home_outlined,
-                activeIcon: Icons.home_rounded,
-                label: 'Home',
-                fontScale: fontScale,
-                onTap: onTap,
-              ),
-              _NavItem(
-                index: 1,
-                currentIndex: currentIndex,
-                icon: Icons.record_voice_over_outlined,
-                activeIcon: Icons.record_voice_over,
-                label: 'Practice',
-                fontScale: fontScale,
-                onTap: onTap,
-              ),
-              _NavItem(
-                index: 2,
-                currentIndex: currentIndex,
-                icon: Icons.event_note_outlined,
-                activeIcon: Icons.event_note_rounded,
-                label: 'Everyday',
-                fontScale: fontScale,
-                onTap: onTap,
-              ),
-              _NavItem(
-                index: 3,
-                currentIndex: currentIndex,
-                icon: Icons.bar_chart_outlined,
-                activeIcon: Icons.bar_chart_rounded,
-                label: 'Progress',
-                fontScale: fontScale,
-                onTap: onTap,
-              ),
-            ],
+            children: isCaregiver
+                ? [
+                    _NavItem(
+                      index: 0,
+                      currentIndex: currentIndex,
+                      icon: Icons.dashboard_outlined,
+                      activeIcon: Icons.dashboard_rounded,
+                      label: 'Dashboard',
+                      fontScale: fontScale,
+                      onTap: onTap,
+                    ),
+                    _NavItem(
+                      index: 1,
+                      currentIndex: currentIndex,
+                      icon: Icons.people_outline_rounded,
+                      activeIcon: Icons.people_rounded,
+                      label: 'Seniors',
+                      fontScale: fontScale,
+                      onTap: onTap,
+                    ),
+                    _NavItem(
+                      index: 2,
+                      currentIndex: currentIndex,
+                      icon: Icons.insights_outlined,
+                      activeIcon: Icons.insights_rounded,
+                      label: 'Insights',
+                      fontScale: fontScale,
+                      onTap: onTap,
+                    ),
+                    _NavItem(
+                      index: 3,
+                      currentIndex: currentIndex,
+                      icon: Icons.medical_services_outlined,
+                      activeIcon: Icons.medical_services_rounded,
+                      label: 'Medical',
+                      fontScale: fontScale,
+                      onTap: onTap,
+                    ),
+                    _NavItem(
+                      index: 4,
+                      currentIndex: currentIndex,
+                      icon: Icons.person_outline_rounded,
+                      activeIcon: Icons.person_rounded,
+                      label: 'Profile',
+                      fontScale: fontScale,
+                      onTap: onTap,
+                    ),
+                  ]
+                : [
+                    _NavItem(
+                      index: 0,
+                      currentIndex: currentIndex,
+                      icon: Icons.home_outlined,
+                      activeIcon: Icons.home_rounded,
+                      label: 'Home',
+                      fontScale: fontScale,
+                      onTap: onTap,
+                    ),
+                    _NavItem(
+                      index: 1,
+                      currentIndex: currentIndex,
+                      icon: Icons.record_voice_over_outlined,
+                      activeIcon: Icons.record_voice_over,
+                      label: 'Practice',
+                      fontScale: fontScale,
+                      onTap: onTap,
+                    ),
+                    _NavItem(
+                      index: 2,
+                      currentIndex: currentIndex,
+                      icon: Icons.event_note_outlined,
+                      activeIcon: Icons.event_note_rounded,
+                      label: 'Everyday',
+                      fontScale: fontScale,
+                      onTap: onTap,
+                    ),
+                    _NavItem(
+                      index: 3,
+                      currentIndex: currentIndex,
+                      icon: Icons.bar_chart_outlined,
+                      activeIcon: Icons.bar_chart_rounded,
+                      label: 'Progress',
+                      fontScale: fontScale,
+                      onTap: onTap,
+                    ),
+                  ],
           ),
         ),
       ),
@@ -259,133 +325,149 @@ class SmritiAppBar extends StatelessWidget implements PreferredSizeWidget {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Row(
-          children: [
-            // Logo
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.asset(
-                'assets/images/app_logo.png',
-                width: 32,
-                height: 32,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: AppColors.terracottaSoft,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.psychology, color: AppColors.primary, size: 20),
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            // App name + screen context
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isCompact = constraints.maxWidth < 410;
+            return Row(
               children: [
-                Row(
-                  children: [
-                    Text(
-                      'SmritiVeda',
-                      style: GoogleFonts.newsreader(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primary,
-                        height: 1.2,
+                // Logo
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.asset(
+                    'assets/images/app_logo.png',
+                    width: 30,
+                    height: 30,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      width: 30,
+                      height: 30,
+                      decoration: BoxDecoration(
+                        color: AppColors.terracottaSoft,
+                        borderRadius: BorderRadius.circular(8),
                       ),
+                      child: const Icon(Icons.psychology, color: AppColors.primary, size: 18),
                     ),
-                    if (DbService().isDemoModeActive) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: AppColors.sandalwoodGold.withValues(alpha: 0.25),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: AppColors.sandalwoodGold, width: 1),
-                        ),
-                        child: Text(
-                          'Demo Profile',
-                          style: GoogleFonts.atkinsonHyperlegible(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.terracottaPrimary,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // App name + screen context
+                Flexible(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              'SmritiVeda',
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.newsreader(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.primary,
+                                height: 1.2,
+                              ),
+                            ),
                           ),
+                          if (DbService().isDemoModeActive) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppColors.sandalwoodGold.withValues(alpha: 0.25),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: AppColors.sandalwoodGold, width: 1),
+                              ),
+                              child: Text(
+                                'Demo',
+                                style: GoogleFonts.atkinsonHyperlegible(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.terracottaPrimary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      Text(
+                        screenLabel,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.atkinsonHyperlegible(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.03 * 11,
+                          color: AppColors.textSecondary,
                         ),
                       ),
                     ],
-                  ],
-                ),
-                Text(
-                  screenLabel,
-                  style: GoogleFonts.atkinsonHyperlegible(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.03 * 12,
-                    color: AppColors.textSecondary,
                   ),
                 ),
-              ],
-            ),
-            const Spacer(),
-            // Gemini AI Assistant Quick Button
-            _HeaderButton(
-              icon: Icons.auto_awesome,
-              color: AppColors.terracottaPrimary,
-              bgColor: AppColors.terracottaSoft,
-              hoverColor: AppColors.terracottaSoft,
-              onPressed: () => _openAiAssistantDialog(context, appState),
-              tooltip: 'Gemini AI Assistant',
-            ),
-            const SizedBox(width: 8),
-            // Ambient BGM Music Toggle
-            ListenableBuilder(
-              listenable: SoundService(),
-              builder: (context, _) {
-                final isBgmOn = SoundService().isBgmActive;
-                return _HeaderButton(
-                  icon: isBgmOn ? Icons.music_note : Icons.music_off,
-                  color: isBgmOn ? AppColors.terracottaPrimary : AppColors.textSecondary,
-                  bgColor: isBgmOn ? AppColors.terracottaSoft : AppColors.surfaceCream,
+                const SizedBox(width: 6),
+                // Gemini AI Assistant Quick Button
+                _HeaderButton(
+                  icon: Icons.auto_awesome,
+                  color: AppColors.terracottaPrimary,
+                  bgColor: AppColors.terracottaSoft,
                   hoverColor: AppColors.terracottaSoft,
-                  onPressed: () {
-                    SoundService().toggleBgm();
-                    SoundService.playTap();
+                  onPressed: () => _openAiAssistantDialog(context, appState),
+                  tooltip: 'Gemini AI Assistant',
+                ),
+                if (!isCompact) ...[
+                  const SizedBox(width: 6),
+                  // Ambient BGM Music Toggle
+                  ListenableBuilder(
+                    listenable: SoundService(),
+                    builder: (context, _) {
+                      final isBgmOn = SoundService().isBgmActive;
+                      return _HeaderButton(
+                        icon: isBgmOn ? Icons.music_note : Icons.music_off,
+                        color: isBgmOn ? AppColors.terracottaPrimary : AppColors.textSecondary,
+                        bgColor: isBgmOn ? AppColors.terracottaSoft : AppColors.surfaceCream,
+                        hoverColor: AppColors.terracottaSoft,
+                        onPressed: () {
+                          SoundService().toggleBgm();
+                          SoundService.playTap();
+                        },
+                        tooltip: isBgmOn ? 'Mute Background Music' : 'Play Serene BGM Music',
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 6),
+                  // Volume / TTS button
+                  _HeaderButton(
+                    icon: Icons.volume_up_outlined,
+                    color: AppColors.primary,
+                    bgColor: AppColors.surfaceCream,
+                    hoverColor: AppColors.terracottaSoft,
+                    onPressed: onVolumePressed ?? () {},
+                    tooltip: 'Listen to daily overview',
+                  ),
+                ],
+                const SizedBox(width: 6),
+                // Font size toggle
+                _HeaderButton(
+                  icon: Icons.format_size_outlined,
+                  color: AppColors.secondary,
+                  bgColor: AppColors.surfaceCream,
+                  hoverColor: AppColors.sageSoft,
+                  onPressed: onFontSizePressed ?? () {
+                    final next = appState.fontScale >= 1.3 ? 1.0 : appState.fontScale + 0.1;
+                    appState.setFontScale(next);
                   },
-                  tooltip: isBgmOn ? 'Mute Background Music' : 'Play Serene BGM Music',
-                );
-              },
-            ),
-            const SizedBox(width: 8),
-            // Volume / TTS button
-            _HeaderButton(
-              icon: Icons.volume_up_outlined,
-              color: AppColors.primary,
-              bgColor: AppColors.surfaceCream,
-              hoverColor: AppColors.terracottaSoft,
-              onPressed: onVolumePressed ?? () {},
-              tooltip: 'Listen to daily overview',
-            ),
-            const SizedBox(width: 8),
-            // Font size toggle
-            _HeaderButton(
-              icon: Icons.format_size_outlined,
-              color: AppColors.secondary,
-              bgColor: AppColors.surfaceCream,
-              hoverColor: AppColors.sageSoft,
-              onPressed: onFontSizePressed ?? () {
-                final next = appState.fontScale >= 1.3 ? 1.0 : appState.fontScale + 0.1;
-                appState.setFontScale(next);
-              },
-              tooltip: 'Adjust text size',
-            ),
-            const SizedBox(width: 8),
-            // Profile avatar & Top-Right Menu
-            const TopRightUserMenu(),
-          ],
+                  tooltip: 'Adjust text size',
+                ),
+                const SizedBox(width: 6),
+                // Profile avatar & Top-Right Menu
+                const TopRightUserMenu(),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -450,11 +532,11 @@ class SmritiAppBar extends StatelessWidget implements PreferredSizeWidget {
                         if (q.isEmpty) return;
                         setDialogState(() => isLoading = true);
 
-                        // If prompt asks to create/generate game, launch AI Game Architect
+                        // If prompt asks to create/generate game, launch AI Game Architect with the prompt
                         final lowerQ = q.toLowerCase();
-                        if (lowerQ.contains('game') || lowerQ.contains('create') || lowerQ.contains('generate') || lowerQ.contains('play')) {
+                        if (lowerQ.contains('game') || lowerQ.contains('create') || lowerQ.contains('generate') || lowerQ.contains('play') || lowerQ.contains('pictorial') || lowerQ.contains('picture') || lowerQ.contains('object') || lowerQ.contains('pattern') || lowerQ.contains('quiz')) {
                           setDialogState(() {
-                            aiResponse = '✨ Generating custom AI memory game for ${appState.userName}...\nOpening AI Game Architect...';
+                            aiResponse = '✨ Generating custom AI memory game for ${appState.userName}...\nPrompt: "$q"\nOpening AI Game Architect...';
                             isLoading = false;
                           });
                           await Future.delayed(const Duration(milliseconds: 600));
@@ -462,21 +544,25 @@ class SmritiAppBar extends StatelessWidget implements PreferredSizeWidget {
                             Navigator.pop(context);
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (_) => const AiGameGeneratorScreen()),
+                              MaterialPageRoute(
+                                builder: (_) => AiGameGeneratorScreen(
+                                  initialPrompt: q,
+                                  autoGenerate: true,
+                                ),
+                              ),
                             );
                           }
                           return;
                         }
 
                         final gemini = GeminiService(apiKey: appState.geminiApiKey);
-                        final res = await gemini.generateCaregiverSummary(
+                        final res = await gemini.askGeminiConversational(
+                          userPrompt: q,
                           patientName: appState.userName,
-                          streakDays: appState.dailyStreak,
-                          completedExercises: 12,
-                          primaryLanguage: appState.selectedLanguage,
+                          language: appState.selectedLanguage,
                         );
                         setDialogState(() {
-                          aiResponse = '✨ AI Response for "$q":\n\n$res';
+                          aiResponse = '✨ Gemini AI Response:\n\n$res';
                           isLoading = false;
                         });
                       },

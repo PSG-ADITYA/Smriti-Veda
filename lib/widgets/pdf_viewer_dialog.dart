@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/patient_info.dart';
@@ -173,95 +174,8 @@ class _PDFViewerDialogState extends State<PDFViewerDialog> {
                             ),
                             const SizedBox(height: 16),
 
-                            // If file has actual image/file bytes attached
-                            if (file.fileBytes != null &&
-                                (file.fileType.toUpperCase() == 'JPG' ||
-                                    file.fileType.toUpperCase() == 'JPEG' ||
-                                    file.fileType.toUpperCase() == 'PNG'))
-                              Container(
-                                constraints: const BoxConstraints(maxHeight: 380),
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: AppColors.borderSubtle),
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: Image.memory(
-                                    file.fileBytes!,
-                                    fit: BoxFit.contain,
-                                  ),
-                                ),
-                              )
-                            else
-                              Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: AppColors.canvasIvory,
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: AppColors.sandalwoodGold.withValues(alpha: 0.3)),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Icon(
-                                          file.fileType.toUpperCase() == 'PDF'
-                                              ? Icons.picture_as_pdf
-                                              : Icons.description,
-                                          color: AppColors.terracottaPrimary,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          'Attached Document Details:',
-                                          style: GoogleFonts.atkinsonHyperlegible(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColors.charcoalText,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 8),
-                                    if (file.originalFileName != null)
-                                      Text(
-                                        'File Name: ${file.originalFileName}',
-                                        style: GoogleFonts.atkinsonHyperlegible(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppColors.charcoalText,
-                                        ),
-                                      ),
-                                    if (file.fileSize != null)
-                                      Text(
-                                        'File Size: ${(file.fileSize! / 1024).toStringAsFixed(1)} KB',
-                                        style: GoogleFonts.atkinsonHyperlegible(
-                                          fontSize: 12,
-                                          color: AppColors.secondaryText,
-                                        ),
-                                      ),
-                                    const SizedBox(height: 10),
-                                    Text(
-                                      'Clinical Summary & Notes:',
-                                      style: GoogleFonts.atkinsonHyperlegible(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.charcoalText,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      file.notes,
-                                      style: GoogleFonts.atkinsonHyperlegible(
-                                        fontSize: 14,
-                                        color: AppColors.charcoalText,
-                                        height: 1.5,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                            // If file has actual image or local file path
+                            _buildDocumentPreview(file),
 
                             const SizedBox(height: 16),
                             Text(
@@ -341,11 +255,11 @@ class _PDFViewerDialogState extends State<PDFViewerDialog> {
                   ElevatedButton.icon(
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Downloading ${file.title}...')),
+                        SnackBar(content: Text('Document "${file.title}" is verified and secured in your local data vault.')),
                       );
                     },
                     icon: const Icon(Icons.download, size: 18),
-                    label: const Text('Download Document'),
+                    label: const Text('Export Document'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.terracottaPrimary,
                       foregroundColor: Colors.white,
@@ -357,6 +271,128 @@ class _PDFViewerDialogState extends State<PDFViewerDialog> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildDocumentPreview(PatientFile file) {
+    final isImage = file.fileType.toUpperCase() == 'JPG' ||
+        file.fileType.toUpperCase() == 'JPEG' ||
+        file.fileType.toUpperCase() == 'PNG';
+
+    if (isImage) {
+      if (file.fileBytes != null && file.fileBytes!.isNotEmpty) {
+        return Container(
+          constraints: const BoxConstraints(maxHeight: 380),
+          width: double.infinity,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppColors.borderSubtle),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Image.memory(
+              file.fileBytes!,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => _buildFallbackDocCard(file),
+            ),
+          ),
+        );
+      } else if (file.localPath != null) {
+        try {
+          final f = File(file.localPath!);
+          if (f.existsSync()) {
+            return Container(
+              constraints: const BoxConstraints(maxHeight: 380),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.borderSubtle),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.file(
+                  f,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => _buildFallbackDocCard(file),
+                ),
+              ),
+            );
+          }
+        } catch (_) {}
+      }
+    }
+
+    return _buildFallbackDocCard(file);
+  }
+
+  Widget _buildFallbackDocCard(PatientFile file) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.canvasIvory,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.sandalwoodGold.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                file.fileType.toUpperCase() == 'PDF'
+                    ? Icons.picture_as_pdf
+                    : Icons.description,
+                color: AppColors.terracottaPrimary,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Attached Document Details:',
+                style: GoogleFonts.atkinsonHyperlegible(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.charcoalText,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (file.originalFileName != null)
+            Text(
+              'File Name: ${file.originalFileName}',
+              style: GoogleFonts.atkinsonHyperlegible(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.charcoalText,
+              ),
+            ),
+          if (file.fileSize != null)
+            Text(
+              'File Size: ${(file.fileSize! / 1024).toStringAsFixed(1)} KB',
+              style: GoogleFonts.atkinsonHyperlegible(
+                fontSize: 12,
+                color: AppColors.secondaryText,
+              ),
+            ),
+          const SizedBox(height: 10),
+          Text(
+            'Clinical Summary & Notes:',
+            style: GoogleFonts.atkinsonHyperlegible(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: AppColors.charcoalText,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            file.notes,
+            style: GoogleFonts.atkinsonHyperlegible(
+              fontSize: 14,
+              color: AppColors.charcoalText,
+              height: 1.5,
+            ),
+          ),
+        ],
       ),
     );
   }

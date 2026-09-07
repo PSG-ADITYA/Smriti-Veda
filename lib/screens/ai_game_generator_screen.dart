@@ -9,7 +9,14 @@ import '../theme/app_theme.dart';
 import '../widgets/confetti_overlay.dart';
 
 class AiGameGeneratorScreen extends StatefulWidget {
-  const AiGameGeneratorScreen({super.key});
+  final String? initialPrompt;
+  final bool autoGenerate;
+
+  const AiGameGeneratorScreen({
+    super.key,
+    this.initialPrompt,
+    this.autoGenerate = false,
+  });
 
   @override
   State<AiGameGeneratorScreen> createState() => _AiGameGeneratorScreenState();
@@ -19,6 +26,7 @@ class _AiGameGeneratorScreenState extends State<AiGameGeneratorScreen> {
   final _eraController = TextEditingController(text: '1970s Classic Music & Regional Heritage');
   final _relativesController = TextEditingController();
   final _memoriesController = TextEditingController();
+  final _promptController = TextEditingController();
 
   String _cognitiveFocus = 'Auditory & Word Recall';
   bool _isGenerating = false;
@@ -26,6 +34,24 @@ class _AiGameGeneratorScreenState extends State<AiGameGeneratorScreen> {
   AiGameTemplate? _generatedGame;
   int _currentStep = 0; // 0 = Study/Memorize, 1 = Quiz Challenge
   final Set<String> _selectedItems = {};
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialPrompt != null && widget.initialPrompt!.isNotEmpty) {
+      _promptController.text = widget.initialPrompt!;
+      final lower = widget.initialPrompt!.toLowerCase();
+      if (lower.contains('pictorial') || lower.contains('picture') || lower.contains('image') || lower.contains('visual') || lower.contains('object')) {
+        _cognitiveFocus = 'Pictorial & Object Recall';
+      } else if (lower.contains('garden') || lower.contains('spatial') || lower.contains('path')) {
+        _cognitiveFocus = 'Spatial Garden Path';
+      } else if (lower.contains('family') || lower.contains('relative')) {
+        _cognitiveFocus = 'Family Member Identification';
+      } else if (lower.contains('routine') || lower.contains('daily') || lower.contains('sequence')) {
+        _cognitiveFocus = 'Sequential Routine Memory';
+      }
+    }
+  }
 
   @override
   void didChangeDependencies() {
@@ -41,6 +67,12 @@ class _AiGameGeneratorScreenState extends State<AiGameGeneratorScreen> {
         _memoriesController.text = appState.medicalNotes!;
       }
       _isInitialized = true;
+
+      if (widget.autoGenerate) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _generateGame(appState);
+        });
+      }
     }
   }
 
@@ -49,6 +81,7 @@ class _AiGameGeneratorScreenState extends State<AiGameGeneratorScreen> {
     _eraController.dispose();
     _relativesController.dispose();
     _memoriesController.dispose();
+    _promptController.dispose();
     super.dispose();
   }
 
@@ -72,6 +105,7 @@ class _AiGameGeneratorScreenState extends State<AiGameGeneratorScreen> {
       relativeNames: relativesList,
       favoriteMemories: _memoriesController.text,
       cognitiveFocus: _cognitiveFocus,
+      customPrompt: _promptController.text.trim().isNotEmpty ? _promptController.text.trim() : null,
     );
 
     if (mounted) {
@@ -117,6 +151,7 @@ class _AiGameGeneratorScreenState extends State<AiGameGeneratorScreen> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(color: AppColors.sageSecondary.withValues(alpha: 0.3)),
+                boxShadow: const [BoxShadow(color: Color(0x06000000), blurRadius: 8)],
               ),
               child: Row(
                 children: [
@@ -126,7 +161,7 @@ class _AiGameGeneratorScreenState extends State<AiGameGeneratorScreen> {
                       color: AppColors.terracottaPrimary.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.auto_awesome, color: AppColors.terracottaPrimary, size: 32),
+                    child: const Icon(Icons.auto_awesome, color: AppColors.terracottaPrimary, size: 30),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -136,14 +171,14 @@ class _AiGameGeneratorScreenState extends State<AiGameGeneratorScreen> {
                         Text(
                           'Personalized AI Game Generator',
                           style: GoogleFonts.newsreader(
-                            fontSize: 20,
+                            fontSize: 19,
                             fontWeight: FontWeight.bold,
                             color: AppColors.charcoalText,
                           ),
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Gemini AI creates tailored games using the patient\'s real memories, family relatives, and era preferences.',
+                          'Gemini AI creates pictorial, audio, routine, and object recall games according to your prompt and memories.',
                           style: GoogleFonts.atkinsonHyperlegible(
                             fontSize: 13,
                             color: AppColors.secondaryText,
@@ -173,7 +208,21 @@ class _AiGameGeneratorScreenState extends State<AiGameGeneratorScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '1. Patient Relatives & Family Members:',
+                        '1. Custom Prompt / Game Theme:',
+                        style: GoogleFonts.newsreader(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 6),
+                      TextField(
+                        controller: _promptController,
+                        decoration: const InputDecoration(
+                          hintText: 'e.g. Create a pictorial nostalgic game with household objects',
+                          prefixIcon: Icon(Icons.psychology_alt, color: AppColors.terracottaPrimary),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      Text(
+                        '2. Patient Relatives & Family Members:',
                         style: GoogleFonts.newsreader(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 6),
@@ -187,7 +236,7 @@ class _AiGameGeneratorScreenState extends State<AiGameGeneratorScreen> {
                       const SizedBox(height: 16),
 
                       Text(
-                        '2. Era & Cultural Preference:',
+                        '3. Era & Cultural Preference:',
                         style: GoogleFonts.newsreader(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 6),
@@ -201,31 +250,19 @@ class _AiGameGeneratorScreenState extends State<AiGameGeneratorScreen> {
                       const SizedBox(height: 16),
 
                       Text(
-                        '3. Personal Memories & Hobbies:',
-                        style: GoogleFonts.newsreader(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 6),
-                      TextField(
-                        controller: _memoriesController,
-                        maxLines: 2,
-                        decoration: const InputDecoration(
-                          hintText: 'e.g. Visiting tea gardens, cooking kheer, morning walks',
-                          prefixIcon: Icon(Icons.psychology, color: AppColors.terracottaPrimary),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      Text(
                         '4. Cognitive Focus Domain:',
                         style: GoogleFonts.newsreader(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 6),
                       DropdownButtonFormField<String>(
                         initialValue: _cognitiveFocus,
+                        isExpanded: true,
                         items: const [
-                          DropdownMenuItem(value: 'Auditory & Word Recall', child: Text('Auditory & Word Recall')),
-                          DropdownMenuItem(value: 'Family Member Identification', child: Text('Family Member Identification')),
-                          DropdownMenuItem(value: 'Sequential Routine Memory', child: Text('Sequential Routine Memory')),
+                          DropdownMenuItem(value: 'Pictorial & Object Recall', child: Text('Pictorial & Object Recall (Visual)', overflow: TextOverflow.ellipsis)),
+                          DropdownMenuItem(value: 'Auditory & Word Recall', child: Text('Auditory & Word Recall', overflow: TextOverflow.ellipsis)),
+                          DropdownMenuItem(value: 'Spatial Garden Path', child: Text('Spatial Garden Path Recall', overflow: TextOverflow.ellipsis)),
+                          DropdownMenuItem(value: 'Family Member Identification', child: Text('Family Member Identification', overflow: TextOverflow.ellipsis)),
+                          DropdownMenuItem(value: 'Sequential Routine Memory', child: Text('Sequential Routine Memory', overflow: TextOverflow.ellipsis)),
                         ],
                         onChanged: (val) {
                           if (val != null) setState(() => _cognitiveFocus = val);
@@ -273,21 +310,25 @@ class _AiGameGeneratorScreenState extends State<AiGameGeneratorScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: AppColors.sageSecondary.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              _generatedGame!.category.toUpperCase(),
-                              style: GoogleFonts.atkinsonHyperlegible(fontWeight: FontWeight.bold, color: AppColors.sageSecondary, fontSize: 11),
+                          Flexible(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: AppColors.sageSecondary.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                _generatedGame!.category.toUpperCase(),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.atkinsonHyperlegible(fontWeight: FontWeight.bold, color: AppColors.sageSecondary, fontSize: 11),
+                              ),
                             ),
                           ),
                           TextButton.icon(
                             onPressed: () => setState(() => _generatedGame = null),
                             icon: const Icon(Icons.refresh, size: 18),
-                            label: const Text('New AI Prompt'),
+                            label: const Text('New Prompt'),
                           ),
                         ],
                       ),
@@ -309,132 +350,137 @@ class _AiGameGeneratorScreenState extends State<AiGameGeneratorScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             if (_currentStep == 0) ...[
-                        Text(
-                          'Study Phase: Memorize these personalized target items:',
-                          style: GoogleFonts.atkinsonHyperlegible(fontWeight: FontWeight.bold, fontSize: 15),
-                        ),
-                        const SizedBox(height: 12),
-                        Wrap(
-                          spacing: 10,
-                          runSpacing: 10,
-                          children: _generatedGame!.targetItems.map((item) {
-                            return Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                              decoration: BoxDecoration(
-                                color: AppColors.canvasIvory,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: AppColors.sandalwoodGold),
+                              Text(
+                                'Study Phase: Memorize these personalized target items:',
+                                style: GoogleFonts.atkinsonHyperlegible(fontWeight: FontWeight.bold, fontSize: 15),
                               ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.star, color: AppColors.sandalwoodGold, size: 18),
-                                  const SizedBox(width: 8),
-                                  Text(item, style: GoogleFonts.atkinsonHyperlegible(fontWeight: FontWeight.bold, fontSize: 15)),
-                                ],
+                              const SizedBox(height: 14),
+                              Wrap(
+                                spacing: 10,
+                                runSpacing: 10,
+                                children: _generatedGame!.targetItems.map((item) {
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.canvasIvory,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: AppColors.sandalwoodGold, width: 1.2),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.star, color: AppColors.sandalwoodGold, size: 20),
+                                        const SizedBox(width: 8),
+                                        Flexible(
+                                          child: Text(
+                                            item,
+                                            style: GoogleFonts.atkinsonHyperlegible(fontWeight: FontWeight.bold, fontSize: 15),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
                               ),
-                            );
-                          }).toList(),
-                        ),
-                        const SizedBox(height: 24),
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            SoundService().playFlipSound();
-                            setState(() => _currentStep = 1);
-                          },
-                          icon: const Icon(Icons.play_circle_fill),
-                          label: const Text('Start Recall Challenge ➔'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.terracottaPrimary,
-                            foregroundColor: Colors.white,
-                            minimumSize: const Size.fromHeight(50),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                          ),
-                        ),
-                      ] else ...[
-                        Text(
-                          'Recall Challenge: Select only the remembered items!',
-                          style: GoogleFonts.atkinsonHyperlegible(fontWeight: FontWeight.bold, fontSize: 15),
-                        ),
-                        const SizedBox(height: 12),
+                              const SizedBox(height: 24),
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  SoundService().playFlipSound();
+                                  setState(() => _currentStep = 1);
+                                },
+                                icon: const Icon(Icons.play_circle_fill),
+                                label: const Text('Start Recall Challenge ➔'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.terracottaPrimary,
+                                  foregroundColor: Colors.white,
+                                  minimumSize: const Size.fromHeight(50),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                ),
+                              ),
+                            ] else ...[
+                              Text(
+                                'Recall Challenge: Select only the remembered items!',
+                                style: GoogleFonts.atkinsonHyperlegible(fontWeight: FontWeight.bold, fontSize: 15),
+                              ),
+                              const SizedBox(height: 14),
 
-                        Builder(
-                          builder: (context) {
-                            final allOptions = [..._generatedGame!.targetItems, ..._generatedGame!.distractorItems]..shuffle();
-                            return Wrap(
-                              spacing: 10,
-                              runSpacing: 10,
-                              children: allOptions.map((opt) {
-                                final isSelected = _selectedItems.contains(opt);
-                                return FilterChip(
-                                  selected: isSelected,
-                                  label: Text(opt),
-                                  onSelected: (selected) {
-                                    SoundService().playTapSound();
-                                    setState(() {
-                                      if (selected) {
-                                        _selectedItems.add(opt);
-                                      } else {
-                                        _selectedItems.remove(opt);
-                                      }
-                                    });
-                                  },
-                                );
-                              }).toList(),
-                            );
-                          },
+                              Builder(
+                                builder: (context) {
+                                  final allOptions = [..._generatedGame!.targetItems, ..._generatedGame!.distractorItems]..shuffle();
+                                  return Wrap(
+                                    spacing: 10,
+                                    runSpacing: 10,
+                                    children: allOptions.map((opt) {
+                                      final isSelected = _selectedItems.contains(opt);
+                                      return FilterChip(
+                                        selected: isSelected,
+                                        label: Text(opt, style: GoogleFonts.atkinsonHyperlegible(fontWeight: FontWeight.w600)),
+                                        onSelected: (selected) {
+                                          SoundService().playTapSound();
+                                          setState(() {
+                                            if (selected) {
+                                              _selectedItems.add(opt);
+                                            } else {
+                                              _selectedItems.remove(opt);
+                                            }
+                                          });
+                                        },
+                                      );
+                                    }).toList(),
+                                  );
+                                },
+                              ),
+
+                              const SizedBox(height: 24),
+                              ElevatedButton(
+                                onPressed: () {
+                                  int correct = 0;
+                                  for (var item in _generatedGame!.targetItems) {
+                                    if (_selectedItems.contains(item)) correct++;
+                                  }
+                                  final total = _generatedGame!.targetItems.length;
+                                  final scorePct = (correct / (total > 0 ? total : 1) * 100).round();
+
+                                  // Log genuine attempt to repository
+                                  final attempt = ExerciseAttempt(
+                                    id: 'ai_game_${DateTime.now().millisecondsSinceEpoch}',
+                                    userId: appState.activeUser.id,
+                                    exerciseId: _generatedGame!.title,
+                                    domain: ExerciseDomain.universalCognitive,
+                                    type: ExerciseType.recognition,
+                                    responseMode: 'choice',
+                                    rawScore: correct.toDouble(),
+                                    maxScore: total.toDouble(),
+                                    timeTakenMs: 35000,
+                                    timestamp: DateTime.now(),
+                                  );
+                                  appState.logAttempt(attempt);
+
+                                  ConfettiOverlay.of(context)?.triggerCelebration(
+                                    title: 'AI Game Completed! 🎉',
+                                    subtitle: 'Score: $scorePct% ($correct of $total target items remembered!)',
+                                  );
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.sageSecondary,
+                                  foregroundColor: Colors.white,
+                                  minimumSize: const Size.fromHeight(50),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                ),
+                                child: const Text('Submit & Claim Score 🎉', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                              ),
+                            ],
+                          ],
                         ),
-
-                        const SizedBox(height: 24),
-                        ElevatedButton(
-                          onPressed: () {
-                            int correct = 0;
-                            for (var item in _generatedGame!.targetItems) {
-                              if (_selectedItems.contains(item)) correct++;
-                            }
-                            final total = _generatedGame!.targetItems.length;
-                            final scorePct = (correct / (total > 0 ? total : 1) * 100).round();
-
-                            // Log genuine attempt to repository
-                            final attempt = ExerciseAttempt(
-                              id: 'ai_game_${DateTime.now().millisecondsSinceEpoch}',
-                              userId: appState.activeUser.id,
-                              exerciseId: _generatedGame!.title,
-                              domain: ExerciseDomain.universalCognitive,
-                              type: ExerciseType.recognition,
-                              responseMode: 'choice',
-                              rawScore: correct.toDouble(),
-                              maxScore: total.toDouble(),
-                              timeTakenMs: 35000,
-                              timestamp: DateTime.now(),
-                            );
-                            appState.logAttempt(attempt);
-
-                            ConfettiOverlay.of(context)?.triggerCelebration(
-                              title: 'AI Game Completed! 🎉',
-                              subtitle: 'Score: $scorePct% ($correct of $total target items remembered!)',
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.sageSecondary,
-                            foregroundColor: Colors.white,
-                            minimumSize: const Size.fromHeight(50),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                          ),
-                          child: const Text('Submit & Claim Score 🎉', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                        ),
-                      ],
+                      ),
                     ],
                   ),
                 ),
-              ],
-            ),
-          ),
+              ),
+            ],
+          ],
         ),
-      ],
-    ],
-  ),
-),
+      ),
     );
   }
 }

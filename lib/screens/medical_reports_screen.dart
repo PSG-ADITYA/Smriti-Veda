@@ -1,3 +1,6 @@
+import '../models/connected_senior.dart';
+import '../services/caregiver_service.dart';
+import 'caregiver_dashboard_screen.dart';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -25,6 +28,7 @@ class _MedicalReportsScreenState extends State<MedicalReportsScreen> {
     String selectedFileType = 'PDF';
     Uint8List? pickedBytes;
     String? pickedFileName;
+    String? pickedFilePath;
     int? pickedFileSize;
     bool isUploading = false;
 
@@ -35,6 +39,7 @@ class _MedicalReportsScreenState extends State<MedicalReportsScreen> {
           setModalState(() {
             pickedBytes = picked.bytes;
             pickedFileName = picked.name;
+            pickedFilePath = picked.path;
             pickedFileSize = picked.size;
             if (titleController.text.trim().isEmpty) {
               titleController.text = picked.name;
@@ -62,7 +67,7 @@ class _MedicalReportsScreenState extends State<MedicalReportsScreen> {
         builder: (context, setModalState) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Text(
-            'Upload New Medical Report from PC',
+            'Upload Medical Report & Records',
             style: GoogleFonts.newsreader(
               fontSize: 22,
               fontWeight: FontWeight.bold,
@@ -73,7 +78,7 @@ class _MedicalReportsScreenState extends State<MedicalReportsScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // PC File Picker Button
+                // Local Storage File Picker Button
                 InkWell(
                   onTap: () => doPickFile(setModalState),
                   child: Container(
@@ -89,7 +94,7 @@ class _MedicalReportsScreenState extends State<MedicalReportsScreen> {
                     child: Row(
                       children: [
                         Icon(
-                          pickedFileName != null ? Icons.check_circle : Icons.laptop_mac,
+                          pickedFileName != null ? Icons.check_circle : Icons.folder_open_rounded,
                           color: pickedFileName != null ? AppColors.sageSecondary : AppColors.terracottaPrimary,
                           size: 28,
                         ),
@@ -99,7 +104,7 @@ class _MedicalReportsScreenState extends State<MedicalReportsScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                pickedFileName != null ? 'Selected File from PC:' : 'Choose File from PC / Local Drive',
+                                pickedFileName != null ? 'Selected File from Device:' : 'Choose File from Local Storage / Drive',
                                 style: GoogleFonts.atkinsonHyperlegible(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 14,
@@ -109,7 +114,7 @@ class _MedicalReportsScreenState extends State<MedicalReportsScreen> {
                               Text(
                                 pickedFileName != null
                                     ? '$pickedFileName (${((pickedFileSize ?? 0) / 1024).toStringAsFixed(1)} KB)'
-                                    : 'Click to open file explorer (PDF, JPG, PNG)',
+                                    : 'Click to open file picker (PDF, JPG, PNG)',
                                 style: GoogleFonts.atkinsonHyperlegible(
                                   fontSize: 12,
                                   color: AppColors.secondaryText,
@@ -127,7 +132,7 @@ class _MedicalReportsScreenState extends State<MedicalReportsScreen> {
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           ),
-                          child: const Text('Browse PC'),
+                          child: const Text('Browse Files'),
                         ),
                       ],
                     ),
@@ -225,6 +230,7 @@ class _MedicalReportsScreenState extends State<MedicalReportsScreen> {
                           category: selectedCategory,
                           fileType: selectedFileType,
                           notes: notesController.text.trim().isEmpty ? 'Uploaded medical record.' : notesController.text.trim(),
+                          localPath: pickedFilePath,
                           fileBytes: pickedBytes,
                           originalFileName: pickedFileName,
                           fileSize: pickedFileSize,
@@ -298,17 +304,40 @@ class _MedicalReportsScreenState extends State<MedicalReportsScreen> {
   @override
   Widget build(BuildContext context) {
     final appState = AppStateScope.of(context);
-    final reports = MedicalReportService().getReports();
+    final isCaregiver = appState.isCaregiverMode;
+    final caregiverId = appState.credentialId.isNotEmpty ? appState.credentialId : 'caregiver';
+    final caregiverService = CaregiverService();
+
+    ConnectedSenior? activeSenior;
+    String targetPatientId = appState.credentialId;
+    String targetPatientName = appState.userName;
+
+    if (isCaregiver) {
+      activeSenior = caregiverService.getActiveSenior(caregiverId);
+      if (activeSenior != null) {
+        targetPatientId = activeSenior.patientId;
+        targetPatientName = activeSenior.name;
+      }
+    }
+
+    final bool isUnauthorized = isCaregiver && activeSenior != null &&
+        !caregiverService.isAuthorized(caregiverId, activeSenior.patientId);
+
+    final reports = (isCaregiver && activeSenior != null && !isUnauthorized)
+        ? MedicalReportService().getReports(activeSenior.patientId)
+        : (isCaregiver ? <PatientFile>[] : MedicalReportService().getReports());
 
     return Scaffold(
       backgroundColor: AppColors.canvasIvory,
       appBar: AppBar(
         backgroundColor: AppColors.canvasIvory,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.charcoalText),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: Navigator.canPop(context)
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back, color: AppColors.charcoalText),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
         title: Text(
           'Medical Reports Hub',
           style: GoogleFonts.newsreader(
@@ -318,11 +347,69 @@ class _MedicalReportsScreenState extends State<MedicalReportsScreen> {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: (isCaregiver && activeSenior == null)
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(28.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.medical_services_outlined, size: 56, color: AppColors.sandalwoodGold),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No Connected Senior',
+                      style: GoogleFonts.newsreader(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.charcoalText),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Medical records require an authorized senior connection. Connect an elderly family member to review their prescriptions and diagnostic reports.',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.atkinsonHyperlegible(fontSize: 14, color: AppColors.textSecondary),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.add_link_rounded),
+                      label: const Text('Connect Senior'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.terracottaPrimary,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(180, 48),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: () => showConnectSeniorModal(context, caregiverId),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : (isUnauthorized)
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(28.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.gpp_bad_outlined, size: 56, color: Colors.redAccent),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Access Denied',
+                          style: GoogleFonts.newsreader(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.red.shade800),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Security Boundary: You are not authorized to view medical records for patient ID $targetPatientId.',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.atkinsonHyperlegible(fontSize: 14, color: Colors.red.shade900),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
             // ── 1. Patient Information Header Card ───────────────────
             Container(
               padding: const EdgeInsets.all(20),
@@ -351,7 +438,7 @@ class _MedicalReportsScreenState extends State<MedicalReportsScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              appState.userName,
+                              targetPatientName,
                               style: GoogleFonts.newsreader(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
@@ -359,7 +446,7 @@ class _MedicalReportsScreenState extends State<MedicalReportsScreen> {
                               ),
                             ),
                             Text(
-                              'Patient ID: ${appState.credentialId} • Senior Care Plan',
+                              'Patient ID: $targetPatientId • ${isCaregiver ? "Authorized Senior Record" : "Senior Care Plan"}',
                               style: GoogleFonts.atkinsonHyperlegible(
                                 fontSize: 13,
                                 color: AppColors.secondaryText,
@@ -471,13 +558,15 @@ class _MedicalReportsScreenState extends State<MedicalReportsScreen> {
               children: [
                 const Icon(Icons.folder_shared_rounded, color: AppColors.terracottaPrimary),
                 const SizedBox(width: 8),
-                Text(
-                  'SAVED MEDICAL REPORTS (${reports.length})',
-                  style: GoogleFonts.newsreader(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.8,
-                    color: AppColors.terracottaPrimary,
+                Expanded(
+                  child: Text(
+                    'SAVED MEDICAL REPORTS (${reports.length})',
+                    style: GoogleFonts.newsreader(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.8,
+                      color: AppColors.terracottaPrimary,
+                    ),
                   ),
                 ),
               ],
