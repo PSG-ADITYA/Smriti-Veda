@@ -16,10 +16,14 @@ class LanguagesSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appState = AppStateScope.of(context);
-    final currentLang = appState.selectedLanguage;
-    final fontScale = appState.fontScale;
 
-    return Semantics(
+    return ListenableBuilder(
+      listenable: appState,
+      builder: (context, _) {
+        final currentLang = appState.selectedLanguage;
+        final fontScale = appState.fontScale;
+
+        return Semantics(
       label: 'Language and Script selection section. Currently active language is $currentLang',
       child: Container(
         margin: EdgeInsets.symmetric(vertical: compact ? 8 : 14),
@@ -180,6 +184,8 @@ class LanguagesSection extends StatelessWidget {
           ],
         ),
       ),
+    );
+      },
     );
   }
 }

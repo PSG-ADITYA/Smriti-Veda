@@ -44,7 +44,7 @@ class _SmritiVedaChatbotScreenState extends State<SmritiVedaChatbotScreen> {
     // Seed friendly initial welcome message
     _messages.add(
       ChatMessage(
-        text: 'Namaste! I am your SmritiVeda companion. How can I help your daily practice today?',
+        text: 'Namaste! I am your SmritiVeda AI Assistant. How can I help your daily practice, memory games, or health records today?',
         isUser: false,
         timestamp: DateTime.now(),
       ),
@@ -90,9 +90,19 @@ class _SmritiVedaChatbotScreenState extends State<SmritiVedaChatbotScreen> {
       return;
     }
 
+    final appState = AppStateScope.maybeOf(context);
+    final langCode = appState?.selectedLanguage ?? 'en';
+    String targetLocale = 'en_IN';
+    if (langCode == 'te') {
+      targetLocale = 'te_IN';
+    } else if (langCode == 'hi' || langCode == 'sa') {
+      targetLocale = 'hi_IN';
+    }
+
     setState(() => _isRecording = true);
     try {
       await _speech!.listen(
+        localeId: targetLocale,
         onResult: (result) {
           if (mounted) {
             setState(() {
@@ -426,7 +436,9 @@ class _SmritiVedaChatbotScreenState extends State<SmritiVedaChatbotScreen> {
           ),
           Expanded(
             child: TextField(
+              key: const Key('chatbot_input_field'),
               controller: _textController,
+              textInputAction: TextInputAction.send,
               decoration: InputDecoration(
                 hintText: _isRecording ? 'Listening to your voice...' : context.tr('chatbot_hint'),
                 hintStyle: GoogleFonts.atkinsonHyperlegible(fontSize: 14 * fontScale, color: AppColors.secondaryText),
@@ -452,6 +464,7 @@ class _SmritiVedaChatbotScreenState extends State<SmritiVedaChatbotScreen> {
               shape: BoxShape.circle,
             ),
             child: IconButton(
+              key: const Key('chatbot_send_button'),
               icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
               tooltip: 'Send Question',
               onPressed: () => _handleSend(),

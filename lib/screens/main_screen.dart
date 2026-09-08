@@ -1,3 +1,5 @@
+import '../locales/app_localizations.dart';
+import 'smritiveda_chatbot_screen.dart';
 import '../widgets/smritiveda_assistant_fab.dart';
 import 'caregiver_dashboard_screen.dart';
 import 'connected_seniors_screen.dart';
@@ -8,7 +10,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/app_state.dart';
 import '../services/db_service.dart';
-import '../services/gemini_service.dart';
 import '../services/sound_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/top_right_user_menu.dart';
@@ -171,7 +172,7 @@ class _StitchBottomNav extends StatelessWidget {
                       currentIndex: currentIndex,
                       icon: Icons.home_outlined,
                       activeIcon: Icons.home_rounded,
-                      label: 'Home',
+                      label: context.tr('nav_home'),
                       fontScale: fontScale,
                       onTap: onTap,
                     ),
@@ -180,7 +181,7 @@ class _StitchBottomNav extends StatelessWidget {
                       currentIndex: currentIndex,
                       icon: Icons.record_voice_over_outlined,
                       activeIcon: Icons.record_voice_over,
-                      label: 'Practice',
+                      label: context.tr('nav_practice'),
                       fontScale: fontScale,
                       onTap: onTap,
                     ),
@@ -189,7 +190,7 @@ class _StitchBottomNav extends StatelessWidget {
                       currentIndex: currentIndex,
                       icon: Icons.event_note_outlined,
                       activeIcon: Icons.event_note_rounded,
-                      label: 'Everyday',
+                      label: context.tr('nav_everyday'),
                       fontScale: fontScale,
                       onTap: onTap,
                     ),
@@ -198,7 +199,7 @@ class _StitchBottomNav extends StatelessWidget {
                       currentIndex: currentIndex,
                       icon: Icons.bar_chart_outlined,
                       activeIcon: Icons.bar_chart_rounded,
-                      label: 'Progress',
+                      label: context.tr('nav_progress'),
                       fontScale: fontScale,
                       onTap: onTap,
                     ),
@@ -411,14 +412,14 @@ class SmritiAppBar extends StatelessWidget implements PreferredSizeWidget {
                   ),
                 ),
                 const SizedBox(width: 6),
-                // Gemini AI Assistant Quick Button
+                // SmritiVeda AI Assistant Quick Button
                 _HeaderButton(
-                  icon: Icons.auto_awesome,
+                  icon: Icons.smart_toy_rounded,
                   color: AppColors.terracottaPrimary,
                   bgColor: AppColors.terracottaSoft,
                   hoverColor: AppColors.terracottaSoft,
                   onPressed: () => _openAiAssistantDialog(context, appState),
-                  tooltip: 'Gemini AI Assistant',
+                  tooltip: 'SmritiVeda AI Assistant',
                 ),
                 if (!isCompact) ...[
                   const SizedBox(width: 6),
@@ -476,127 +477,110 @@ class SmritiAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   void _openAiAssistantDialog(BuildContext context, AppState appState) {
-    final queryController = TextEditingController();
-    String aiResponse = 'Hello ${appState.userName}! I am your Gemini AI Cognitive Assistant. Ask me to generate a custom game, practice routine, or memory exercise!';
-    bool isLoading = false;
-
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Row(
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            const Icon(Icons.smart_toy_rounded, color: AppColors.terracottaPrimary),
+            const SizedBox(width: 8),
+            Text(
+              'SmritiVeda AI Assistant',
+              style: GoogleFonts.newsreader(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppColors.terracottaPrimary,
+              ),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.auto_awesome, color: AppColors.terracottaPrimary),
-              const SizedBox(width: 8),
-              Text(
-                'Gemini AI Assistant',
-                style: GoogleFonts.newsreader(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.terracottaPrimary,
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.terracottaSoft,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.terracottaPrimary.withValues(alpha: 0.2)),
+                ),
+                child: Text(
+                  'Hello ${appState.userName}! Choose an AI service below:\n\n'
+                  '• SmritiVeda Chatbot: Conversational AI with voice support, app guides, and wellness tips.\n'
+                  '• AI Game Architect: Procedural brain game generator powered by cognitive science.',
+                  style: GoogleFonts.atkinsonHyperlegible(
+                    fontSize: 14,
+                    color: AppColors.charcoalText,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    side: const BorderSide(color: AppColors.terracottaPrimary, width: 1.5),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  icon: const Icon(Icons.chat_bubble_outline_rounded, color: AppColors.terracottaPrimary, size: 20),
+                  label: Text(
+                    'Open Full Chatbot',
+                    style: GoogleFonts.atkinsonHyperlegible(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.terracottaPrimary,
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const SmritiVedaChatbotScreen()),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.terracottaPrimary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  icon: const Icon(Icons.videogame_asset, size: 20),
+                  label: Text(
+                    '🎮 AI Game Architect',
+                    style: GoogleFonts.atkinsonHyperlegible(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const AiGameGeneratorScreen()),
+                    );
+                  },
                 ),
               ),
             ],
           ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: AppColors.terracottaSoft,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppColors.terracottaPrimary.withValues(alpha: 0.2)),
-                  ),
-                  child: Text(
-                    aiResponse,
-                    style: GoogleFonts.atkinsonHyperlegible(
-                      fontSize: 14,
-                      color: AppColors.charcoalText,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: queryController,
-                  decoration: InputDecoration(
-                    labelText: 'Ask Gemini AI a question or request a game...',
-                    hintText: 'e.g. Create a custom game for me',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    suffixIcon: IconButton(
-                      icon: isLoading ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.send, color: AppColors.terracottaPrimary),
-                      onPressed: () async {
-                        final q = queryController.text.trim();
-                        if (q.isEmpty) return;
-                        setDialogState(() => isLoading = true);
-
-                        // If prompt asks to create/generate game, launch AI Game Architect with the prompt
-                        final lowerQ = q.toLowerCase();
-                        if (lowerQ.contains('game') || lowerQ.contains('create') || lowerQ.contains('generate') || lowerQ.contains('play') || lowerQ.contains('pictorial') || lowerQ.contains('picture') || lowerQ.contains('object') || lowerQ.contains('pattern') || lowerQ.contains('quiz')) {
-                          setDialogState(() {
-                            aiResponse = '✨ Generating custom AI memory game for ${appState.userName}...\nPrompt: "$q"\nOpening AI Game Architect...';
-                            isLoading = false;
-                          });
-                          await Future.delayed(const Duration(milliseconds: 600));
-                          if (context.mounted) {
-                            Navigator.pop(context);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => AiGameGeneratorScreen(
-                                  initialPrompt: q,
-                                  autoGenerate: true,
-                                ),
-                              ),
-                            );
-                          }
-                          return;
-                        }
-
-                        final gemini = GeminiService(apiKey: appState.geminiApiKey);
-                        final res = await gemini.askGeminiConversational(
-                          userPrompt: q,
-                          patientName: appState.userName,
-                          language: appState.selectedLanguage,
-                        );
-                        setDialogState(() {
-                          aiResponse = '✨ Gemini AI Response:\n\n$res';
-                          isLoading = false;
-                        });
-                      },
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.terracottaPrimary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              icon: const Icon(Icons.videogame_asset, size: 18),
-              label: const Text('🎮 Launch AI Custom Game Architect'),
-              onPressed: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const AiGameGeneratorScreen()),
-                );
-              },
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Close'),
-            ),
-          ],
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
       ),
     );
   }

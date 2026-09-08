@@ -1,3 +1,4 @@
+import '../locales/app_localizations.dart';
 import '../widgets/languages_section.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -34,12 +35,13 @@ class HomeTab extends StatefulWidget {
 
 class _HomeTabState extends State<HomeTab> {
   bool _audioPlaying = false;
+  MotivationalQuote _currentQuote = MotivationalQuoteService.getRandomQuote();
 
-  String _greeting() {
+  String _greeting(BuildContext context) {
     final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 12) return context.tr('greeting_morning');
+    if (hour < 17) return context.tr('greeting_afternoon');
+    return context.tr('greeting_evening');
   }
 
   String _formattedDate() {
@@ -109,24 +111,33 @@ class _HomeTabState extends State<HomeTab> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Row(
-                                  children: [
-                                    Container(width: 10, height: 10,
-                                        decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.secondary)),
-                                    const SizedBox(width: 6),
-                                    Text(_formattedDate().toUpperCase(),
-                                      style: GoogleFonts.atkinsonHyperlegible(
-                                          fontSize: 11 * fontScale, fontWeight: FontWeight.w700,
-                                          letterSpacing: 1.2, color: AppColors.secondary)),
-                                  ],
-                                ),
+                                 Row(
+                                   children: [
+                                     Container(width: 10, height: 10,
+                                         decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.secondary)),
+                                     const SizedBox(width: 6),
+                                     Expanded(
+                                       child: Text(
+                                         _formattedDate().toUpperCase(),
+                                         maxLines: 1,
+                                         overflow: TextOverflow.ellipsis,
+                                         style: GoogleFonts.atkinsonHyperlegible(
+                                           fontSize: 11 * fontScale,
+                                           fontWeight: FontWeight.w700,
+                                           letterSpacing: 1.2,
+                                           color: AppColors.secondary,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 const SizedBox(height: 6),
-                                Text('${_greeting()}, $userName',
+                                Text('${_greeting(context)}, $userName',
                                   style: GoogleFonts.newsreader(
                                       fontSize: 28 * fontScale, fontWeight: FontWeight.w600,
                                       color: AppColors.textPrimary, height: 1.15)),
                                 const SizedBox(height: 4),
-                                Text('Ready for today\'s practice?',
+                                Text(context.tr('ready_practice'),
                                   style: GoogleFonts.atkinsonHyperlegible(
                                       fontSize: 16 * fontScale, color: AppColors.textSecondary)),
                               ],
@@ -192,50 +203,61 @@ class _HomeTabState extends State<HomeTab> {
                 ),
                 const SizedBox(height: 14),
 
-                // ── 1.2. Daily Motivational Reflection ────────────────────
-                Builder(
-                  builder: (context) {
-                    final quote = MotivationalQuoteService.getQuoteOfTheDay();
-                    return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: AppColors.canvasIvory,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.borderSubtle),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.format_quote_rounded, color: AppColors.secondary, size: 22),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '"${quote.text}"',
-                                  style: GoogleFonts.newsreader(
-                                    fontSize: 14 * fontScale,
-                                    fontStyle: FontStyle.italic,
-                                    color: AppColors.textPrimary,
-                                    height: 1.3,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  '— ${quote.author}',
-                                  style: GoogleFonts.atkinsonHyperlegible(
-                                    fontSize: 11 * fontScale,
-                                    color: AppColors.textSecondary,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
+                // ── 1.2. Daily Motivational Reflection (Dynamic & Localized) ──
+                InkWell(
+                  onTap: () {
+                    SoundService.playTap();
+                    setState(() {
+                      _currentQuote = MotivationalQuoteService.getRandomQuote();
+                    });
                   },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: AppColors.canvasIvory,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.borderSubtle),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.format_quote_rounded, color: AppColors.secondary, size: 22),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '"${_currentQuote.localizedText(appState.selectedLanguage)}"',
+                                style: GoogleFonts.newsreader(
+                                  fontSize: 14 * fontScale,
+                                  fontStyle: FontStyle.italic,
+                                  color: AppColors.textPrimary,
+                                  height: 1.3,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      '— ${_currentQuote.localizedAuthor(appState.selectedLanguage)}',
+                                      style: GoogleFonts.atkinsonHyperlegible(
+                                        fontSize: 11 * fontScale,
+                                        color: AppColors.textSecondary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                  const Icon(Icons.refresh_rounded, size: 14, color: AppColors.secondaryText),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 14),
 
@@ -281,7 +303,7 @@ class _HomeTabState extends State<HomeTab> {
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
-                              "GEMINI AI ACTIVE",
+                              "SMRITIVEDA AI ACTIVE",
                               style: GoogleFonts.atkinsonHyperlegible(
                                 fontSize: 10 * fontScale,
                                 fontWeight: FontWeight.bold,
@@ -360,8 +382,11 @@ class _HomeTabState extends State<HomeTab> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 8,
+                        runSpacing: 6,
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -370,6 +395,7 @@ class _HomeTabState extends State<HomeTab> {
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(recommendation.icon, size: 14, color: recommendation.color),
                                 const SizedBox(width: 4),
@@ -506,8 +532,11 @@ class _HomeTabState extends State<HomeTab> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 8,
+                        runSpacing: 6,
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -519,6 +548,7 @@ class _HomeTabState extends State<HomeTab> {
                                   letterSpacing: 0.8, color: AppColors.primary)),
                           ),
                           Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               const Icon(Icons.schedule, size: 16, color: AppColors.primary),
                               const SizedBox(width: 4),
@@ -683,15 +713,22 @@ class _HomeTabState extends State<HomeTab> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
-                            children: [
-                              const Icon(Icons.anchor, color: AppColors.primary, size: 22),
-                              const SizedBox(width: 8),
-                              Text('Daily Memory Anchors',
-                                style: GoogleFonts.newsreader(
-                                    fontSize: 20 * fontScale, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-                            ],
+                          Expanded(
+                            child: Row(
+                              children: [
+                                const Icon(Icons.anchor, color: AppColors.primary, size: 22),
+                                const SizedBox(width: 8),
+                                Flexible(
+                                  child: Text('Daily Memory Anchors',
+                                    style: GoogleFonts.newsreader(
+                                        fontSize: 20 * fontScale, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
+                          const SizedBox(width: 8),
                           Text('Today', style: GoogleFonts.atkinsonHyperlegible(
                               fontSize: 12 * fontScale, color: AppColors.textSecondary)),
                         ],

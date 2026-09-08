@@ -511,6 +511,79 @@ class DbService {
     _setPersistentItem('reminders_db_$targetUid', jsonEncode(serializable));
   }
 
+  // ── Routine Steps Persistence ──────────────────────────────────────────
+  List<RoutineStep> getRoutineSteps([String? userId]) {
+    final targetUid = userId ?? activeUserId;
+    if (targetUid.isEmpty) return [];
+
+    final str = _getPersistentItem('routine_steps_db_$targetUid');
+    if (str != null && str.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(str) as List<dynamic>;
+        return decoded.map((item) {
+          final m = item as Map<String, dynamic>;
+          return RoutineStep(
+            id: m['id'] ?? '',
+            stepNumber: m['stepNumber'] ?? 1,
+            title: m['title'] ?? '',
+            description: m['description'] ?? '',
+            targetTime: m['targetTime'] ?? '',
+            isCompleted: m['isCompleted'] ?? false,
+          );
+        }).toList();
+      } catch (e) {
+        debugPrint('DBMS Routine Steps Parse Error: $e');
+      }
+    }
+    return [];
+  }
+
+  void saveRoutineStep(RoutineStep step, [String? userId]) {
+    final targetUid = userId ?? activeUserId;
+    if (targetUid.isEmpty) return;
+
+    final list = getRoutineSteps(targetUid).toList();
+    final idx = list.indexWhere((s) => s.id == step.id);
+    if (idx != -1) {
+      list[idx] = step;
+    } else {
+      list.add(step);
+    }
+
+    final serializable = list.map((s) => {
+      'id': s.id,
+      'stepNumber': s.stepNumber,
+      'title': s.title,
+      'description': s.description,
+      'targetTime': s.targetTime,
+      'isCompleted': s.isCompleted,
+    }).toList();
+
+    _setPersistentItem('routine_steps_db_$targetUid', jsonEncode(serializable));
+  }
+
+  void deleteRoutineStep(String id, [String? userId]) {
+    final targetUid = userId ?? activeUserId;
+    if (targetUid.isEmpty) return;
+
+    final list = getRoutineSteps(targetUid).toList();
+    list.removeWhere((s) => s.id == id);
+    for (int i = 0; i < list.length; i++) {
+      list[i] = list[i].copyWith(stepNumber: i + 1);
+    }
+
+    final serializable = list.map((s) => {
+      'id': s.id,
+      'stepNumber': s.stepNumber,
+      'title': s.title,
+      'description': s.description,
+      'targetTime': s.targetTime,
+      'isCompleted': s.isCompleted,
+    }).toList();
+
+    _setPersistentItem('routine_steps_db_$targetUid', jsonEncode(serializable));
+  }
+
   // ── Familiar People / Anchors (Keyed per user) ───────────────────────────
   List<FamiliarPerson> getFamiliarPeople([String? userId]) {
     final targetUid = userId ?? activeUserId;
@@ -871,4 +944,7 @@ class DbService {
   String get geminiApiKey =>
       _getPersistentItem('gemini_api_key') ?? const String.fromEnvironment('GEMINI_API_KEY');
   bool get isAiEnabled => _getPersistentItem('ai_enabled') != 'false';
+  String? get omnirouteBaseUrl => _getPersistentItem('omniroute_base_url');
+  String? getPersistentItem(String key) => _getPersistentItem(key);
+  void setPersistentItem(String key, String value) => _setPersistentItem(key, value);
 }

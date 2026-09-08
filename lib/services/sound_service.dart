@@ -88,13 +88,21 @@ class SoundService extends ChangeNotifier {
     });
   }
 
+  static const MethodChannel _audioChannel = MethodChannel('smriti_veda/audio_tone');
+  DateTime _lastNotePlayedTime = DateTime.fromMillisecondsSinceEpoch(0);
+
   /// Plays an individual musical tone (C, D, E, F, G, A, B or Sa, Re, Ga...)
   void playMusicalTone({
     required double frequency,
     double durationSeconds = 0.45,
-    double volume = 0.22,
+    double volume = 0.88,
     String noteLabel = '',
   }) {
+    final now = DateTime.now();
+    // Debounce rapid repeated taps (minimum 60ms between note triggers)
+    if (now.difference(_lastNotePlayedTime).inMilliseconds < 60) return;
+    _lastNotePlayedTime = now;
+
     if (kIsWeb) {
       _playTone(
         frequency: frequency,
@@ -102,7 +110,14 @@ class SoundService extends ChangeNotifier {
         volume: volume,
       );
     } else {
-      SystemSound.play(SystemSoundType.click);
+      _audioChannel.invokeMethod('playTone', {
+        'frequency': frequency,
+        'durationMs': (durationSeconds * 1000).toInt(),
+        'volume': volume.clamp(0.1, 1.0),
+      }).catchError((_) {
+        SystemSound.play(SystemSoundType.click);
+        return null;
+      });
       HapticFeedback.selectionClick();
     }
   }

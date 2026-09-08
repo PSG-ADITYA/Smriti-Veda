@@ -59,9 +59,11 @@ class _CulturalPipelineScreenState extends State<CulturalPipelineScreen> {
   bool _isArrangedEvaluated = false;
   int _arrangedMatches = 0;
 
-  // ── STT Engine ──
+  // ── STT Engine & Lifecycle Watchdog ──
   stt.SpeechToText? _speech;
   bool _isSpeechInitialized = false;
+  Timer? _voiceWatchdogTimer;
+  bool _isVoiceTransitioning = false;
 
   final Stopwatch _sessionStopwatch = Stopwatch();
 
@@ -145,8 +147,12 @@ class _CulturalPipelineScreenState extends State<CulturalPipelineScreen> {
 
   @override
   void dispose() {
+    _voiceWatchdogTimer?.cancel();
+    _voiceWatchdogTimer = null;
     _chantSequenceTimer?.cancel();
-    _speech?.stop();
+    try {
+      _speech?.stop();
+    } catch (_) {}
     SoundService.stop();
     _sessionStopwatch.stop();
     super.dispose();
@@ -208,7 +214,36 @@ class _CulturalPipelineScreenState extends State<CulturalPipelineScreen> {
     SoundService.speak(pada, languageCode: widget.item.languageCode);
   }
 
+  void _stopOrCancelEchoRecording() async {
+    if (_isVoiceTransitioning) return;
+    _isVoiceTransitioning = true;
+    _voiceWatchdogTimer?.cancel();
+    _voiceWatchdogTimer = null;
+    SoundService.playTap();
+    try {
+      await _speech?.stop();
+    } catch (_) {}
+    if (mounted) {
+      _isVoiceTransitioning = false;
+      if (_lastEchoSpokenText.trim().isNotEmpty) {
+        _finishEchoVoiceEvaluation();
+      } else {
+        setState(() {
+          _isEchoMicActive = false;
+          _echoFeedbackMessage = 'Voice listening finished. Tap below to confirm your recitation.';
+          _echoFeedbackIsPositive = true;
+        });
+      }
+    }
+  }
+
   void _startEchoRecording() async {
+    if (_isVoiceTransitioning) return;
+    if (_isEchoMicActive) {
+      _stopOrCancelEchoRecording();
+      return;
+    }
+    _isVoiceTransitioning = true;
     SoundService.playTap();
     setState(() {
       _isEchoMicActive = true;
@@ -217,27 +252,70 @@ class _CulturalPipelineScreenState extends State<CulturalPipelineScreen> {
     });
 
     if (_speech == null || !_isSpeechInitialized) {
-      // Fallback if mic unavailable
+      _isVoiceTransitioning = false;
       _confirmManualEchoRecitation();
       return;
     }
 
+    // 7-second hard watchdog timer so user is NEVER stuck in "Listening..."
+    _voiceWatchdogTimer?.cancel();
+    _voiceWatchdogTimer = Timer(const Duration(seconds: 7), () {
+      if (mounted && _isEchoMicActive) {
+        _stopOrCancelEchoRecording();
+      }
+    });
+
+    String targetLocale = 'en_IN';
+    switch (widget.item.languageCode.toLowerCase()) {
+      case 'sa':
+        targetLocale = 'sa_IN';
+        break;
+      case 'te':
+        targetLocale = 'te_IN';
+        break;
+      case 'hi':
+        targetLocale = 'hi_IN';
+        break;
+      default:
+        targetLocale = 'en_IN';
+    }
+
     try {
       await _speech!.listen(
+        localeId: targetLocale,
         onResult: (result) {
           if (mounted) {
             setState(() {
               _lastEchoSpokenText = result.recognizedWords;
             });
+            if (result.finalResult) {
+              _voiceWatchdogTimer?.cancel();
+              _voiceWatchdogTimer = null;
+              _finishEchoVoiceEvaluation();
+            }
           }
         },
+        listenFor: const Duration(seconds: 6),
+        pauseFor: const Duration(seconds: 2),
       );
     } catch (_) {
-      _confirmManualEchoRecitation();
+      _voiceWatchdogTimer?.cancel();
+      _voiceWatchdogTimer = null;
+      if (mounted) {
+        setState(() {
+          _isEchoMicActive = false;
+          _echoFeedbackMessage = 'Microphone could not be started. Tap below to confirm recitation.';
+          _echoFeedbackIsPositive = false;
+        });
+      }
+    } finally {
+      if (mounted) _isVoiceTransitioning = false;
     }
   }
 
   void _finishEchoVoiceEvaluation() {
+    _voiceWatchdogTimer?.cancel();
+    _voiceWatchdogTimer = null;
     setState(() => _isEchoMicActive = false);
     final targetPada = widget.item.chunks[_currentEchoPadaIndex];
     final match = SanskritTextNormalizer.evaluateMatch(
@@ -249,7 +327,7 @@ class _CulturalPipelineScreenState extends State<CulturalPipelineScreen> {
     SoundService.playSuccess();
     setState(() {
       _echoFeedbackIsPositive = true;
-      if (match.matchPercentage >= 40.0) {
+      if (match.matchPercentage >= 35.0) {
         _echoFeedbackMessage = 'Wonderful recitation! Clear and resonant rhythm.';
       } else {
         _echoFeedbackMessage = 'Good effort! Every recitation cultivates peace and recall.';
@@ -860,14 +938,14 @@ class _CulturalPipelineScreenState extends State<CulturalPipelineScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: _isEchoMicActive ? null : _startEchoRecording,
-                    icon: Icon(_isEchoMicActive ? Icons.mic_rounded : Icons.mic_none_rounded, size: 18),
+                    onPressed: _isEchoMicActive ? _stopOrCancelEchoRecording : _startEchoRecording,
+                    icon: Icon(_isEchoMicActive ? Icons.stop_circle_rounded : Icons.mic_rounded, size: 18),
                     label: Text(
-                      _isEchoMicActive ? 'Listening...' : 'Repeat with Voice',
+                      _isEchoMicActive ? 'Stop / Finish' : 'Repeat with Voice',
                       style: GoogleFonts.atkinsonHyperlegible(fontWeight: FontWeight.bold),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.terracottaPrimary,
+                      backgroundColor: _isEchoMicActive ? Colors.red.shade700 : AppColors.terracottaPrimary,
                       foregroundColor: Colors.white,
                       minimumSize: const Size.fromHeight(48),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

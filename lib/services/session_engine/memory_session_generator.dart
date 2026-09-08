@@ -227,17 +227,51 @@ class MemorySessionGenerator {
       'g4': 'Pa', 'a4': 'Dha', 'b4': 'Ni', 'c5': 'Taar Sa',
     };
 
-    // Curated raga patterns or variations
-    final variations = [
-      ['c4', 'e4', 'g4', 'a4', 'c5', 'g4', 'e4'],
-      ['c4', 'd4', 'e4', 'g4', 'c5', 'a4', 'g4'],
-      ['c4', 'e4', 'g4', 'c5', 'g4', 'e4', 'c4'],
+    // Authentic Indian classical scales & melodic structures (Mohanam, Hamsadhwani, Shankarabharanam, etc.)
+    final List<List<String>> melodicPatterns = [
+      // 1. Ascending Arohana Patterns
+      ['c4', 'd4', 'e4', 'g4', 'a4', 'c5', 'g4'],
+      ['c4', 'e4', 'g4', 'a4', 'c5', 'a4', 'g4'],
+      ['c4', 'd4', 'e4', 'f4', 'g4', 'a4', 'b4'],
       ['c4', 'd4', 'f4', 'g4', 'a4', 'c5', 'a4'],
-      ['c4', 'e4', 'f4', 'g4', 'b4', 'c5', 'g4'],
+      // 2. Descending Avarohana Waves
+      ['c5', 'a4', 'g4', 'e4', 'd4', 'c4', 'g4'],
+      ['c5', 'b4', 'a4', 'g4', 'f4', 'e4', 'c4'],
+      ['g4', 'e4', 'd4', 'c4', 'e4', 'g4', 'c5'],
+      // 3. Symmetrical & Arch Arcs (Vakra Swaras)
+      ['c4', 'e4', 'g4', 'c5', 'g4', 'e4', 'c4'],
+      ['c4', 'd4', 'g4', 'e4', 'a4', 'g4', 'c5'],
+      ['c4', 'g4', 'e4', 'g4', 'c5', 'g4', 'e4'],
+      ['c4', 'e4', 'd4', 'g4', 'e4', 'a4', 'g4'],
+      // 4. Repeated Rhythmic Paired Swaras
+      ['c4', 'c4', 'e4', 'g4', 'g4', 'a4', 'c5'],
+      ['c4', 'd4', 'd4', 'e4', 'g4', 'a4', 'a4'],
+      ['c4', 'e4', 'e4', 'g4', 'c5', 'c5', 'g4'],
+      // 5. Classic Ragas (Hamsadhwani, Durga, Madhmad)
+      ['c4', 'd4', 'e4', 'g4', 'b4', 'c5', 'g4'], // Hamsadhwani
+      ['c4', 'd4', 'f4', 'g4', 'a4', 'c5', 'd4'], // Durga
+      ['c4', 'e4', 'f4', 'g4', 'b4', 'c5', 'e4'], // Kalyani
+      ['c4', 'd4', 'f4', 'g4', 'c5', 'a4', 'f4'], // Madhmad
+      ['c4', 'e4', 'g4', 'a4', 'd4', 'g4', 'c4'], // Shivaranjani arch
     ];
 
-    final pickedVariation = variations[_rng.nextInt(variations.length)];
-    final pickedNotes = pickedVariation.take(noteCount).toList();
+    // Seeded/randomized selection for endless procedurally varied sessions
+    final basePattern = melodicPatterns[_rng.nextInt(melodicPatterns.length)];
+    List<String> pickedNotes;
+
+    // Apply procedural transforms based on difficulty and seed
+    final transformType = _rng.nextInt(4);
+    if (transformType == 1 && noteCount <= basePattern.length) {
+      // Subsequence starting at varied anchor
+      final startIdx = _rng.nextInt(basePattern.length - noteCount + 1);
+      pickedNotes = basePattern.sublist(startIdx, startIdx + noteCount);
+    } else if (transformType == 2 && difficulty == GameDifficulty.hard) {
+      // Reversed wave
+      pickedNotes = basePattern.take(noteCount).toList().reversed.toList();
+    } else {
+      pickedNotes = basePattern.take(noteCount).toList();
+    }
+
     final swaras = pickedNotes.map((id) => idToSwara[id] ?? 'Sa').toList();
 
     return MemorySession<MelodySessionData>(

@@ -722,9 +722,52 @@ class _MedicalReportsScreenState extends State<MedicalReportsScreen> {
 
             if (reports.isEmpty)
               Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-                child: const Center(child: Text('No medical reports uploaded yet.')),
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: AppColors.sandalwoodGold.withValues(alpha: 0.4)),
+                  boxShadow: const [BoxShadow(color: Color(0x06000000), blurRadius: 8)],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: const BoxDecoration(
+                        color: AppColors.surfaceCream,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.description_outlined,
+                        size: 32,
+                        color: AppColors.terracottaPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No medical reports uploaded yet.',
+                      style: GoogleFonts.newsreader(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.charcoalText,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Medical records for $targetPatientName will appear here once prescriptions or lab reports are attached.',
+                      style: GoogleFonts.atkinsonHyperlegible(
+                        fontSize: 13,
+                        color: AppColors.secondaryText,
+                        height: 1.4,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
               )
             else
               Column(
@@ -796,12 +839,15 @@ class _MedicalReportsScreenState extends State<MedicalReportsScreen> {
                                               borderRadius: BorderRadius.circular(6),
                                             ),
                                             child: Text(
-                                              file.category,
+                                              'Category: ${file.category}',
                                               style: GoogleFonts.atkinsonHyperlegible(
                                                 fontSize: 11,
                                                 fontWeight: FontWeight.bold,
                                                 color: AppColors.terracottaPrimary,
                                               ),
+                                              maxLines: 1,
+                                              softWrap: false,
+                                              overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
                                           Container(
@@ -850,66 +896,54 @@ class _MedicalReportsScreenState extends State<MedicalReportsScreen> {
                             ),
 
                             // ── Metadata: Upload Date & File Info ──
-                            Padding(
-                              padding: const EdgeInsets.only(top: 10.0),
-                              child: Wrap(
-                                spacing: 8,
-                                runSpacing: 6,
-                                crossAxisAlignment: WrapCrossAlignment.center,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFF7F5F0),
-                                      borderRadius: BorderRadius.circular(6),
-                                      border: Border.all(color: AppColors.borderSubtle),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Icon(Icons.calendar_today_outlined, size: 12, color: AppColors.secondaryText),
-                                        const SizedBox(width: 5),
-                                        Text(
-                                          'Uploaded: ${file.uploadDate.toString().split(' ')[0]}',
+                            if (file.originalFileName != null &&
+                                file.originalFileName!.isNotEmpty &&
+                                file.originalFileName != file.title)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF7F5F0),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: AppColors.borderSubtle),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.attach_file, size: 13, color: AppColors.secondaryText),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: Text(
+                                          file.originalFileName!,
                                           style: GoogleFonts.atkinsonHyperlegible(
                                             fontSize: 12,
                                             color: AppColors.secondaryText,
                                           ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
-                                      ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.calendar_today_outlined, size: 12, color: AppColors.secondaryText),
+                                  const SizedBox(width: 5),
+                                  Expanded(
+                                    child: Text(
+                                      'Uploaded: ${file.uploadDate.toString().split(' ')[0]}',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.atkinsonHyperlegible(
+                                        fontSize: 12,
+                                        color: AppColors.secondaryText,
+                                      ),
                                     ),
                                   ),
-                                  if (file.originalFileName != null &&
-                                      file.originalFileName!.isNotEmpty &&
-                                      file.originalFileName != file.title)
-                                    Container(
-                                      constraints: const BoxConstraints(maxWidth: 200),
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFF7F5F0),
-                                        borderRadius: BorderRadius.circular(6),
-                                        border: Border.all(color: AppColors.borderSubtle),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          const Icon(Icons.attach_file, size: 12, color: AppColors.secondaryText),
-                                          const SizedBox(width: 4),
-                                          Flexible(
-                                            child: Text(
-                                              file.originalFileName!,
-                                              style: GoogleFonts.atkinsonHyperlegible(
-                                                fontSize: 12,
-                                                color: AppColors.secondaryText,
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              softWrap: false,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
                                 ],
                               ),
                             ),

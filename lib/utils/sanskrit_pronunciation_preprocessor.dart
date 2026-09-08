@@ -26,6 +26,15 @@ class SanskritPronunciationPreprocessor {
     text = text.replaceAll(RegExp(r'[-_~]'), ' ');
     text = text.replaceAll(RegExp(r'\s+'), ' ').trim();
 
+    // 5. Safe buffering for short tokens (e.g. single Om or short syllables):
+    // Android TTS engines drop or cut off isolated 1-3 character Devanagari tokens
+    // if there is no terminal breath pause/punctuation to flush the audio synthesis buffer.
+    if (text == 'ओम्' || text == 'ॐ') {
+      text = 'ओम्, ';
+    } else if (text.length <= 4 && !text.endsWith(',') && !text.endsWith('.')) {
+      text = '$text, ';
+    }
+
     return text;
   }
 
@@ -40,7 +49,7 @@ class SanskritPronunciationPreprocessor {
 
     for (final c in rawChunks) {
       final processed = preprocessForTts(c);
-      if (processed.isNotEmpty && processed.length > 2) {
+      if (processed.isNotEmpty) {
         padas.add(processed);
       }
     }

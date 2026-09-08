@@ -1,3 +1,6 @@
+import 'memory_melody_screen.dart';
+import 'fruit_memory_path_screen.dart';
+import 'dice_memory_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/exercise_attempt.dart';
@@ -133,7 +136,7 @@ class _AiGameGeneratorScreenState extends State<AiGameGeneratorScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'AI Game Architect (Gemini AI)',
+          'AI Game Architect (Smriti Veda AI)',
           style: GoogleFonts.newsreader(
             color: AppColors.terracottaPrimary,
             fontWeight: FontWeight.bold,
@@ -180,7 +183,7 @@ class _AiGameGeneratorScreenState extends State<AiGameGeneratorScreen> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Gemini AI creates pictorial, audio, routine, and object recall games according to your prompt and memories.',
+                          'Smriti Veda AI creates pictorial, audio, routine, and object recall games according to your prompt and memories.',
                           style: GoogleFonts.atkinsonHyperlegible(
                             fontSize: 13,
                             color: AppColors.secondaryText,
@@ -281,7 +284,7 @@ class _AiGameGeneratorScreenState extends State<AiGameGeneratorScreen> {
                             ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                             : const Icon(Icons.auto_awesome, color: Colors.white),
                         label: Text(
-                          _isGenerating ? 'Gemini AI is Generating Custom Game...' : 'Generate AI Custom Game ➔',
+                          _isGenerating ? 'Smriti Veda AI is Generating Custom Game...' : 'Generate Custom Memory Game ➔',
                           style: GoogleFonts.atkinsonHyperlegible(fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                         style: ElevatedButton.styleFrom(
@@ -403,6 +406,56 @@ class _AiGameGeneratorScreenState extends State<AiGameGeneratorScreen> {
                                   minimumSize: const Size.fromHeight(50),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                                 ),
+                              ),
+                              const SizedBox(height: 20),
+                              Text(
+                                'Or Play in App\'s Native Memory Engines:',
+                                style: GoogleFonts.atkinsonHyperlegible(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.secondaryText),
+                              ),
+                              const SizedBox(height: 8),
+                              OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  minimumSize: const Size.fromHeight(44),
+                                  side: const BorderSide(color: AppColors.terracottaPrimary),
+                                ),
+                                icon: const Icon(Icons.music_note_rounded, color: AppColors.terracottaPrimary, size: 18),
+                                label: const Text('Play in Memory Melody (Heritage Tones)'),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => MemoryMelodyScreen(initialTheme: _generatedGame!.title)),
+                                  );
+                                },
+                              ),
+                              const SizedBox(height: 6),
+                              OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  minimumSize: const Size.fromHeight(44),
+                                  side: const BorderSide(color: AppColors.sageSecondary),
+                                ),
+                                icon: const Icon(Icons.park_rounded, color: AppColors.sageSecondary, size: 18),
+                                label: const Text('Play in Fruit Memory Path (Garden Route)'),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => const FruitMemoryPathScreen()),
+                                  );
+                                },
+                              ),
+                              const SizedBox(height: 6),
+                              OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  minimumSize: const Size.fromHeight(44),
+                                  side: const BorderSide(color: Color(0xFF8A643E)),
+                                ),
+                                icon: const Icon(Icons.casino_rounded, color: Color(0xFF8A643E), size: 18),
+                                label: const Text('Play in 3D Dice Memory (Tabletop Focus)'),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => const DiceMemoryScreen()),
+                                  );
+                                },
                               ),
                             ] else ...[
                               Text(

@@ -54,9 +54,6 @@ class PcFilePicker {
 
         try {
           bytes = await file.readAsBytes();
-          if (size == 0) {
-            size = bytes.lengthInBytes;
-          }
         } catch (e) {
           debugPrint('Failed to read file bytes from PlatformFile: $e');
           if (path != null && !kIsWeb) {
@@ -68,6 +65,9 @@ class PcFilePicker {
               }
             } catch (_) {}
           }
+        }
+        if (bytes != null && size == 0) {
+          size = bytes.lengthInBytes;
         }
 
         final fileName = file.name;

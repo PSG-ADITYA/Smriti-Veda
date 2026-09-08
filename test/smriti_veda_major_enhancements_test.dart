@@ -96,6 +96,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(appState.selectedLanguage, 'te');
+
+      // Reset back to English to preserve test isolation
+      appState.setSelectedLanguage('en');
     });
   });
 
@@ -215,7 +218,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Ask SmritiVeda Assistant'), findsOneWidget);
+      expect(find.text('SmritiVeda AI Assistant'), findsOneWidget);
       expect(find.text('How do I practice Shlokas today?'), findsOneWidget);
 
       // Tap preset chip

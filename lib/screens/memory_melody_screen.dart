@@ -184,10 +184,11 @@ class _MemoryMelodyScreenState extends State<MemoryMelodyScreen> {
       _userSequence.clear();
     });
 
-    SoundService.speak('Listen carefully to the melody.');
+    // Ensure speech is completely stopped so voice NEVER overlaps the music tones
+    SoundService.stop();
 
-    // Give 1.2s before tones start so user gets ready
-    Timer(const Duration(milliseconds: 1200), () {
+    // Brief 500ms pause for user focus before musical sequence begins
+    Timer(const Duration(milliseconds: 500), () {
       if (!mounted || !_isPlayingMelody) return;
 
       int noteIdx = 0;
@@ -250,6 +251,9 @@ class _MemoryMelodyScreenState extends State<MemoryMelodyScreen> {
     if (_phase != MemoryMelodyPhase.reproduction) return;
     if (_isPlayingMelody) return;
     if (_userSequence.length >= _targetSequence.length) return;
+
+    // Immediately stop any lingering TTS voice so musical tone is crystal clear
+    SoundService.stop();
 
     // Play note immediately on touch
     SoundService.playNote(note.frequency, label: note.westernName);

@@ -260,7 +260,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       'Patient Profile & Avatar Picture',
       'Family Relatives & Memory Details',
       'Accessibility & Voice Preferences',
-      'AI Setup & Gemini Configuration',
+      'AI Setup & Assistant Configuration',
       'Database Confirmation & Setup',
     ];
 
@@ -269,7 +269,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       'Enter patient demographics, emergency contacts, and select profile picture.',
       'Enter real names of family members & relatives to personalize recall games.',
       'Configure font scaling, read aloud voice preferences, and controls.',
-      'Configure Gemini AI API Key for personalized AI game creation & caregiver notes.',
+      'Configure AI Assistant API Key for personalized AI game creation & caregiver notes.',
       'Review settings and save to local DBMS storage engine.',
     ];
 
@@ -538,7 +538,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   color: Colors.transparent,
                   child: SwitchListTile(
                     activeThumbColor: AppColors.terracottaPrimary,
-                    title: Text('Enable Gemini AI Engine', style: GoogleFonts.atkinsonHyperlegible(fontWeight: FontWeight.bold)),
+                    title: Text('Enable SmritiVeda AI Engine', style: GoogleFonts.atkinsonHyperlegible(fontWeight: FontWeight.bold)),
                     subtitle: const Text('AI personalized activity recommendations and caregiver progress notes'),
                     value: _enableAiFeatures,
                     onChanged: (val) => setState(() => _enableAiFeatures = val),
@@ -558,7 +558,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Gemini GenAI is configured by Smriti Veda environment. Your personal health profile stays strictly confidential.',
+                          'AI Assistant is configured by Smriti Veda environment. Your personal health profile stays strictly confidential.',
                           style: GoogleFonts.atkinsonHyperlegible(
                             fontSize: 12,
                             color: AppColors.charcoalText,
@@ -594,7 +594,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 Text('Age: ${_ageController.text}'),
                 Text('Emergency Contact: ${_emergencyContactController.text}'),
                 Text('Family Relatives: ${_addedRelatives.map((r) => r.name).join(", ")}'),
-                Text('AI Status: ${_enableAiFeatures ? "Enabled (Gemini active)" : "Disabled (Offline fallback)"}'),
+                Text('AI Status: ${_enableAiFeatures ? "Enabled (AI Assistant active)" : "Disabled (Offline fallback)"}'),
                 const Divider(height: 24),
                 Text('All parameters will be saved into local persistent DBMS storage.', style: GoogleFonts.atkinsonHyperlegible(fontSize: 13, color: AppColors.secondaryText)),
               ],

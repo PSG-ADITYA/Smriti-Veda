@@ -754,7 +754,7 @@ class _PersonalizedQuestionnaireScreenState
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '5. Gemini AI & Plan Activation',
+          '5. Personalized AI Plan',
           style: GoogleFonts.newsreader(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -763,7 +763,7 @@ class _PersonalizedQuestionnaireScreenState
         ),
         const SizedBox(height: 6),
         Text(
-          'Enable intelligent Gemini GenAI adaptation to dynamically adjust exercise difficulty and memory plans.',
+          'Enable intelligent personalization to dynamically adapt memory exercises and plans to your progress.',
           style: GoogleFonts.atkinsonHyperlegible(
             fontSize: 14,
             color: AppColors.secondaryText,
@@ -786,14 +786,14 @@ class _PersonalizedQuestionnaireScreenState
               value: _enableAi,
               activeThumbColor: AppColors.terracottaPrimary,
               title: Text(
-                'Enable Gemini GenAI Cognitive Engine',
+                'Enable AI Cognitive Personalization',
                 style: GoogleFonts.atkinsonHyperlegible(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                 ),
               ),
               subtitle: Text(
-                'Automatically generates adaptive recall games and weekly progress summaries.',
+                'Generates personalized memory exercises and progress summaries based on your activity.',
                 style: GoogleFonts.atkinsonHyperlegible(
                   fontSize: 13,
                   color: AppColors.secondaryText,
@@ -855,7 +855,7 @@ class _PersonalizedQuestionnaireScreenState
           ),
           const SizedBox(height: 8),
           Text(
-            'Persisting profile data to private DBMS storage and generating tailored regimen via Gemini AI.',
+            'Persisting profile data to private DBMS storage and generating tailored regimen via SmritiVeda AI.',
             style: GoogleFonts.atkinsonHyperlegible(
               fontSize: 14,
               color: AppColors.secondaryText,

@@ -1,6 +1,6 @@
+import '../services/sound_service.dart';
 import 'dice_memory_screen.dart';
 import 'word_memory_puzzle_screen.dart';
-import '../widgets/languages_section.dart';
 import 'package:flutter/material.dart';
 import 'main_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -25,16 +25,62 @@ class PracticeTab extends StatefulWidget {
 }
 
 class _PracticeTabState extends State<PracticeTab> {
-  String _selectedLanguageFilter = 'all';
+  String? _selectedLanguageGroup;
+
+  static const List<Map<String, dynamic>> _languageGroups = [
+    {
+      'code': 'sa',
+      'name': 'संस्कृतम् (Sanskrit)',
+      'sub': 'Vedic Mantras, Shlokas & Peace Chants',
+      'badge': '12 Verses',
+      'icon': '📜',
+      'color': Color(0xFFB85028),
+    },
+    {
+      'code': 'te',
+      'name': 'తెలుగు (Telugu)',
+      'sub': 'Vemana Shatakam & Potana Bhagavatham Padyalu',
+      'badge': '8 Padyalu',
+      'icon': '🌸',
+      'color': Color(0xFF2E7D32),
+    },
+    {
+      'code': 'hi',
+      'name': 'हिन्दी (Hindi)',
+      'sub': 'Sant Kabir & Goswami Tulsidas Dohas',
+      'badge': '8 Dohas',
+      'icon': '🪔',
+      'color': Color(0xFFE65100),
+    },
+    {
+      'code': 'en',
+      'name': 'English & Heritage',
+      'sub': 'Nursery Rhymes & Family Oral Memories',
+      'badge': '8 Items',
+      'icon': '🏡',
+      'color': Color(0xFF1565C0),
+    },
+    {
+      'code': 'regional',
+      'name': 'Regional Traditions',
+      'sub': 'Tamil Thirukkural, Bengali & Assamese Poetry',
+      'badge': '3 Poems',
+      'icon': '🇮🇳',
+      'color': Color(0xFF6A1B9A),
+    },
+  ];
 
   List<dynamic> get _allCulturalItems {
     return AppStateScope.of(context).culturalContentRepo.getAllItems();
   }
 
-  List<dynamic> get _filteredCulturalItems {
+  List<dynamic> _getItemsForGroup(String? groupCode) {
     final all = _allCulturalItems;
-    if (_selectedLanguageFilter == 'all') return all;
-    return all.where((item) => item.languageCode == _selectedLanguageFilter).toList();
+    if (groupCode == null) return all;
+    if (groupCode == 'regional') {
+      return all.where((item) => item.languageCode == 'ta' || item.languageCode == 'bn' || item.languageCode == 'as').toList();
+    }
+    return all.where((item) => item.languageCode == groupCode).toList();
   }
 
   String _getLanguageFlag(String code) {
@@ -58,30 +104,7 @@ class _PracticeTabState extends State<PracticeTab> {
     }
   }
 
-  Widget _buildLanguageFilterChip(String langCode, String label) {
-    final isSelected = _selectedLanguageFilter == langCode;
-    return FilterChip(
-      selected: isSelected,
-      label: Text(
-        label,
-        style: GoogleFonts.atkinsonHyperlegible(
-          fontSize: 12,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-          color: isSelected ? Colors.white : AppColors.charcoalText,
-        ),
-      ),
-      selectedColor: AppColors.terracottaPrimary,
-      backgroundColor: Colors.white,
-      side: BorderSide(
-        color: isSelected ? AppColors.terracottaPrimary : AppColors.terracottaPrimary.withValues(alpha: 0.3),
-      ),
-      onSelected: (selected) {
-        setState(() {
-          _selectedLanguageFilter = langCode;
-        });
-      },
-    );
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -115,7 +138,6 @@ class _PracticeTabState extends State<PracticeTab> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-            const LanguagesSection(compact: true),
                   Wrap(
                     alignment: WrapAlignment.spaceBetween,
                     crossAxisAlignment: WrapCrossAlignment.center,
@@ -502,7 +524,7 @@ class _PracticeTabState extends State<PracticeTab> {
 
             const SizedBox(height: 32),
 
-            // SECTION 3: CULTURAL & ORAL MEMORY SYSTEM
+            // SECTION 3: CULTURAL & ORAL MEMORY SYSTEM (BY LANGUAGE GROUP)
             Row(
               children: [
                 const Icon(Icons.record_voice_over_rounded, color: AppColors.sageSecondary),
@@ -522,7 +544,7 @@ class _PracticeTabState extends State<PracticeTab> {
             ),
             const SizedBox(height: 6),
             Text(
-              'Practicing structured recall inspired by Indian oral memory traditions (Listen ➔ Pada Chunk ➔ Krama Overlap ➔ Reverse ➔ Missing Element ➔ Delayed Recall). Works with regional folk songs, North Eastern poems, family stories, and sayings.',
+              'Select your heritage language or tradition first to practice structured recall (Listen ➔ Pada Chunk ➔ Reverse ➔ Missing Element ➔ Delayed Recall).',
               style: GoogleFonts.atkinsonHyperlegible(
                 fontSize: 13 * fontScale,
                 color: AppColors.secondaryText,
@@ -531,171 +553,304 @@ class _PracticeTabState extends State<PracticeTab> {
             ),
             const SizedBox(height: 14),
 
-            // Language Filter Chips
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _buildLanguageFilterChip('all', 'All Regions (${_allCulturalItems.length})'),
-                  const SizedBox(width: 8),
-                  _buildLanguageFilterChip('as', 'Assamese 🇮🇳'),
-                  const SizedBox(width: 8),
-                  _buildLanguageFilterChip('bn', 'Bengali 🇮🇳'),
-                  const SizedBox(width: 8),
-                  _buildLanguageFilterChip('hi', 'Hindi 🇮🇳'),
-                  const SizedBox(width: 8),
-                  _buildLanguageFilterChip('te', 'Telugu 🇮🇳'),
-                  const SizedBox(width: 8),
-                  _buildLanguageFilterChip('ta', 'Tamil 🇮🇳'),
-                  const SizedBox(width: 8),
-                  _buildLanguageFilterChip('en', 'English / Family 🏡'),
-                  const SizedBox(width: 8),
-                  _buildLanguageFilterChip('sa', 'Traditional 📜'),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
+            if (_selectedLanguageGroup == null) ...[
+              // Display the Language Groups First as requested
+              ..._languageGroups.map((grp) {
+                final code = grp['code'] as String;
+                final name = grp['name'] as String;
+                final sub = grp['sub'] as String;
+                                final icon = grp['icon'] as String;
+                final color = grp['color'] as Color;
+                final count = _getItemsForGroup(code).length;
 
-            Builder(
-              builder: (context) {
-                final items = _filteredCulturalItems;
-                if (items.isEmpty) {
-                  return Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Center(
-                      child: Text('No content items found for this language filter.'),
-                    ),
-                  );
-                }
-
-                return Column(
-                  children: items.map((item) {
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      elevation: 0,
-                      color: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        side: BorderSide(color: AppColors.sandalwoodGold.withValues(alpha: 0.3)),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  elevation: 0,
+                  color: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: BorderSide(color: color.withValues(alpha: 0.3), width: 1.2),
+                  ),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(16),
+                    onTap: () {
+                      SoundService.playTap();
+                      setState(() {
+                        _selectedLanguageGroup = code;
+                      });
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: color.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(icon, style: const TextStyle(fontSize: 24)),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.terracottaPrimary.withValues(alpha: 0.12),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    '${_getLanguageFlag(item.languageCode)} ${item.category.toUpperCase()}',
-                                    style: GoogleFonts.atkinsonHyperlegible(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.terracottaPrimary,
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        name,
+                                        style: GoogleFonts.newsreader(
+                                          fontSize: 17 * fontScale,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.charcoalText,
+                                        ),
+                                      ),
                                     ),
-                                  ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: color.withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        '$count items',
+                                        style: GoogleFonts.atkinsonHyperlegible(
+                                          fontSize: 11 * fontScale,
+                                          fontWeight: FontWeight.bold,
+                                          color: color,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    item.title,
-                                    style: GoogleFonts.newsreader(
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.charcoalText,
-                                    ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  sub,
+                                  style: GoogleFonts.atkinsonHyperlegible(
+                                    fontSize: 12 * fontScale,
+                                    color: AppColors.secondaryText,
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 10),
-                            Text(
-                              item.originalScriptText,
-                              style: GoogleFonts.newsreader(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.charcoalText,
-                              ),
+                          ),
+                          const SizedBox(width: 8),
+                          Icon(Icons.arrow_forward_ios_rounded, size: 16, color: color),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ] else ...[
+              // Header when a specific language group is selected
+              Builder(
+                builder: (context) {
+                  final activeGrp = _languageGroups.firstWhere(
+                    (g) => g['code'] == _selectedLanguageGroup,
+                    orElse: () => _languageGroups.first,
+                  );
+                  final color = activeGrp['color'] as Color;
+                  final items = _getItemsForGroup(_selectedLanguageGroup);
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Back to all groups button + Title
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: color.withValues(alpha: 0.25)),
+                        ),
+                        child: Row(
+                          children: [
+                            IconButton(
+                              visualDensity: VisualDensity.compact,
+                              icon: Icon(Icons.arrow_back, color: color),
+                              onPressed: () {
+                                SoundService.playTap();
+                                setState(() {
+                                  _selectedLanguageGroup = null;
+                                });
+                              },
+                              tooltip: 'Back to all language traditions',
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Transliteration: ${item.transliteration}',
-                              style: GoogleFonts.atkinsonHyperlegible(
-                                fontSize: 12,
-                                fontStyle: FontStyle.italic,
-                                color: AppColors.secondaryText,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              'Meaning: ${item.englishMeaning}',
-                              style: GoogleFonts.atkinsonHyperlegible(
-                                fontSize: 13,
-                                color: AppColors.charcoalText,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: AppColors.sageSecondary.withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Icon(Icons.psychology, size: 16, color: AppColors.sageSecondary),
-                                  const SizedBox(width: 6),
-                                  Expanded(
-                                    child: Text(
-                                      'Cognitive Target: ${item.cognitivePurpose}',
-                                      style: GoogleFonts.atkinsonHyperlegible(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.sageSecondary,
-                                      ),
+                                  Text(
+                                    activeGrp['name'] as String,
+                                    style: GoogleFonts.newsreader(
+                                      fontSize: 16 * fontScale,
+                                      fontWeight: FontWeight.bold,
+                                      color: color,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Showing ${items.length} recitation pieces',
+                                    style: GoogleFonts.atkinsonHyperlegible(
+                                      fontSize: 11 * fontScale,
+                                      color: AppColors.secondaryText,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 12),
-                            ElevatedButton.icon(
+                            TextButton(
                               onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => CulturalPipelineScreen(item: item),
-                                  ),
-                                );
+                                SoundService.playTap();
+                                setState(() {
+                                  _selectedLanguageGroup = null;
+                                });
                               },
-                              icon: const Icon(Icons.record_voice_over_rounded, size: 20),
-                              label: const Text('Start 7-Stage Recitation & Recall'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.sageSecondary,
-                                foregroundColor: Colors.white,
-                                minimumSize: const Size.fromHeight(48),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                              child: Text(
+                                'Change',
+                                style: GoogleFonts.atkinsonHyperlegible(
+                                  fontSize: 12 * fontScale,
+                                  fontWeight: FontWeight.bold,
+                                  color: color,
                                 ),
                               ),
                             ),
                           ],
                         ),
                       ),
-                    );
-                  }).toList(),
-                );
-              },
-            ),
+                      const SizedBox(height: 14),
+
+                      // List of Shlokas / Poems for this Language
+                      ...items.map((item) {
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 14),
+                          elevation: 0,
+                          color: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: BorderSide(color: color.withValues(alpha: 0.25)),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: color.withValues(alpha: 0.12),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        '${_getLanguageFlag(item.languageCode)} ${item.category.toUpperCase()}',
+                                        style: GoogleFonts.atkinsonHyperlegible(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: color,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        item.title,
+                                        style: GoogleFonts.newsreader(
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.charcoalText,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                Text(
+                                  item.originalScriptText,
+                                  style: GoogleFonts.newsreader(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.charcoalText,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Transliteration: ${item.transliteration}',
+                                  style: GoogleFonts.atkinsonHyperlegible(
+                                    fontSize: 12,
+                                    fontStyle: FontStyle.italic,
+                                    color: AppColors.secondaryText,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  'Meaning: ${item.englishMeaning}',
+                                  style: GoogleFonts.atkinsonHyperlegible(
+                                    fontSize: 13,
+                                    color: AppColors.charcoalText,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: color.withValues(alpha: 0.08),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.psychology, size: 16, color: color),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: Text(
+                                          'Cognitive Target: ${item.cognitivePurpose}',
+                                          style: GoogleFonts.atkinsonHyperlegible(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: color,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                ElevatedButton.icon(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => CulturalPipelineScreen(item: item),
+                                      ),
+                                    );
+                                  },
+                                  icon: const Icon(Icons.record_voice_over_rounded, size: 20),
+                                  label: const Text('Start 7-Stage Recitation & Recall'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: color,
+                                    foregroundColor: Colors.white,
+                                    minimumSize: const Size.fromHeight(48),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }),
+                    ],
+                  );
+                },
+              ),
+            ],
               ]),
             ),
           ),

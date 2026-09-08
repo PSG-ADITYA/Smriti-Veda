@@ -1,3 +1,4 @@
+import '../services/sound_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/everyday_memory.dart';
@@ -35,6 +36,271 @@ class _EverydayMemoryScreenState extends State<EverydayMemoryScreen>
     super.dispose();
   }
 
+  void _showAddRoutineDialog(BuildContext context) {
+    SoundService.playTap();
+    final appState = AppStateScope.of(context);
+    final titleCtrl = TextEditingController();
+    final timeCtrl = TextEditingController(text: '7:00 AM');
+    final descCtrl = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          'Add Daily Routine Step',
+          style: GoogleFonts.newsreader(fontWeight: FontWeight.bold, color: AppColors.charcoalText),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Routine Step Name',
+                  hintText: 'e.g., Evening Walk in Park',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: timeCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Target Time',
+                  hintText: 'e.g., 6:00 PM',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: descCtrl,
+                maxLines: 2,
+                decoration: const InputDecoration(
+                  labelText: 'Description / Notes',
+                  hintText: 'e.g., Walk 500 steps around the garden',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.terracottaPrimary,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              final title = titleCtrl.text.trim();
+              if (title.isEmpty) return;
+              final newStep = RoutineStep(
+                id: 'routine_${DateTime.now().millisecondsSinceEpoch}',
+                stepNumber: appState.routineSteps.length + 1,
+                title: title,
+                description: descCtrl.text.trim(),
+                targetTime: timeCtrl.text.trim().isNotEmpty ? timeCtrl.text.trim() : 'Daily',
+                isCompleted: false,
+              );
+              appState.addRoutineStep(newStep);
+              SoundService.playSuccess();
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Routine step "$title" added to daily memory!')),
+              );
+            },
+            child: const Text('Save Step'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddReminderDialog(BuildContext context) {
+    SoundService.playTap();
+    final appState = AppStateScope.of(context);
+    final titleCtrl = TextEditingController();
+    final timeCtrl = TextEditingController(text: '8:00 AM');
+    final descCtrl = TextEditingController();
+    String selectedCategory = ReminderCategory.health;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDlgState) => AlertDialog(
+          title: Text(
+            'Add Personal Reminder',
+            style: GoogleFonts.newsreader(fontWeight: FontWeight.bold, color: AppColors.charcoalText),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Reminder Title',
+                    hintText: 'e.g., Take Blood Pressure Medicine',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: timeCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Time',
+                    hintText: 'e.g., 8:00 AM',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: selectedCategory,
+                  decoration: const InputDecoration(
+                    labelText: 'Category',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: ReminderCategory.all.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                  onChanged: (val) {
+                    if (val != null) setDlgState(() => selectedCategory = val);
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: descCtrl,
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                    labelText: 'Instructions / Notes',
+                    hintText: 'e.g., Take with warm water after breakfast',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.terracottaPrimary,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () {
+                final title = titleCtrl.text.trim();
+                if (title.isEmpty) return;
+                final newRem = EverydayReminder(
+                  id: 'rem_${DateTime.now().millisecondsSinceEpoch}',
+                  title: title,
+                  description: descCtrl.text.trim(),
+                  date: DateTime.now(),
+                  time: const TimeOfDay(hour: 8, minute: 0),
+                  category: selectedCategory,
+                  isCompleted: false,
+                );
+                appState.addReminder(newRem);
+                SoundService.playSuccess();
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Reminder "$title" saved successfully!')),
+                );
+              },
+              child: const Text('Save Reminder'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showAddFamiliarPersonDialog(BuildContext context) {
+    SoundService.playTap();
+    final appState = AppStateScope.of(context);
+    final nameCtrl = TextEditingController();
+    final relCtrl = TextEditingController();
+    final noteCtrl = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          'Add Familiar Person / Family Anchor',
+          style: GoogleFonts.newsreader(fontWeight: FontWeight.bold, color: AppColors.charcoalText),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Name',
+                  hintText: 'e.g., Aarav',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: relCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Relationship',
+                  hintText: 'e.g., Grandson, Daughter, Neighbor',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: noteCtrl,
+                maxLines: 2,
+                decoration: const InputDecoration(
+                  labelText: 'Memory Clue / Notes',
+                  hintText: 'e.g., Lives in Bengaluru, loves playing chess',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.terracottaPrimary,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              final name = nameCtrl.text.trim();
+              if (name.isEmpty) return;
+              final newPerson = FamiliarPerson(
+                id: 'person_${DateTime.now().millisecondsSinceEpoch}',
+                name: name,
+                relationship: relCtrl.text.trim().isNotEmpty ? relCtrl.text.trim() : 'Family',
+                note: noteCtrl.text.trim(),
+                avatarColor: AppColors.terracottaPrimary,
+                initials: name.isNotEmpty ? name[0].toUpperCase() : 'FP',
+              );
+              appState.addFamiliarPerson(newPerson);
+              SoundService.playSuccess();
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Familiar person "$name" saved to memory anchors!')),
+              );
+            },
+            child: const Text('Save Person'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final appState = AppStateScope.of(context);
@@ -45,6 +311,26 @@ class _EverydayMemoryScreenState extends State<EverydayMemoryScreen>
       builder: (context, _) {
         return Scaffold(
           backgroundColor: AppColors.canvasIvory,
+          floatingActionButton: FloatingActionButton.extended(
+            backgroundColor: AppColors.terracottaPrimary,
+            foregroundColor: Colors.white,
+            icon: const Icon(Icons.add),
+            label: Text(
+              _tabController.index == 0
+                  ? '+ Reminder'
+                  : (_tabController.index == 1 ? '+ Routine' : '+ Person'),
+              style: GoogleFonts.atkinsonHyperlegible(fontWeight: FontWeight.bold),
+            ),
+            onPressed: () {
+              if (_tabController.index == 0) {
+                _showAddReminderDialog(context);
+              } else if (_tabController.index == 1) {
+                _showAddRoutineDialog(context);
+              } else {
+                _showAddFamiliarPersonDialog(context);
+              }
+            },
+          ),
           appBar: AppBar(
             backgroundColor: AppColors.canvasIvory,
             elevation: 0,
@@ -78,13 +364,131 @@ class _EverydayMemoryScreenState extends State<EverydayMemoryScreen>
               ],
             ),
           ),
-          body: TabBarView(
-            controller: _tabController,
+          body: Column(
             children: [
-              _RemindersTab(appState: appState, isDark: isDark),
-              _RoutineTab(appState: appState, isDark: isDark),
-              _ParichayTab(appState: appState, isDark: isDark),
-              _RecallGameTab(appState: appState, isDark: isDark),
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.sandalwoodGold.withValues(alpha: 0.45)),
+                  boxShadow: const [BoxShadow(color: Color(0x0A000000), blurRadius: 4, offset: Offset(0, 2))],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 18,
+                          backgroundColor: AppColors.terracottaSoft,
+                          child: Text(
+                            appState.userName.trim().isNotEmpty ? appState.userName.trim()[0].toUpperCase() : 'S',
+                            style: GoogleFonts.newsreader(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.terracottaPrimary),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Everyday Memory • ${appState.userName.trim().isNotEmpty ? appState.userName.trim() : "Senior"}',
+                                style: GoogleFonts.newsreader(
+                                  fontSize: 16 * appState.fontScale,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.charcoalText,
+                                ),
+                              ),
+                              Text(
+                                'Personal daily anchors, routines, and familiar connections',
+                                style: GoogleFonts.atkinsonHyperlegible(
+                                  fontSize: 12 * appState.fontScale,
+                                  color: AppColors.secondaryText,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          ActionChip(
+                            avatar: const Icon(Icons.alarm_add_rounded, size: 16, color: AppColors.terracottaPrimary),
+                            label: Text(
+                              '+ Add Reminder',
+                              style: GoogleFonts.atkinsonHyperlegible(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                                color: AppColors.terracottaPrimary,
+                              ),
+                            ),
+                            backgroundColor: AppColors.canvasIvory,
+                            side: BorderSide(color: AppColors.terracottaPrimary.withValues(alpha: 0.45), width: 1.2),
+                            onPressed: () {
+                              _tabController.animateTo(0);
+                              _showAddReminderDialog(context);
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                          ActionChip(
+                            avatar: const Icon(Icons.add_task_rounded, size: 16, color: AppColors.sageSecondary),
+                            label: Text(
+                              '+ Add Custom Routine',
+                              style: GoogleFonts.atkinsonHyperlegible(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                                color: AppColors.sageSecondary,
+                              ),
+                            ),
+                            backgroundColor: AppColors.canvasIvory,
+                            side: BorderSide(color: AppColors.sageSecondary.withValues(alpha: 0.5), width: 1.2),
+                            onPressed: () {
+                              _tabController.animateTo(1);
+                              _showAddRoutineDialog(context);
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                          ActionChip(
+                            avatar: const Icon(Icons.person_add_alt_1_rounded, size: 16, color: Color(0xFF6A1B9A)),
+                            label: Text(
+                              '+ Add Familiar Person',
+                              style: GoogleFonts.atkinsonHyperlegible(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                                color: const Color(0xFF6A1B9A),
+                              ),
+                            ),
+                            backgroundColor: AppColors.canvasIvory,
+                            side: const BorderSide(color: Color(0x666A1B9A), width: 1.2),
+                            onPressed: () {
+                              _tabController.animateTo(2);
+                              _showAddFamiliarPersonDialog(context);
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _RemindersTab(appState: appState, isDark: isDark),
+                    _RoutineTab(appState: appState, isDark: isDark),
+                    _ParichayTab(appState: appState, isDark: isDark),
+                    _RecallGameTab(appState: appState, isDark: isDark),
+                  ],
+                ),
+              ),
             ],
           ),
         );

@@ -8,8 +8,6 @@ import '../services/db_service.dart';
 import '../services/sound_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/pc_file_picker.dart';
-import '../widgets/pdf_viewer_dialog.dart';
-import 'medical_reports_screen.dart';
 import '../models/caregiver_info.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -23,15 +21,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _doctorController = TextEditingController();
   final _titleController = TextEditingController();
   final _locationController = TextEditingController();
-  final _docTitleController = TextEditingController();
-  final _docCategoryController = TextEditingController();
 
   bool _isEditingProfile = false;
   final _editNameController = TextEditingController();
   final _editAgeController = TextEditingController();
   final _editContactController = TextEditingController();
   String _editLanguage = 'hi';
-  String _selectedFileType = 'PDF';
 
   DateTime _selectedDate = DateTime.now().add(const Duration(days: 2));
 
@@ -53,8 +48,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _doctorController.dispose();
     _titleController.dispose();
     _locationController.dispose();
-    _docTitleController.dispose();
-    _docCategoryController.dispose();
     _editNameController.dispose();
     _editAgeController.dispose();
     _editContactController.dispose();
@@ -212,135 +205,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _showAddDocumentDialog(AppState appState) {
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text('Select & Attach System File', style: GoogleFonts.newsreader(fontWeight: FontWeight.bold)),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Choose document type to pick from system:',
-                  style: GoogleFonts.atkinsonHyperlegible(fontSize: 13, color: AppColors.secondaryText),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  children: [
-                    ChoiceChip(
-                      label: const Text('Medical Report'),
-                      selected: _docCategoryController.text == 'Medical Report' || _docCategoryController.text.isEmpty,
-                      onSelected: (_) {
-                        setDialogState(() {
-                          _docCategoryController.text = 'Medical Report';
-                          _docTitleController.text = 'Blood & Lipid Panel Report.pdf';
-                          _selectedFileType = 'PDF';
-                        });
-                      },
-                    ),
-                    ChoiceChip(
-                      label: const Text('Prescription'),
-                      selected: _docCategoryController.text == 'Prescription',
-                      onSelected: (_) {
-                        setDialogState(() {
-                          _docCategoryController.text = 'Prescription';
-                          _docTitleController.text = 'Dr_Sharma_Prescription_Sept.jpg';
-                          _selectedFileType = 'Image';
-                        });
-                      },
-                    ),
-                    ChoiceChip(
-                      label: const Text('Lab Scan'),
-                      selected: _docCategoryController.text == 'Lab Scan',
-                      onSelected: (_) {
-                        setDialogState(() {
-                          _docCategoryController.text = 'Lab Scan';
-                          _docTitleController.text = 'Brain_MRI_Scan_Report.pdf';
-                          _selectedFileType = 'PDF';
-                        });
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _docTitleController,
-                  decoration: const InputDecoration(
-                    labelText: 'System File Name / Document Title',
-                    prefixIcon: Icon(Icons.attach_file, color: AppColors.terracottaPrimary),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.sageSecondary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppColors.sageSecondary.withValues(alpha: 0.3)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.folder_open, color: AppColors.sageSecondary),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'System Location: LocalStorage/Documents/${_docTitleController.text.isEmpty ? "document.pdf" : _docTitleController.text}',
-                          style: GoogleFonts.atkinsonHyperlegible(fontSize: 12, color: AppColors.charcoalText),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                FocusManager.instance.primaryFocus?.unfocus();
-                Navigator.pop(ctx);
-              },
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.upload_file, size: 18),
-              label: const Text('Attach System Document'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.terracottaPrimary,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: () {
-                if (_docTitleController.text.isNotEmpty) {
-                  FocusManager.instance.primaryFocus?.unfocus();
-                  appState.patientFileRepo.addFile(
-                    PatientFile(
-                      id: DateTime.now().millisecondsSinceEpoch.toString(),
-                      title: _docTitleController.text,
-                      category: _docCategoryController.text.isEmpty ? 'Medical Report' : _docCategoryController.text,
-                      uploadDate: DateTime.now(),
-                      fileType: _selectedFileType,
-                      localPath: 'documents/${_docTitleController.text.replaceAll(' ', '_')}.${_selectedFileType.toLowerCase()}',
-                    ),
-                  );
-                  _docTitleController.clear();
-                  _docCategoryController.clear();
-                  if (ctx.mounted) Navigator.pop(ctx);
-                  setState(() {});
-                }
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   void _showAvatarPickerModal(BuildContext context, AppState appState) {
-    final avatarEmojis = ['👴', '👵', '📜', '🩺', '🪷', '🌸', '🎨', '🕉️', '🧘‍♂️', '👑', '🌟'];
+    final avatarEmojis = ['👴', '👵', '🧓', '👨‍🦳', '👩‍🦳', '👨', '👩', '🧑‍⚕️'];
 
     showDialog(
       context: context,
@@ -865,100 +731,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         subtitle: Text('${app.doctorName} • ${app.location}\n${app.date.day}/${app.date.month}/${app.date.year}'),
                         isThreeLine: true,
-                      ),
-                    );
-                  }).toList(),
-                );
-              },
-            ),
-
-            const SizedBox(height: 24),
-
-            // Patient Files & Documents Section
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Patient Documents',
-                  style: GoogleFonts.newsreader(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.charcoalText,
-                  ),
-                ),
-                TextButton.icon(
-                  onPressed: () => _showAddDocumentDialog(appState),
-                  icon: const Icon(Icons.upload_file, color: AppColors.terracottaPrimary),
-                  label: const Text('Add System File', style: TextStyle(color: AppColors.terracottaPrimary)),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-
-            Builder(
-              builder: (context) {
-                final files = appState.patientFileRepo.getFiles();
-                if (files.isEmpty) {
-                  return Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.sandalwoodGold.withValues(alpha: 0.2)),
-                    ),
-                    child: Text(
-                      'No medical reports or documents added yet.',
-                      style: GoogleFonts.atkinsonHyperlegible(color: AppColors.secondaryText),
-                    ),
-                  );
-                }
-
-                return Column(
-                  children: files.map((file) {
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 10),
-                      elevation: 0,
-                      color: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(color: AppColors.sageSecondary.withValues(alpha: 0.3)),
-                      ),
-                      child: ListTile(
-                        leading: const CircleAvatar(
-                          backgroundColor: AppColors.canvasIvory,
-                          child: Icon(Icons.description, color: AppColors.sageSecondary),
-                        ),
-                        title: Text(
-                          file.title,
-                          style: GoogleFonts.atkinsonHyperlegible(fontWeight: FontWeight.bold),
-                        ),
-                        subtitle: Text('Category: ${file.category} • Uploaded: ${file.uploadDate.day}/${file.uploadDate.month}/${file.uploadDate.year}'),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
-                              onPressed: () {
-                                SoundService().playTapSound();
-                                appState.patientFileRepo.deleteFile(file.id);
-                                setState(() {});
-                              },
-                            ),
-                            const Icon(Icons.arrow_forward_ios, size: 16),
-                          ],
-                        ),
-                        onTap: () {
-                          if (file.fileType == 'PDF' || file.fileType == 'JPG' || file.fileType == 'PNG') {
-                            PdfViewerDialog.show(context, file);
-                          } else {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const MedicalReportsScreen(),
-                              ),
-                            );
-                          }
-                        },
                       ),
                     );
                   }).toList(),

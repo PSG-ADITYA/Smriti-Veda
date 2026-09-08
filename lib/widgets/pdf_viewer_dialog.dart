@@ -39,7 +39,11 @@ class _PDFViewerDialogState extends State<PDFViewerDialog> {
     _pdfViewerController = PdfViewerController();
     _activeBytes = widget.file.fileBytes;
     _resolvedPath = widget.file.localPath;
-    _loadFileContent();
+    if (_activeBytes != null && _activeBytes!.isNotEmpty) {
+      _isLoading = false;
+    } else {
+      _loadFileContent();
+    }
   }
 
   Future<void> _loadFileContent() async {
@@ -318,6 +322,7 @@ class _PDFViewerDialogState extends State<PDFViewerDialog> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.terracottaPrimary,
                       foregroundColor: Colors.white,
+                      minimumSize: const Size(80, 40),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                     ),
@@ -349,17 +354,17 @@ class _PDFViewerDialogState extends State<PDFViewerDialog> {
   }
 
   Widget _buildPdfView(PatientFile file) {
-    final hasValidPath = file.localPath != null && File(file.localPath!).existsSync();
     final hasBytes = _activeBytes != null && _activeBytes!.isNotEmpty;
+    final hasValidPath = file.localPath != null && File(file.localPath!).existsSync();
 
-    if (!hasValidPath && !hasBytes) {
-      return _buildErrorCard(file, 'PDF file not accessible on this device storage.');
+    if (!hasBytes && !hasValidPath) {
+      return _buildErrorCard(file, 'PDF document not found in device storage or memory.');
     }
 
     Widget pdfWidget;
-    if (hasValidPath) {
-      pdfWidget = SfPdfViewer.file(
-        File(file.localPath!),
+    if (hasBytes) {
+      pdfWidget = SfPdfViewer.memory(
+        _activeBytes!,
         controller: _pdfViewerController,
         canShowScrollHead: true,
         canShowScrollStatus: true,
@@ -389,8 +394,8 @@ class _PDFViewerDialogState extends State<PDFViewerDialog> {
         },
       );
     } else {
-      pdfWidget = SfPdfViewer.memory(
-        _activeBytes!,
+      pdfWidget = SfPdfViewer.file(
+        File(file.localPath!),
         controller: _pdfViewerController,
         canShowScrollHead: true,
         canShowScrollStatus: true,

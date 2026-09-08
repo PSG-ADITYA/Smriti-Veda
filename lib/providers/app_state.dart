@@ -47,6 +47,8 @@ class AppState extends ChangeNotifier {
   // Authentication & Profile State
   bool _isLoggedIn = false;
   String _userName = '';
+  String _patientName = 'Senior Patient';
+  String _caregiverName = 'Dr. Sharma (Caregiver)';
   String _credentialId = '';
   String _userRole = 'Patient'; // 'Patient' or 'Caregiver'
   String _selectedLanguage = 'en'; // default English
@@ -89,8 +91,24 @@ class AppState extends ChangeNotifier {
   }
 
   void _restoreSession() {
+    // Always restore persisted app language first
+    final savedLang = DbService().getPersistentItem('app_selected_language');
+    if (savedLang != null && savedLang.isNotEmpty) {
+      _selectedLanguage = savedLang;
+    }
+
+    final savedPatient = DbService().getPersistentItem('saved_patient_name');
+    if (savedPatient != null && savedPatient.isNotEmpty) {
+      _patientName = savedPatient;
+    }
+    final savedCaregiver = DbService().getPersistentItem('saved_caregiver_name');
+    if (savedCaregiver != null && savedCaregiver.isNotEmpty) {
+      _caregiverName = savedCaregiver;
+    }
+
     if (!DbService().hasActiveSession) {
       _isLoggedIn = false;
+      _userName = _patientName;
       _reloadUserData();
       return;
     }
@@ -102,7 +120,14 @@ class AppState extends ChangeNotifier {
         _userName = profile['name'] as String? ?? 'Patient';
         _credentialId = profile['credentialId'] as String? ?? activeUid;
         _userRole = profile['role'] as String? ?? 'Patient';
-        _selectedLanguage = profile['language'] as String? ?? 'en';
+        if (profile['language'] != null) {
+          _selectedLanguage = profile['language'] as String;
+        }
+        if (_userRole == 'Caregiver') {
+          _caregiverName = _userName;
+        } else {
+          _patientName = _userName;
+        }
         _userAge = profile['age'] as int?;
         _emergencyContact = profile['emergencyContact'] as String?;
         _medicalNotes = profile['medicalNotes'] as String?;
@@ -120,9 +145,11 @@ class AppState extends ChangeNotifier {
     _familiarPeople.addAll(db.getFamiliarPeople());
     _connectedCaregiver = db.getConnectedCaregiver();
 
-    // If demo mode is active and routine steps are empty, initialize demo routine
     _routineSteps.clear();
-    if (db.isDemoModeActive) {
+    final savedRoutines = db.getRoutineSteps();
+    if (savedRoutines.isNotEmpty) {
+      _routineSteps.addAll(savedRoutines);
+    } else if (db.isDemoModeActive) {
       _routineSteps.addAll([
         RoutineStep(
           id: 'demo_step_1',
@@ -204,7 +231,17 @@ class AppState extends ChangeNotifier {
   }
 
   bool get isLoggedIn => _isLoggedIn;
-  String get userName => _userName.isEmpty ? (_userRole == 'Caregiver' ? 'Caregiver' : 'Patient') : _userName;
+  String get patientName => _patientName;
+  String get caregiverName => _caregiverName;
+  String get userName {
+    if (_userName.isEmpty) {
+      return _userRole == 'Caregiver' ? 'Caregiver' : 'Patient';
+    }
+    if (_userRole == 'Caregiver') {
+      return _caregiverName.isNotEmpty ? _caregiverName : _userName;
+    }
+    return _patientName.isNotEmpty ? _patientName : _userName;
+  }
   String get credentialId => _credentialId;
   String get userRole => _userRole;
   String get selectedLanguage => _selectedLanguage;
@@ -212,8 +249,10 @@ class AppState extends ChangeNotifier {
   void setSelectedLanguage(String languageCode) {
     if (_selectedLanguage != languageCode) {
       _selectedLanguage = languageCode;
-      if (_credentialId.isNotEmpty) {
-        DbService().updateUserProfile(_credentialId, {'language': languageCode});
+      DbService().setPersistentItem('app_selected_language', languageCode);
+      final uid = _credentialId.isNotEmpty ? _credentialId : DbService().activeUserId;
+      if (uid.isNotEmpty) {
+        DbService().updateUserProfile(uid, {'language': languageCode});
       }
       notifyListeners();
     }
@@ -268,6 +307,14 @@ class AppState extends ChangeNotifier {
         ? role.trim()
         : (existingProfile?['role']?.toString().trim() ?? 'Patient');
 
+    if (_userRole == 'Caregiver') {
+      _caregiverName = _userName;
+      db.setPersistentItem('saved_caregiver_name', _caregiverName);
+    } else {
+      _patientName = _userName;
+      db.setPersistentItem('saved_patient_name', _patientName);
+    }
+
     _selectedLanguage = language.trim().isNotEmpty
         ? language.trim()
         : (existingProfile?['language']?.toString().trim() ?? 'en');
@@ -298,11 +345,24 @@ class AppState extends ChangeNotifier {
     String? medicalNotes,
     String? language,
   }) {
-    if (name != null) _userName = name.trim();
+    if (name != null) {
+      final trimmed = name.trim();
+      _userName = trimmed;
+      if (_userRole == 'Caregiver') {
+        _caregiverName = trimmed;
+        DbService().setPersistentItem('saved_caregiver_name', trimmed);
+      } else {
+        _patientName = trimmed;
+        DbService().setPersistentItem('saved_patient_name', trimmed);
+      }
+    }
     if (age != null) _userAge = age;
     if (emergencyContact != null) _emergencyContact = emergencyContact.trim();
     if (medicalNotes != null) _medicalNotes = medicalNotes.trim();
-    if (language != null) _selectedLanguage = language;
+    if (language != null) {
+      _selectedLanguage = language;
+      DbService().setPersistentItem('app_selected_language', language);
+    }
 
     if (_credentialId.isNotEmpty) {
       DbService().saveUserProfile(
@@ -322,14 +382,10 @@ class AppState extends ChangeNotifier {
   void switchRole() {
     if (_userRole == 'Patient') {
       _userRole = 'Caregiver';
-      if (_userName == 'Senior Patient' || _userName == 'Patient') {
-        _userName = 'Dr. Sharma (Caregiver)';
-      }
+      _userName = _caregiverName;
     } else {
       _userRole = 'Patient';
-      if (_userName == 'Dr. Sharma (Caregiver)') {
-        _userName = 'Senior Patient';
-      }
+      _userName = _patientName;
     }
     _currentTab = 0;
     notifyListeners();
@@ -339,9 +395,13 @@ class AppState extends ChangeNotifier {
     _isLoggedIn = false;
     _currentTab = 0;
     DbService().clearActiveSession();
+    DbService().setPersistentItem('app_selected_language', 'en');
     _userName = '';
+    _patientName = 'Senior Patient';
+    _caregiverName = 'Dr. Sharma (Caregiver)';
     _credentialId = '';
     _userRole = 'Patient';
+    _selectedLanguage = 'en';
     _userAge = null;
     _emergencyContact = null;
     _medicalNotes = null;
@@ -554,6 +614,7 @@ class AppState extends ChangeNotifier {
 
   void addRoutineStep(RoutineStep step) {
     _routineSteps.add(step);
+    DbService().saveRoutineStep(step);
     notifyListeners();
   }
 
@@ -561,6 +622,7 @@ class AppState extends ChangeNotifier {
     final index = _routineSteps.indexWhere((s) => s.id == updated.id);
     if (index != -1) {
       _routineSteps[index] = updated;
+      DbService().saveRoutineStep(updated);
       notifyListeners();
     }
   }
@@ -570,6 +632,7 @@ class AppState extends ChangeNotifier {
     for (int i = 0; i < _routineSteps.length; i++) {
       _routineSteps[i] = _routineSteps[i].copyWith(stepNumber: i + 1);
     }
+    DbService().deleteRoutineStep(id);
     notifyListeners();
   }
 
@@ -690,25 +753,22 @@ class AppState extends ChangeNotifier {
   }
 }
 
-class AppStateScope extends InheritedWidget {
+class AppStateScope extends InheritedNotifier<AppState> {
   final AppState state;
 
   const AppStateScope({
     super.key,
     required this.state,
     required super.child,
-  });
+  }) : super(notifier: state);
 
   static AppState? maybeOf(BuildContext context) {
-    return context.dependOnInheritedWidgetOfExactType<AppStateScope>()?.state;
+    return context.dependOnInheritedWidgetOfExactType<AppStateScope>()?.notifier;
   }
 
   static AppState of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<AppStateScope>();
     assert(scope != null, 'No AppStateScope found in context');
-    return scope!.state;
+    return scope!.notifier!;
   }
-
-  @override
-  bool updateShouldNotify(AppStateScope oldWidget) => true;
 }

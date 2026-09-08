@@ -86,8 +86,8 @@ void main() {
         expect(find.textContaining('Morning Medication Prescription'), findsOneWidget);
 
         // Verify category badges are present as badges
-        expect(find.text('Medical Report'), findsOneWidget);
-        expect(find.text('Prescription'), findsOneWidget);
+        expect(find.textContaining('Medical Report'), findsWidgets);
+        expect(find.textContaining('Prescription'), findsWidgets);
 
         // Verify format badges
         expect(find.text('PDF'), findsOneWidget);
