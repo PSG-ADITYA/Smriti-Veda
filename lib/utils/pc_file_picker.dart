@@ -27,16 +27,17 @@ class PcFilePicker {
       final files = await FilePickerPlatform.instance.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
+        withData: true,
       );
 
       if (files.isNotEmpty) {
         final file = files.first;
         final path = file.path;
-        Uint8List? bytes;
-        int size = 0;
+        Uint8List? bytes = file.bytes;
+        int size = file.size;
 
         // If bytes are not loaded directly (common on native Android/iOS), read from path
-        if (path != null && !kIsWeb) {
+        if ((bytes == null || bytes.isEmpty) && path != null && !kIsWeb) {
           try {
             final f = File(path);
             if (await f.exists()) {

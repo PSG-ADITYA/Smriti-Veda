@@ -584,85 +584,223 @@ class _MedicalReportsScreenState extends State<MedicalReportsScreen> {
                 children: reports.map((file) {
                   final isPdf = file.fileType.toUpperCase() == 'PDF';
                   return Card(
-                    margin: const EdgeInsets.only(bottom: 12),
+                    margin: const EdgeInsets.only(bottom: 14),
                     elevation: 0,
                     color: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
-                      side: BorderSide(color: AppColors.sandalwoodGold.withValues(alpha: 0.3)),
+                      side: BorderSide(color: AppColors.sandalwoodGold.withValues(alpha: 0.35)),
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: isPdf ? Colors.redAccent.withOpacity(0.1) : AppColors.sageSecondary.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(
-                              isPdf ? Icons.picture_as_pdf : Icons.image,
-                              color: isPdf ? Colors.redAccent : AppColors.sageSecondary,
-                              size: 28,
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (_) => PDFViewerDialog(file: file),
+                        );
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // ── Top Row: Thumbnail + Title/Badges + Delete ──
+                            Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  file.title,
-                                  style: GoogleFonts.newsreader(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.charcoalText,
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: isPdf
+                                        ? Colors.redAccent.withValues(alpha: 0.1)
+                                        : AppColors.sageSecondary.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Icon(
+                                    isPdf ? Icons.picture_as_pdf : Icons.image,
+                                    color: isPdf ? Colors.redAccent : AppColors.sageSecondary,
+                                    size: 26,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Category: ${file.category} • Uploaded: ${file.uploadDate.toString().split(' ')[0]}',
-                                  style: GoogleFonts.atkinsonHyperlegible(
-                                    fontSize: 12,
-                                    color: AppColors.secondaryText,
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        file.title,
+                                        style: GoogleFonts.newsreader(
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.charcoalText,
+                                        ),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Wrap(
+                                        spacing: 6,
+                                        runSpacing: 4,
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.terracottaSoft,
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: Text(
+                                              file.category,
+                                              style: GoogleFonts.atkinsonHyperlegible(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.terracottaPrimary,
+                                              ),
+                                            ),
+                                          ),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFF3F1ED),
+                                              borderRadius: BorderRadius.circular(6),
+                                              border: Border.all(color: AppColors.borderSubtle),
+                                            ),
+                                            child: Text(
+                                              file.fileType.toUpperCase(),
+                                              style: GoogleFonts.atkinsonHyperlegible(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600,
+                                                color: AppColors.charcoalText,
+                                              ),
+                                            ),
+                                          ),
+                                          if (file.formattedFileSize.isNotEmpty)
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFF3F1ED),
+                                                borderRadius: BorderRadius.circular(6),
+                                              ),
+                                              child: Text(
+                                                file.formattedFileSize,
+                                                style: GoogleFonts.atkinsonHyperlegible(
+                                                  fontSize: 11,
+                                                  color: AppColors.secondaryText,
+                                                ),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  file.notes,
-                                  style: GoogleFonts.atkinsonHyperlegible(
-                                    fontSize: 13,
-                                    color: AppColors.charcoalText,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                IconButton(
+                                  icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 22),
+                                  tooltip: 'Delete Report',
+                                  visualDensity: VisualDensity.compact,
+                                  onPressed: () => _confirmDelete(context, file),
                                 ),
                               ],
                             ),
-                          ),
-                          const SizedBox(width: 10),
-                          ElevatedButton.icon(
-                            onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder: (_) => PDFViewerDialog(file: file),
-                              );
-                            },
-                            icon: const Icon(Icons.visibility, size: 16),
-                            label: const Text('View'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.sageSecondary,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+
+                            // ── Metadata: Upload Date & File Info ──
+                            const SizedBox(height: 10),
+                            Wrap(
+                              spacing: 12,
+                              runSpacing: 4,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.calendar_today_outlined, size: 13, color: AppColors.secondaryText),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'Uploaded: ${file.uploadDate.toString().split(' ')[0]}',
+                                      style: GoogleFonts.atkinsonHyperlegible(
+                                        fontSize: 12,
+                                        color: AppColors.secondaryText,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (file.originalFileName != null &&
+                                    file.originalFileName!.isNotEmpty &&
+                                    file.originalFileName != file.title)
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.attach_file, size: 13, color: AppColors.secondaryText),
+                                      const SizedBox(width: 2),
+                                      ConstrainedBox(
+                                        constraints: const BoxConstraints(maxWidth: 180),
+                                        child: Text(
+                                          file.originalFileName!,
+                                          style: GoogleFonts.atkinsonHyperlegible(
+                                            fontSize: 12,
+                                            color: AppColors.secondaryText,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                              ],
                             ),
-                          ),
-                          const SizedBox(width: 6),
-                          IconButton(
-                            icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                            onPressed: () => _confirmDelete(context, file),
-                          ),
-                        ],
+
+                            // ── Clinical Notes (If Present) ──
+                            if (file.notes.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF9F7F4),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: AppColors.borderSubtle),
+                                ),
+                                child: Text(
+                                  file.notes,
+                                  style: GoogleFonts.atkinsonHyperlegible(
+                                    fontSize: 12,
+                                    color: AppColors.charcoalText,
+                                    height: 1.35,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+
+                            // ── Action Button: View Report ──
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 42,
+                              child: OutlinedButton.icon(
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (_) => PDFViewerDialog(file: file),
+                                  );
+                                },
+                                icon: const Icon(Icons.visibility_outlined, size: 16),
+                                label: Text(
+                                  isPdf ? 'View PDF Document' : 'View Medical Scan',
+                                  style: GoogleFonts.atkinsonHyperlegible(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppColors.terracottaPrimary,
+                                  side: const BorderSide(color: AppColors.terracottaPrimary, width: 1.2),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   );

@@ -26,23 +26,55 @@ class MedicalReportService extends ChangeNotifier {
     String? targetUserId,
   }) async {
     String? finalLocalPath = localPath;
+    Uint8List? effectiveBytes = fileBytes;
 
-    // Persist file bytes directly to the application sandbox documents directory
-    if (fileBytes != null && fileBytes.isNotEmpty) {
+    if ((effectiveBytes == null || effectiveBytes.isEmpty) && localPath != null) {
       try {
-        final directory = await getApplicationDocumentsDirectory();
-        final reportsDir = Directory('${directory.path}/medical_reports');
-        if (!await reportsDir.exists()) {
-          await reportsDir.create(recursive: true);
+        final src = File(localPath);
+        if (await src.exists()) {
+          effectiveBytes = await src.readAsBytes();
         }
-        final safeName = (originalFileName ?? 'report_${DateTime.now().millisecondsSinceEpoch}')
-            .replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
-        final savedFile = File('${reportsDir.path}/${DateTime.now().millisecondsSinceEpoch}_$safeName');
-        await savedFile.writeAsBytes(fileBytes);
-        finalLocalPath = savedFile.path;
       } catch (e) {
-        debugPrint('File system storage notice: $e');
+        debugPrint('Could not read source file at $localPath: $e');
       }
+    }
+
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final reportsDir = Directory('${directory.path}/medical_reports');
+      if (!await reportsDir.exists()) {
+        await reportsDir.create(recursive: true);
+      }
+      final safeName = (originalFileName ?? 'report_${DateTime.now().millisecondsSinceEpoch}')
+          .replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+      final targetFile = File('${reportsDir.path}/${DateTime.now().millisecondsSinceEpoch}_$safeName');
+
+      if (effectiveBytes != null && effectiveBytes.isNotEmpty) {
+        await targetFile.writeAsBytes(effectiveBytes);
+        if (await targetFile.exists()) {
+          finalLocalPath = targetFile.path;
+        }
+      } else if (localPath != null) {
+        final src = File(localPath);
+        if (await src.exists()) {
+          await src.copy(targetFile.path);
+          if (await targetFile.exists()) {
+            finalLocalPath = targetFile.path;
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('File system storage notice: $e');
+    }
+
+    int? computedSize = fileSize ?? effectiveBytes?.length;
+    if (computedSize == null && finalLocalPath != null) {
+      try {
+        final f = File(finalLocalPath);
+        if (f.existsSync()) {
+          computedSize = f.lengthSync();
+        }
+      } catch (_) {}
     }
 
     final newReport = PatientFile(
@@ -53,9 +85,9 @@ class MedicalReportService extends ChangeNotifier {
       fileType: fileType,
       notes: notes,
       localPath: finalLocalPath,
-      fileBytes: fileBytes,
+      fileBytes: effectiveBytes,
       originalFileName: originalFileName,
-      fileSize: fileSize ?? fileBytes?.length,
+      fileSize: computedSize,
     );
 
     DbService().savePatientFile(newReport, targetUserId);
