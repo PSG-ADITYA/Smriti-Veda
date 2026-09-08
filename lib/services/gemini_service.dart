@@ -27,6 +27,12 @@ class AiGameTemplate {
 class GeminiService {
   final String? apiKey;
 
+  // In-memory caches to prevent duplicate network calls
+  static final Map<String, AiGameTemplate> _gameCache = {};
+  static final Map<String, String> _chatCache = {};
+  static final Map<String, String> _summaryCache = {};
+  static final Map<String, String> _planCache = {};
+
   GeminiService({this.apiKey});
 
   /// Generates a personalized cognitive game tailored to patient details or prompt.
@@ -38,6 +44,11 @@ class GeminiService {
     required String cognitiveFocus,
     String? customPrompt,
   }) async {
+    final cacheKey = '$patientName|$eraPreference|$cognitiveFocus|${customPrompt ?? ""}';
+    if (_gameCache.containsKey(cacheKey)) {
+      return _gameCache[cacheKey]!;
+    }
+
     final prompt = '''
 You are the AI Cognitive Game Architect for Smriti Veda, an elderly dementia care and cognitive longevity platform.
 Create a rich, personalized memory recall game for patient "$patientName".
@@ -82,7 +93,7 @@ Return ONLY a valid JSON object with the following fields:
               }
             ]
           }),
-        );
+        ).timeout(const Duration(seconds: 8));
 
         if (response.statusCode == 200) {
           final json = jsonDecode(response.body);
@@ -116,8 +127,9 @@ Return ONLY a valid JSON object with the following fields:
     final isObject = lowerPrompt.contains('object') || lowerPrompt.contains('item') || lowerPrompt.contains('market');
     final isGarden = lowerPrompt.contains('garden') || lowerPrompt.contains('spatial') || lowerPrompt.contains('path');
 
+    final AiGameTemplate template;
     if (isPictorial || isObject) {
-      return AiGameTemplate(
+      template = AiGameTemplate(
         title: '$patientName\'s Pictorial Object Memory Quest',
         category: 'Pictorial & Object Recall',
         description: 'Memorize these traditional nostalgic household items. Later, identify them among distractions!',
@@ -146,7 +158,7 @@ Return ONLY a valid JSON object with the following fields:
         ],
       );
     } else if (isGarden) {
-      return AiGameTemplate(
+      template = AiGameTemplate(
         title: '$patientName\'s Botanical Memory Path',
         category: 'Spatial Garden Path Recall',
         description: 'Trace the sensory footsteps along the herbal sanctuary garden path.',
@@ -172,9 +184,8 @@ Return ONLY a valid JSON object with the following fields:
           '🪵 Teakwood Garden Bench',
         ],
       );
-    }
-
-    return AiGameTemplate(
+    } else {
+      template = AiGameTemplate(
       title: '$patientName\'s $eraPreference Heritage Challenge',
       category: cognitiveFocus,
       description: 'Custom memory game generated for $patientName incorporating family members (${relativeNames.join(", ")}) and $eraPreference.',
@@ -196,6 +207,9 @@ Return ONLY a valid JSON object with the following fields:
         '🌲 Shillong Pine Tree Trail',
       ],
     );
+    }
+    _gameCache[cacheKey] = template;
+    return template;
   }
 
   /// General conversational AI response for patient wellness inquiries.
@@ -204,6 +218,11 @@ Return ONLY a valid JSON object with the following fields:
     required String patientName,
     required String language,
   }) async {
+    final cacheKey = '$patientName|$language|$userPrompt';
+    if (_chatCache.containsKey(cacheKey)) {
+      return _chatCache[cacheKey]!;
+    }
+
     final prompt = '''
 You are the compassionate, clinically-grounded Gemini AI Cognitive Companion in Smriti Veda, an app for elderly cognitive stimulation and dementia support.
 The user ($patientName) asks: "$userPrompt"
@@ -228,7 +247,7 @@ Provide a warm, encouraging, 2-3 sentence response with practical memory and wel
               }
             ]
           }),
-        );
+        ).timeout(const Duration(seconds: 8));
         if (response.statusCode == 200) {
           final json = jsonDecode(response.body);
           final candidates = json['candidates'] as List?;
@@ -252,6 +271,11 @@ Provide a warm, encouraging, 2-3 sentence response with practical memory and wel
     required int completedExercises,
     required String primaryLanguage,
   }) async {
+    final cacheKey = '$patientName|$streakDays|$completedExercises|$primaryLanguage';
+    if (_summaryCache.containsKey(cacheKey)) {
+      return _summaryCache[cacheKey]!;
+    }
+
     final prompt = '''
 You are an AI assistant in Smriti Veda.
 Generate a concise 3-sentence weekly summary for caregiver of patient "$patientName".
@@ -275,7 +299,7 @@ Streak: $streakDays days, Exercises: $completedExercises, Language: $primaryLang
               }
             ]
           }),
-        );
+        ).timeout(const Duration(seconds: 8));
         if (response.statusCode == 200) {
           final json = jsonDecode(response.body);
           final candidates = json['candidates'] as List?;
@@ -301,6 +325,11 @@ Streak: $streakDays days, Exercises: $completedExercises, Language: $primaryLang
     required String relatives,
     required String memoriesAndHobbies,
   }) async {
+    final cacheKey = '$patientName|$age|$cognitiveGoal|$language|$relatives|$memoriesAndHobbies';
+    if (_planCache.containsKey(cacheKey)) {
+      return _planCache[cacheKey]!;
+    }
+
     final prompt = '''
 You are the Lead Neuro-Cognitive AI Specialist for Smriti Veda, an elderly cognitive health platform.
 Design a highly personalized, warm, 4-week cognitive memory plan for senior patient "$patientName" (Age: $age).
@@ -335,7 +364,7 @@ Format the response into clear sections with emojis:
               }
             ]
           }),
-        );
+        ).timeout(const Duration(seconds: 8));
         if (response.statusCode == 200) {
           final json = jsonDecode(response.body);
           final candidates = json['candidates'] as List?;

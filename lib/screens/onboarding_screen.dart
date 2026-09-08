@@ -323,7 +323,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 'assets/images/app_logo.png',
                 width: 100,
                 height: 100,
-                errorBuilder: (_, __, ___) => const Icon(Icons.psychology, size: 80, color: AppColors.terracottaPrimary),
+                errorBuilder: (context, child, extra) => const Icon(Icons.psychology, size: 80, color: AppColors.terracottaPrimary),
               ),
             ),
             const SizedBox(height: 20),

@@ -36,14 +36,14 @@ class AbdmHealthDataService {
           'coding': [
             {
               'system': 'https://healthid.ndhm.gov.in/fhir/ndhm-loinc',
-              'code': 'COG-',
-              'display': '\ Domain Score'
+              'code': 'COG-${entry.key.name}',
+              'display': '${entry.key.name} Domain Score'
             }
           ],
-          'text': '\ Recall Index'
+          'text': '${entry.key.name} Recall Index'
         },
         'subject': {
-          'reference': 'Patient/',
+          'reference': 'Patient/$patientId',
           'display': patientName
         },
         'effectiveDateTime': nowIso,
@@ -99,11 +99,11 @@ class AbdmHealthDataService {
               'text': 'Smriti Veda Longitudinal Cognitive Health Summary'
             },
             'subject': {
-              'reference': 'Patient/',
+              'reference': 'Patient/$patientId',
               'display': patientName
             },
             'issued': nowIso,
-            'conclusion': 'Continuous non-pharmacological cognitive engagement tracked via Smriti Veda. Total exercises logged: \.'
+            'conclusion': 'Continuous non-pharmacological cognitive engagement tracked via Smriti Veda. Total exercises logged: ${attempts.length}.'
           }
         },
         ...observations.map((o) => {'resource': o}),

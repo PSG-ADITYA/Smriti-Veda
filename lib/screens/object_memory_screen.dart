@@ -1,3 +1,5 @@
+import '../models/game_difficulty.dart';
+import '../services/session_engine/memory_session_generator.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/exercise_attempt.dart';
@@ -124,7 +126,6 @@ class _ObjectMemoryScreenState extends State<ObjectMemoryScreen> {
   int _falseCount = 0;
   double _scorePct = 0.0;
 
-  RoomScene get _currentScene => kRoomScenes[_sceneIndex];
 
   @override
   void initState() {
@@ -132,14 +133,28 @@ class _ObjectMemoryScreenState extends State<ObjectMemoryScreen> {
     _loadScene();
   }
 
+  RoomScene? _dynamicScene;
+  RoomScene get _activeScene => _dynamicScene ?? kRoomScenes.first;
+
   void _loadScene() {
     _phase = ObjectGamePhase.study;
     _userSelections.clear();
-    _targetSet = Set.from(_currentScene.targetObjects.keys);
+    final session = MemorySessionGenerator.generateObjectSession(GameDifficulty.medium);
+    final targetMap = {for (final t in session.stimulus.targets) t.name: t.icon};
+    final distractorMap = {for (final d in session.stimulus.distractors) d.name: d.icon};
 
+    _dynamicScene = RoomScene(
+      title: session.stimulus.roomTitle,
+      subtitle: session.stimulus.roomSubtitle,
+      sceneIcon: Icons.room_preferences_rounded,
+      targetObjects: targetMap,
+      distractorObjects: distractorMap,
+    );
+
+    _targetSet = Set.from(targetMap.keys);
     final allItems = [
-      ..._currentScene.targetObjects.entries,
-      ..._currentScene.distractorObjects.entries,
+      ...targetMap.entries,
+      ...distractorMap.entries,
     ]..shuffle();
 
     _choiceGrid = allItems;
@@ -154,7 +169,7 @@ class _ObjectMemoryScreenState extends State<ObjectMemoryScreen> {
       _phase = ObjectGamePhase.recall;
       _userSelections.clear();
     });
-    SoundService.speak('Now tap the items that were in the ${_currentScene.title}.');
+    SoundService.speak('Now tap the items that were in the ${_activeScene.title}.');
   }
 
   void _toggleSelection(String itemName) {
@@ -258,7 +273,7 @@ class _ObjectMemoryScreenState extends State<ObjectMemoryScreen> {
             margin: const EdgeInsets.only(right: 16),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.terracottaPrimary.withOpacity(0.12),
+              color: AppColors.terracottaPrimary.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
@@ -290,7 +305,7 @@ class _ObjectMemoryScreenState extends State<ObjectMemoryScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.sandalwoodGold.withOpacity(0.4)),
+                  border: Border.all(color: AppColors.sandalwoodGold.withValues(alpha: 0.4)),
                   boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 4)],
                 ),
                 child: Row(
@@ -298,10 +313,10 @@ class _ObjectMemoryScreenState extends State<ObjectMemoryScreen> {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: AppColors.terracottaPrimary.withOpacity(0.12),
+                        color: AppColors.terracottaPrimary.withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(_currentScene.sceneIcon, color: AppColors.terracottaPrimary, size: 24),
+                      child: Icon(_activeScene.sceneIcon, color: AppColors.terracottaPrimary, size: 24),
                     ),
                     const SizedBox(width: 14),
                     Expanded(
@@ -319,7 +334,7 @@ class _ObjectMemoryScreenState extends State<ObjectMemoryScreen> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            _currentScene.title,
+                            _activeScene.title,
                             style: GoogleFonts.newsreader(
                               fontSize: 17 * fontScale,
                               fontWeight: FontWeight.bold,
@@ -328,7 +343,7 @@ class _ObjectMemoryScreenState extends State<ObjectMemoryScreen> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            _currentScene.subtitle,
+                            _activeScene.subtitle,
                             style: GoogleFonts.atkinsonHyperlegible(
                               fontSize: 12 * fontScale,
                               color: AppColors.secondaryText,
@@ -357,7 +372,7 @@ class _ObjectMemoryScreenState extends State<ObjectMemoryScreen> {
                 GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _currentScene.targetObjects.length,
+                  itemCount: _activeScene.targetObjects.length,
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     childAspectRatio: 2.2,
@@ -365,13 +380,13 @@ class _ObjectMemoryScreenState extends State<ObjectMemoryScreen> {
                     mainAxisSpacing: 12,
                   ),
                   itemBuilder: (context, idx) {
-                    final item = _currentScene.targetObjects.entries.elementAt(idx);
+                    final item = _activeScene.targetObjects.entries.elementAt(idx);
                     return Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.sandalwoodGold.withOpacity(0.5)),
+                        border: Border.all(color: AppColors.sandalwoodGold.withValues(alpha: 0.5)),
                         boxShadow: const [BoxShadow(color: Color(0x06000000), blurRadius: 4)],
                       ),
                       child: Row(
@@ -379,7 +394,7 @@ class _ObjectMemoryScreenState extends State<ObjectMemoryScreen> {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: AppColors.sageSecondary.withOpacity(0.15),
+                              color: AppColors.sageSecondary.withValues(alpha: 0.15),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(item.value, color: AppColors.sageSecondary, size: 20),
@@ -422,7 +437,7 @@ class _ObjectMemoryScreenState extends State<ObjectMemoryScreen> {
                 Text(
                   _phase == ObjectGamePhase.recall
                       ? 'WHICH OF THESE WERE IN THE SCENE? (SELECT ALL)'
-                      : 'RESULTS FOR ${_currentScene.title.toUpperCase()}:',
+                      : 'RESULTS FOR ${_activeScene.title.toUpperCase()}:',
                   style: GoogleFonts.atkinsonHyperlegible(
                     fontSize: 12 * fontScale,
                     fontWeight: FontWeight.bold,
@@ -451,19 +466,19 @@ class _ObjectMemoryScreenState extends State<ObjectMemoryScreen> {
                     Color border = Colors.black12;
 
                     if (!isSummary && isSelected) {
-                      bg = AppColors.terracottaPrimary.withOpacity(0.12);
+                      bg = AppColors.terracottaPrimary.withValues(alpha: 0.12);
                       border = AppColors.terracottaPrimary;
                     }
 
                     if (isSummary) {
                       if (isTarget && isSelected) {
-                        bg = AppColors.sageSecondary.withOpacity(0.18);
+                        bg = AppColors.sageSecondary.withValues(alpha: 0.18);
                         border = AppColors.sageSecondary;
                       } else if (!isTarget && isSelected) {
-                        bg = AppColors.terracottaPrimary.withOpacity(0.18);
+                        bg = AppColors.terracottaPrimary.withValues(alpha: 0.18);
                         border = AppColors.terracottaPrimary;
                       } else if (isTarget && !isSelected) {
-                        bg = AppColors.sandalwoodGold.withOpacity(0.15);
+                        bg = AppColors.sandalwoodGold.withValues(alpha: 0.15);
                         border = AppColors.sandalwoodGold;
                       }
                     }

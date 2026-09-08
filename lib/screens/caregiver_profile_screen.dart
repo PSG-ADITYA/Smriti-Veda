@@ -4,7 +4,6 @@ import '../providers/app_state.dart';
 import '../services/auth_service.dart';
 import '../services/caregiver_service.dart';
 import '../services/db_service.dart';
-import '../services/sound_service.dart';
 import '../theme/app_theme.dart';
 import 'welcome_screen.dart';
 

@@ -8,7 +8,9 @@ import '../services/db_service.dart';
 import '../services/sound_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/pc_file_picker.dart';
-import 'document_viewer_screen.dart';
+import '../widgets/pdf_viewer_dialog.dart';
+import 'medical_reports_screen.dart';
+import '../models/caregiver_info.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -503,7 +505,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           const SizedBox(height: 12),
                           DropdownButtonFormField<String>(
-                            value: _editLanguage,
+                            initialValue: _editLanguage,
                             decoration: InputDecoration(
                               labelText: 'Preferred Language',
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -719,6 +721,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ),
+
+            const SizedBox(height: 20),
+
+            // Caregiver Guardian Connection Status Card
+            _buildCaregiverConnectionCard(context, appState),
 
             const SizedBox(height: 24),
 
@@ -941,12 +948,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ],
                         ),
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => DocumentViewerScreen(file: file),
-                            ),
-                          );
+                          if (file.fileType == 'PDF' || file.fileType == 'JPG' || file.fileType == 'PNG') {
+                            PdfViewerDialog.show(context, file);
+                          } else {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const MedicalReportsScreen(),
+                              ),
+                            );
+                          }
                         },
                       ),
                     );
@@ -959,4 +970,190 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
+
+  Widget _buildCaregiverConnectionCard(BuildContext context, AppState appState) {
+    final cg = appState.connectedCaregiver;
+    final isLinked = cg != null && cg.isConnected;
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isLinked ? AppColors.sageSecondary.withValues(alpha: 0.4) : AppColors.sandalwoodGold.withValues(alpha: 0.3),
+          width: 1.5,
+        ),
+        boxShadow: const [
+          BoxShadow(color: Color(0x06000000), blurRadius: 8, offset: Offset(0, 3)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: isLinked ? AppColors.sageSoft : AppColors.terracottaSoft,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  isLinked ? Icons.verified_user_rounded : Icons.person_search_rounded,
+                  color: isLinked ? AppColors.sageSecondary : AppColors.terracottaPrimary,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Caregiver Guardian Status',
+                      style: GoogleFonts.newsreader(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.charcoalText,
+                      ),
+                    ),
+                    Text(
+                      isLinked ? 'Linked & Authorized Monitor' : 'No Caregiver Linked Currently',
+                      style: GoogleFonts.atkinsonHyperlegible(
+                        fontSize: 12,
+                        color: isLinked ? AppColors.sageSecondary : AppColors.secondaryText,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isLinked ? AppColors.sageSoft : const Color(0xFFF0ECE1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isLinked ? AppColors.sageSecondary : AppColors.sandalwoodGold,
+                  ),
+                ),
+                child: Text(
+                  isLinked ? 'ACTIVE' : 'STANDALONE',
+                  style: GoogleFonts.atkinsonHyperlegible(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: isLinked ? AppColors.sageSecondary : AppColors.charcoalText,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          const Divider(height: 1),
+          const SizedBox(height: 14),
+          if (isLinked) ...[
+            _buildCaregiverInfoRow(Icons.person_outline, 'Name', cg.name),
+            _buildCaregiverInfoRow(Icons.family_restroom, 'Relationship', cg.relationship),
+            if (cg.email.isNotEmpty)
+              _buildCaregiverInfoRow(Icons.email_outlined, 'Email', cg.email),
+            if (cg.phoneNumber.isNotEmpty)
+              _buildCaregiverInfoRow(Icons.phone_outlined, 'Emergency Contact', cg.phoneNumber),
+            _buildCaregiverInfoRow(Icons.security, 'Boundary', 'Progress & Medical Vault Authorized'),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.link_off, size: 16, color: Colors.redAccent),
+                    label: const Text('Unlink Caregiver', style: TextStyle(color: Colors.redAccent)),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Colors.redAccent),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    onPressed: () {
+                      DbService().disconnectCaregiver();
+                      setState(() {});
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Caregiver unlinked from this patient account.')),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ] else ...[
+            Text(
+              'A connected caregiver can monitor cognitive exercise completion, track vitality trends, and review medical documents remotely.',
+              style: GoogleFonts.atkinsonHyperlegible(
+                fontSize: 13,
+                color: AppColors.secondaryText,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.add_link, size: 18),
+              label: const Text('Link Demo Caregiver (Sunita Sharma)'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.terracottaPrimary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                minimumSize: const Size.fromHeight(44),
+              ),
+              onPressed: () {
+                final defaultCg = CaregiverInfo(
+                  id: 'caregiver',
+                  name: 'Sunita Sharma (Daughter)',
+                  relationship: 'Daughter & Primary Caregiver',
+                  email: 'sunita.caregiver@smritiveda.in',
+                  phoneNumber: '+91 98765 12340',
+                  isConnected: true,
+                  connectedAt: DateTime.now(),
+                  lastSyncedAt: DateTime.now(),
+                  syncStatusNote: 'Authorized for Cognitive Progress & Medical Vault',
+                );
+                DbService().saveConnectedCaregiver(defaultCg);
+                setState(() {});
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Caregiver Sunita Sharma linked successfully!')),
+                );
+              },
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCaregiverInfoRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: AppColors.sandalwoodGold),
+          const SizedBox(width: 8),
+          Text(
+            '$label: ',
+            style: GoogleFonts.atkinsonHyperlegible(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: AppColors.charcoalText,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: GoogleFonts.atkinsonHyperlegible(
+                fontSize: 13,
+                color: AppColors.secondaryText,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 }

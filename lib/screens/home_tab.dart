@@ -1,3 +1,4 @@
+import '../widgets/languages_section.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/everyday_memory.dart';
@@ -350,6 +351,7 @@ class _HomeTabState extends State<HomeTab> {
                   ),
                 ),
                 const SizedBox(height: 16),
+            const LanguagesSection(),
 
                 // ── 2. Adaptive Personalized Recommendation Card (SIH Flagship Loop) ──
                 _SurfaceCard(

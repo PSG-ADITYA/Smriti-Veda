@@ -30,7 +30,14 @@ class _MedicalReportsScreenState extends State<MedicalReportsScreen> {
     String? pickedFileName;
     String? pickedFilePath;
     int? pickedFileSize;
-    bool isUploading = false;
+    String uploadStatus = 'idle'; // 'idle', 'uploading', 'complete'
+
+    String formatFileSize(int bytes) {
+      if (bytes <= 0) return '0 B';
+      if (bytes < 1024) return '$bytes B';
+      if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    }
 
     Future<void> doPickFile(StateSetter setModalState) async {
       try {
@@ -78,66 +85,142 @@ class _MedicalReportsScreenState extends State<MedicalReportsScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Local Storage File Picker Button
-                InkWell(
-                  onTap: () => doPickFile(setModalState),
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
+                // Local Storage File Picker - Responsive Horizontal Flex Layout
+                if (pickedFileName != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     decoration: BoxDecoration(
-                      color: pickedFileName != null ? AppColors.sageSoft : AppColors.canvasIvory,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: pickedFileName != null ? AppColors.sageSecondary : AppColors.sandalwoodGold,
-                        width: 1.5,
-                      ),
+                      color: AppColors.canvasIvory,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.sageSecondary, width: 1.5),
                     ),
                     child: Row(
                       children: [
-                        Icon(
-                          pickedFileName != null ? Icons.check_circle : Icons.folder_open_rounded,
-                          color: pickedFileName != null ? AppColors.sageSecondary : AppColors.terracottaPrimary,
-                          size: 28,
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: selectedFileType == 'PDF'
+                                ? Colors.redAccent.withValues(alpha: 0.1)
+                                : AppColors.sageSecondary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            selectedFileType == 'PDF' ? Icons.picture_as_pdf : Icons.image,
+                            color: selectedFileType == 'PDF' ? Colors.redAccent : AppColors.sageSecondary,
+                            size: 22,
+                          ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                pickedFileName != null ? 'Selected File from Device:' : 'Choose File from Local Storage / Drive',
+                                pickedFileName!,
                                 style: GoogleFonts.atkinsonHyperlegible(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 14,
                                   color: AppColors.charcoalText,
                                 ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
+                              const SizedBox(height: 2),
                               Text(
-                                pickedFileName != null
-                                    ? '$pickedFileName (${((pickedFileSize ?? 0) / 1024).toStringAsFixed(1)} KB)'
-                                    : 'Click to open file picker (PDF, JPG, PNG)',
+                                formatFileSize(pickedFileSize ?? 0),
                                 style: GoogleFonts.atkinsonHyperlegible(
                                   fontSize: 12,
                                   color: AppColors.secondaryText,
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                               ),
                             ],
                           ),
                         ),
-                        ElevatedButton(
+                        const SizedBox(width: 8),
+                        TextButton.icon(
                           onPressed: () => doPickFile(setModalState),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.terracottaPrimary,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          icon: const Icon(Icons.change_circle_outlined, size: 16),
+                          label: const Text('Change', style: TextStyle(fontSize: 12)),
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.terracottaPrimary,
+                            visualDensity: VisualDensity.compact,
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
                           ),
-                          child: const Text('Browse Files'),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close_rounded, color: Colors.redAccent, size: 20),
+                          tooltip: 'Remove file',
+                          visualDensity: VisualDensity.compact,
+                          onPressed: () {
+                            setModalState(() {
+                              pickedBytes = null;
+                              pickedFileName = null;
+                              pickedFilePath = null;
+                              pickedFileSize = null;
+                              titleController.clear();
+                            });
+                          },
                         ),
                       ],
                     ),
+                  )
+                else
+                  InkWell(
+                    onTap: () => doPickFile(setModalState),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.canvasIvory,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppColors.sandalwoodGold, width: 1.5),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.folder_open_rounded,
+                            color: AppColors.terracottaPrimary,
+                            size: 28,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Choose File from Local Storage',
+                                  style: GoogleFonts.atkinsonHyperlegible(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    color: AppColors.charcoalText,
+                                  ),
+                                ),
+                                Text(
+                                  'Tap to select PDF, JPG, or PNG document',
+                                  style: GoogleFonts.atkinsonHyperlegible(
+                                    fontSize: 12,
+                                    color: AppColors.secondaryText,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            onPressed: () => doPickFile(setModalState),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.terracottaPrimary,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                            child: const Text('Browse'),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
                 const SizedBox(height: 14),
                 TextField(
                   controller: titleController,
@@ -194,7 +277,7 @@ class _MedicalReportsScreenState extends State<MedicalReportsScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: isUploading
+              onPressed: uploadStatus != 'idle'
                   ? null
                   : () {
                       FocusManager.instance.primaryFocus?.unfocus();
@@ -204,11 +287,13 @@ class _MedicalReportsScreenState extends State<MedicalReportsScreen> {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.terracottaPrimary,
+                backgroundColor: uploadStatus == 'complete'
+                    ? AppColors.sageSecondary
+                    : AppColors.terracottaPrimary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
-              onPressed: isUploading
+              onPressed: uploadStatus != 'idle'
                   ? null
                   : () async {
                       final title = titleController.text.trim();
@@ -221,7 +306,7 @@ class _MedicalReportsScreenState extends State<MedicalReportsScreen> {
 
                       FocusManager.instance.primaryFocus?.unfocus();
                       setModalState(() {
-                        isUploading = true;
+                        uploadStatus = 'uploading';
                       });
 
                       try {
@@ -236,6 +321,12 @@ class _MedicalReportsScreenState extends State<MedicalReportsScreen> {
                           fileSize: pickedFileSize,
                         );
 
+                        setModalState(() {
+                          uploadStatus = 'complete';
+                        });
+
+                        await Future.delayed(const Duration(milliseconds: 650));
+
                         if (context.mounted) {
                           FocusManager.instance.primaryFocus?.unfocus();
                           Navigator.pop(context);
@@ -246,22 +337,38 @@ class _MedicalReportsScreenState extends State<MedicalReportsScreen> {
                         }
                       } catch (e) {
                         setModalState(() {
-                          isUploading = false;
+                          uploadStatus = 'idle';
                         });
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Upload failed: $e')),
+                            const SnackBar(content: Text('Unable to upload report right now. Please verify the file and try again.')),
                           );
                         }
                       }
                     },
-              child: isUploading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+              child: uploadStatus == 'uploading'
+                  ? const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        ),
+                        SizedBox(width: 8),
+                        Text('Uploading...', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ],
                     )
-                  : const Text('Upload Report'),
+                  : uploadStatus == 'complete'
+                      ? const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.check_circle, color: Colors.white, size: 16),
+                            SizedBox(width: 6),
+                            Text('Upload complete', style: TextStyle(fontWeight: FontWeight.bold)),
+                          ],
+                        )
+                      : const Text('Upload Report', style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -460,33 +567,73 @@ class _MedicalReportsScreenState extends State<MedicalReportsScreen> {
                   const SizedBox(height: 16),
                   const Divider(height: 1, color: AppColors.borderSubtle),
                   const SizedBox(height: 14),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildInfoDetail(
-                          'Age / DOB',
-                          appState.userAge != null ? '${appState.userAge} Yrs' : 'Not provided',
-                        ),
-                      ),
-                      Expanded(
-                        child: _buildInfoDetail(
-                          'Language',
-                          appState.selectedLanguage.toUpperCase() == 'HI'
-                              ? 'Hindi'
-                              : (appState.selectedLanguage.toUpperCase() == 'EN'
-                                  ? 'English'
-                                  : appState.selectedLanguage.toUpperCase()),
-                        ),
-                      ),
-                      Expanded(
-                        child: _buildInfoDetail(
-                          'Emergency Contact',
-                          appState.emergencyContact?.isNotEmpty == true
-                              ? appState.emergencyContact!
-                              : 'Not provided',
-                        ),
-                      ),
-                    ],
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isNarrow = constraints.maxWidth < 360;
+                      if (isNarrow) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildInfoDetail(
+                                    'Age / DOB',
+                                    appState.userAge != null ? '${appState.userAge} Yrs' : 'Not provided',
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _buildInfoDetail(
+                                    'Language',
+                                    appState.selectedLanguage.toUpperCase() == 'HI'
+                                        ? 'Hindi'
+                                        : (appState.selectedLanguage.toUpperCase() == 'EN'
+                                            ? 'English'
+                                            : appState.selectedLanguage.toUpperCase()),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            _buildInfoDetail(
+                              'Emergency Contact',
+                              appState.emergencyContact?.isNotEmpty == true
+                                  ? appState.emergencyContact!
+                                  : 'Not provided',
+                            ),
+                          ],
+                        );
+                      }
+                      return Row(
+                        children: [
+                          Expanded(
+                            child: _buildInfoDetail(
+                              'Age / DOB',
+                              appState.userAge != null ? '${appState.userAge} Yrs' : 'Not provided',
+                            ),
+                          ),
+                          Expanded(
+                            child: _buildInfoDetail(
+                              'Language',
+                              appState.selectedLanguage.toUpperCase() == 'HI'
+                                  ? 'Hindi'
+                                  : (appState.selectedLanguage.toUpperCase() == 'EN'
+                                      ? 'English'
+                                      : appState.selectedLanguage.toUpperCase()),
+                            ),
+                          ),
+                          Expanded(
+                            child: _buildInfoDetail(
+                              'Emergency Contact',
+                              appState.emergencyContact?.isNotEmpty == true
+                                  ? appState.emergencyContact!
+                                  : 'Not provided',
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ],
               ),
@@ -703,49 +850,68 @@ class _MedicalReportsScreenState extends State<MedicalReportsScreen> {
                             ),
 
                             // ── Metadata: Upload Date & File Info ──
-                            const SizedBox(height: 10),
-                            Wrap(
-                              spacing: 12,
-                              runSpacing: 4,
-                              crossAxisAlignment: WrapCrossAlignment.center,
-                              children: [
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.calendar_today_outlined, size: 13, color: AppColors.secondaryText),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      'Uploaded: ${file.uploadDate.toString().split(' ')[0]}',
-                                      style: GoogleFonts.atkinsonHyperlegible(
-                                        fontSize: 12,
-                                        color: AppColors.secondaryText,
-                                      ),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 10.0),
+                              child: Wrap(
+                                spacing: 8,
+                                runSpacing: 6,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF7F5F0),
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(color: AppColors.borderSubtle),
                                     ),
-                                  ],
-                                ),
-                                if (file.originalFileName != null &&
-                                    file.originalFileName!.isNotEmpty &&
-                                    file.originalFileName != file.title)
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(Icons.attach_file, size: 13, color: AppColors.secondaryText),
-                                      const SizedBox(width: 2),
-                                      ConstrainedBox(
-                                        constraints: const BoxConstraints(maxWidth: 180),
-                                        child: Text(
-                                          file.originalFileName!,
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.calendar_today_outlined, size: 12, color: AppColors.secondaryText),
+                                        const SizedBox(width: 5),
+                                        Text(
+                                          'Uploaded: ${file.uploadDate.toString().split(' ')[0]}',
                                           style: GoogleFonts.atkinsonHyperlegible(
                                             fontSize: 12,
                                             color: AppColors.secondaryText,
                                           ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
-                              ],
+                                  if (file.originalFileName != null &&
+                                      file.originalFileName!.isNotEmpty &&
+                                      file.originalFileName != file.title)
+                                    Container(
+                                      constraints: const BoxConstraints(maxWidth: 200),
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFF7F5F0),
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(color: AppColors.borderSubtle),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(Icons.attach_file, size: 12, color: AppColors.secondaryText),
+                                          const SizedBox(width: 4),
+                                          Flexible(
+                                            child: Text(
+                                              file.originalFileName!,
+                                              style: GoogleFonts.atkinsonHyperlegible(
+                                                fontSize: 12,
+                                                color: AppColors.secondaryText,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              softWrap: false,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                ],
+                              ),
                             ),
 
                             // ── Clinical Notes (If Present) ──
@@ -815,6 +981,7 @@ class _MedicalReportsScreenState extends State<MedicalReportsScreen> {
   Widget _buildInfoDetail(String label, String value) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           label.toUpperCase(),
@@ -823,6 +990,8 @@ class _MedicalReportsScreenState extends State<MedicalReportsScreen> {
             fontWeight: FontWeight.bold,
             color: AppColors.textMuted,
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: 2),
         Text(
@@ -832,6 +1001,9 @@ class _MedicalReportsScreenState extends State<MedicalReportsScreen> {
             fontWeight: FontWeight.w600,
             color: AppColors.charcoalText,
           ),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          softWrap: true,
         ),
       ],
     );

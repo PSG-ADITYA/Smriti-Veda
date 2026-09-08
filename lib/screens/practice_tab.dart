@@ -1,3 +1,6 @@
+import 'dice_memory_screen.dart';
+import 'word_memory_puzzle_screen.dart';
+import '../widgets/languages_section.dart';
 import 'package:flutter/material.dart';
 import 'main_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -10,7 +13,7 @@ import 'fruit_memory_path_screen.dart';
 import 'memory_melody_screen.dart';
 import 'object_memory_screen.dart';
 import 'pattern_memory_screen.dart';
-import 'sequence_recall_screen.dart';
+import 'arranging_order_screen.dart';
 import 'story_memory_screen.dart';
 import 'word_association_screen.dart';
 
@@ -112,6 +115,7 @@ class _PracticeTabState extends State<PracticeTab> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+            const LanguagesSection(compact: true),
                   Wrap(
                     alignment: WrapAlignment.spaceBetween,
                     crossAxisAlignment: WrapCrossAlignment.center,
@@ -185,7 +189,7 @@ class _PracticeTabState extends State<PracticeTab> {
                     },
                     icon: const Icon(Icons.play_circle_fill_rounded, size: 22),
                     label: Text(
-                      'Play Fruit Memory Path (4 Tiers)',
+                      'Play Fruit Memory Path',
                       style: GoogleFonts.atkinsonHyperlegible(
                         fontSize: 15 * fontScale,
                         fontWeight: FontWeight.bold,
@@ -379,14 +383,14 @@ class _PracticeTabState extends State<PracticeTab> {
               children: [
                 Expanded(
                   child: _buildGameCard(
-                    title: 'Sequence Recall',
+                    title: 'Arranging Order',
                     domainLabel: 'Sequential Memory',
-                    subtitle: 'Order symbols & rivers',
-                    icon: Icons.format_list_numbered_rounded,
+                    subtitle: 'Drag & reorder items in sequence',
+                    icon: Icons.low_priority_rounded,
                     color: const Color(0xFF5B8E7D),
                     onTap: () => Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const SequenceRecallScreen()),
+                      MaterialPageRoute(builder: (_) => const ArrangingOrderScreen()),
                     ),
                     fontScale: fontScale,
                   ),
@@ -458,6 +462,42 @@ class _PracticeTabState extends State<PracticeTab> {
                 MaterialPageRoute(builder: (_) => const DailyRoutineRecallScreen()),
               ),
               fontScale: fontScale,
+            ),
+            const SizedBox(height: 12),
+
+            // Pair 4: 3D Dice Memory & Word Memory Puzzle
+            Row(
+              children: [
+                Expanded(
+                  child: _buildGameCard(
+                    title: '3D Dice Memory',
+                    domainLabel: 'Spatial & Working Memory',
+                    subtitle: 'Tabletop dice value & spatial position recall',
+                    icon: Icons.casino_rounded,
+                    color: const Color(0xFF386641),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const DiceMemoryScreen()),
+                    ),
+                    fontScale: fontScale,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildGameCard(
+                    title: 'Word Memory Puzzle',
+                    domainLabel: 'Language & Sequential Memory',
+                    subtitle: 'Observe & order culturally familiar words',
+                    icon: Icons.spellcheck_rounded,
+                    color: const Color(0xFFB85028),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const WordMemoryPuzzleScreen()),
+                    ),
+                    fontScale: fontScale,
+                  ),
+                ),
+              ],
             ),
 
             const SizedBox(height: 32),

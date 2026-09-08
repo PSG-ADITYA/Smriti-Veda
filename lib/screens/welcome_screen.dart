@@ -145,7 +145,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               child: Image.asset(
                 'assets/images/app_logo.png',
                 fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => const Icon(
+                errorBuilder: (context, child, extra) => const Icon(
                   Icons.psychology_rounded,
                   size: 52,
                   color: AppColors.terracottaPrimary,
@@ -338,7 +338,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
           child: Image.asset(
             'assets/images/app_logo.png',
             fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) => const Icon(
+            errorBuilder: (context, child, extra) => const Icon(
               Icons.psychology_rounded,
               size: 40,
               color: AppColors.terracottaPrimary,

@@ -1,5 +1,6 @@
+import '../services/session_engine/memory_session_generator.dart';
+import '../models/game_difficulty.dart';
 import 'dart:async';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/exercise_attempt.dart';
@@ -15,19 +16,40 @@ enum PatternPhase {
   roundSummary,
 }
 
-class PatternLevelConfig {
-  final int level;
+class PatternDifficultyConfig {
+  final GameDifficulty difficulty;
   final int gridSize;
   final int activeTiles;
   final int previewSeconds;
 
-  const PatternLevelConfig({
-    required this.level,
+  const PatternDifficultyConfig({
+    required this.difficulty,
     required this.gridSize,
     required this.activeTiles,
     required this.previewSeconds,
   });
 }
+
+const Map<GameDifficulty, PatternDifficultyConfig> kPatternDifficultyConfigs = {
+  GameDifficulty.easy: PatternDifficultyConfig(
+    difficulty: GameDifficulty.easy,
+    gridSize: 3,
+    activeTiles: 3,
+    previewSeconds: 4,
+  ),
+  GameDifficulty.medium: PatternDifficultyConfig(
+    difficulty: GameDifficulty.medium,
+    gridSize: 3,
+    activeTiles: 4,
+    previewSeconds: 3,
+  ),
+  GameDifficulty.hard: PatternDifficultyConfig(
+    difficulty: GameDifficulty.hard,
+    gridSize: 4,
+    activeTiles: 6,
+    previewSeconds: 3,
+  ),
+};
 
 class PatternMemoryScreen extends StatefulWidget {
   const PatternMemoryScreen({super.key});
@@ -37,14 +59,7 @@ class PatternMemoryScreen extends StatefulWidget {
 }
 
 class _PatternMemoryScreenState extends State<PatternMemoryScreen> {
-  final List<PatternLevelConfig> _levels = const [
-    PatternLevelConfig(level: 1, gridSize: 3, activeTiles: 3, previewSeconds: 4),
-    PatternLevelConfig(level: 2, gridSize: 3, activeTiles: 4, previewSeconds: 3),
-    PatternLevelConfig(level: 3, gridSize: 4, activeTiles: 5, previewSeconds: 4),
-    PatternLevelConfig(level: 4, gridSize: 4, activeTiles: 6, previewSeconds: 3),
-  ];
-
-  int _levelIndex = 0;
+  GameDifficulty _difficulty = GameDifficulty.easy;
   PatternPhase _phase = PatternPhase.ready;
   late Set<int> _targetPattern;
   final Set<int> _userSelections = {};
@@ -56,13 +71,13 @@ class _PatternMemoryScreenState extends State<PatternMemoryScreen> {
   int _cumulativeScore = 0;
   double? _lastRoundAccuracy;
 
-  PatternLevelConfig get _currentConfig => _levels[_levelIndex];
+  PatternDifficultyConfig get _currentConfig => kPatternDifficultyConfigs[_difficulty]!;
   int get _cellCount => _currentConfig.gridSize * _currentConfig.gridSize;
 
   @override
   void initState() {
     super.initState();
-    _initLevel();
+    _initRound();
   }
 
   @override
@@ -71,15 +86,13 @@ class _PatternMemoryScreenState extends State<PatternMemoryScreen> {
     super.dispose();
   }
 
-  void _initLevel() {
+  void _initRound() {
     _countdownTimer?.cancel();
-    final config = _currentConfig;
-    final random = Random();
-    final all = List<int>.generate(config.gridSize * config.gridSize, (i) => i)..shuffle(random);
-    _targetPattern = all.take(config.activeTiles).toSet();
+    final session = MemorySessionGenerator.generatePatternSession(_difficulty);
+    _targetPattern = session.stimulus.activeTiles;
 
     _userSelections.clear();
-    _previewSecondsRemaining = config.previewSeconds;
+    _previewSecondsRemaining = session.stimulus.previewSeconds;
     _phase = PatternPhase.ready;
     _lastRoundAccuracy = null;
     setState(() {});
@@ -158,11 +171,11 @@ class _PatternMemoryScreenState extends State<PatternMemoryScreen> {
 
     if (accuracy >= 65.0) {
       SoundService.playFanfare();
-      if (mounted && _levelIndex == _levels.length - 1) {
+      if (mounted && _difficulty == GameDifficulty.hard) {
         ConfettiOverlay.show(
           context,
           title: 'Pattern Visionary! 🌟',
-          subtitle: 'You mastered all ${_levels.length} grid matrix tiers!',
+          subtitle: 'You mastered the Hard grid matrix challenge!',
         );
       }
     } else {
@@ -177,7 +190,7 @@ class _PatternMemoryScreenState extends State<PatternMemoryScreen> {
         domain: ExerciseDomain.universalCognitive,
         cognitiveDomain: CognitiveDomain.workingMemory,
         type: ExerciseType.patternRecall,
-        exerciseId: 'pattern_memory_tier_${_levelIndex + 1}',
+        exerciseId: 'pattern_memory_${_difficulty.name}',
         responseMode: 'action',
         rawScore: rawScore,
         maxScore: maxScore,
@@ -187,14 +200,12 @@ class _PatternMemoryScreenState extends State<PatternMemoryScreen> {
   }
 
   void _nextTierOrRestart() {
-    if (_levelIndex < _levels.length - 1) {
-      _levelIndex++;
-      _initLevel();
-    } else {
-      _levelIndex = 0;
-      _cumulativeScore = 0;
-      _initLevel();
+    if (_difficulty == GameDifficulty.easy) {
+      _difficulty = GameDifficulty.medium;
+    } else if (_difficulty == GameDifficulty.medium) {
+      _difficulty = GameDifficulty.hard;
     }
+    _initRound();
   }
 
   @override
@@ -224,7 +235,7 @@ class _PatternMemoryScreenState extends State<PatternMemoryScreen> {
             margin: const EdgeInsets.only(right: 16),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.sageSecondary.withOpacity(0.12),
+              color: AppColors.sageSecondary.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
@@ -256,7 +267,7 @@ class _PatternMemoryScreenState extends State<PatternMemoryScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.sandalwoodGold.withOpacity(0.4)),
+                  border: Border.all(color: AppColors.sandalwoodGold.withValues(alpha: 0.4)),
                   boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 4)],
                 ),
                 child: Row(
@@ -267,7 +278,7 @@ class _PatternMemoryScreenState extends State<PatternMemoryScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'TIER ${_levelIndex + 1} OF ${_levels.length}',
+                            'DIFFICULTY: ${_difficulty.label.toUpperCase()}',
                             style: GoogleFonts.atkinsonHyperlegible(
                               fontSize: 11 * fontScale,
                               fontWeight: FontWeight.bold,
@@ -304,7 +315,7 @@ class _PatternMemoryScreenState extends State<PatternMemoryScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: AppColors.sageSecondary.withOpacity(0.15),
+                          color: AppColors.sageSecondary.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -329,7 +340,7 @@ class _PatternMemoryScreenState extends State<PatternMemoryScreen> {
                   decoration: BoxDecoration(
                     color: const Color(0xFFF6F3EC),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppColors.sandalwoodGold.withOpacity(0.4), width: 1.5),
+                    border: Border.all(color: AppColors.sandalwoodGold.withValues(alpha: 0.4), width: 1.5),
                   ),
                   child: GridView.builder(
                     physics: const NeverScrollableScrollPhysics(),
@@ -364,7 +375,7 @@ class _PatternMemoryScreenState extends State<PatternMemoryScreen> {
                           tileBg = AppColors.terracottaPrimary;
                           border = Border.all(color: AppColors.terracottaPrimary, width: 2.5);
                         } else if (isTarget && !isSelected) {
-                          tileBg = AppColors.sandalwoodGold.withOpacity(0.4);
+                          tileBg = AppColors.sandalwoodGold.withValues(alpha: 0.4);
                           border = Border.all(color: AppColors.sandalwoodGold, width: 2);
                         }
                       }
@@ -378,7 +389,7 @@ class _PatternMemoryScreenState extends State<PatternMemoryScreen> {
                             borderRadius: BorderRadius.circular(14),
                             border: border,
                             boxShadow: [
-                              BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 4),
+                              BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 4),
                             ],
                           ),
                           child: Center(
@@ -457,7 +468,7 @@ class _PatternMemoryScreenState extends State<PatternMemoryScreen> {
                   child: Column(
                     children: [
                       Text(
-                        'Tier Accuracy: ${_lastRoundAccuracy?.toInt() ?? 0}%',
+                        'Round Accuracy: ${_lastRoundAccuracy?.toInt() ?? 0}%',
                         style: GoogleFonts.newsreader(
                           fontSize: 18 * fontScale,
                           fontWeight: FontWeight.bold,
@@ -479,7 +490,7 @@ class _PatternMemoryScreenState extends State<PatternMemoryScreen> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                         child: Text(
-                          _levelIndex < _levels.length - 1 ? 'Proceed to Next Tier' : 'Restart Challenge',
+                          _difficulty != GameDifficulty.hard ? 'Try Next Difficulty' : 'Play Again',
                           style: GoogleFonts.atkinsonHyperlegible(fontSize: 15 * fontScale, fontWeight: FontWeight.bold),
                         ),
                       ),

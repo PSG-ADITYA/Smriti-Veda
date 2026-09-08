@@ -1,3 +1,5 @@
+import '../models/game_difficulty.dart';
+import '../widgets/difficulty_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../engine/exercise_engine.dart';
@@ -15,7 +17,7 @@ class RecognitionExerciseScreen extends StatefulWidget {
 
 class _RecognitionExerciseScreenState extends State<RecognitionExerciseScreen> {
   late ExerciseEngine _engine;
-  int _difficultyLevel = 1; // 1 = 3 targets + 3 distractors, 2 = 4 targets + 4 distractors
+  GameDifficulty _difficulty = GameDifficulty.easy;
 
   // Sample Recognition Items with Icons
   final Map<String, IconData> _itemIcons = {
@@ -49,7 +51,7 @@ class _RecognitionExerciseScreenState extends State<RecognitionExerciseScreen> {
     final allKeys = _itemIcons.keys.toList();
     allKeys.shuffle();
 
-    final targetCount = _difficultyLevel == 1 ? 3 : 4;
+    final targetCount = _difficulty == GameDifficulty.easy ? 3 : (_difficulty == GameDifficulty.medium ? 4 : 5);
     _targetItems = Set.from(allKeys.take(targetCount));
     
     // Mix targets with distractors for the test grid
@@ -87,12 +89,12 @@ class _RecognitionExerciseScreenState extends State<RecognitionExerciseScreen> {
       appState: appState,
       domain: ExerciseDomain.universalCognitive,
       type: ExerciseType.recognition,
-      exerciseId: 'recog_level_$_difficultyLevel',
+      exerciseId: 'recognition_${_difficulty.name}',
       responseMode: 'choice',
       rawScore: res.rawScore,
       maxScore: res.maxScore,
       metadata: {
-        'difficultyLevel': _difficultyLevel,
+        'difficulty': _difficulty.name,
         'targetItems': _targetItems.toList(),
         'selectedItems': _selectedItems.toList(),
       },
@@ -133,29 +135,14 @@ class _RecognitionExerciseScreenState extends State<RecognitionExerciseScreen> {
             padding: const EdgeInsets.all(20),
             child: Column(
               children: [
-                // Level selector
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [1, 2].map((lvl) {
-                    final isSelected = _difficultyLevel == lvl;
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                      child: FilterChip(
-                        selected: isSelected,
-                        label: Text('Level $lvl (${lvl == 1 ? "3 Targets" : "4 Targets"})'),
-                        selectedColor: AppColors.primarySaffron.withValues(alpha: 0.3),
-                        checkmarkColor: AppColors.primarySaffron,
-                        onSelected: (selected) {
-                          if (selected) {
-                            setState(() {
-                              _difficultyLevel = lvl;
-                              _loadRecognitionSet();
-                            });
-                          }
-                        },
-                      ),
-                    );
-                  }).toList(),
+                DifficultySelector(
+                  selected: _difficulty,
+                  onChanged: (d) {
+                    setState(() {
+                      _difficulty = d;
+                      _loadRecognitionSet();
+                    });
+                  },
                 ),
                 const SizedBox(height: 20),
 
@@ -484,10 +471,10 @@ class _RecognitionExerciseScreenState extends State<RecognitionExerciseScreen> {
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                                 ),
                                 icon: const Icon(Icons.arrow_forward, color: Colors.white),
-                                label: const Text('Next Level', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                label: const Text('Next Difficulty', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                                 onPressed: () {
                                   setState(() {
-                                    _difficultyLevel = _difficultyLevel == 1 ? 2 : 1;
+                                    _difficulty = _difficulty == GameDifficulty.easy ? GameDifficulty.medium : (_difficulty == GameDifficulty.medium ? GameDifficulty.hard : GameDifficulty.easy);
                                     _loadRecognitionSet();
                                   });
                                 },

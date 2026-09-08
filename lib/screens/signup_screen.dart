@@ -289,7 +289,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
                     // Language Selector Dropdown
                     DropdownButtonFormField<String>(
-                      value: _selectedLanguage,
+                      initialValue: _selectedLanguage,
                       decoration: InputDecoration(
                         labelText: 'Preferred Language for Recitation',
                         prefixIcon: const Icon(Icons.translate, color: AppColors.sageSecondary),

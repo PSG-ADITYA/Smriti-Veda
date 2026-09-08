@@ -207,7 +207,7 @@ class _WordAssociationScreenState extends State<WordAssociationScreen> {
             margin: const EdgeInsets.only(right: 16),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.sageSecondary.withOpacity(0.15),
+              color: AppColors.sageSecondary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
@@ -239,7 +239,7 @@ class _WordAssociationScreenState extends State<WordAssociationScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.sandalwoodGold.withOpacity(0.4)),
+                  border: Border.all(color: AppColors.sandalwoodGold.withValues(alpha: 0.4)),
                   boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 4)],
                 ),
                 child: Column(
@@ -317,7 +317,7 @@ class _WordAssociationScreenState extends State<WordAssociationScreen> {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: AppColors.terracottaPrimary.withOpacity(0.12),
+                                color: AppColors.terracottaPrimary.withValues(alpha: 0.12),
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(pair['icon'], color: AppColors.terracottaPrimary, size: 22),
@@ -348,7 +348,7 @@ class _WordAssociationScreenState extends State<WordAssociationScreen> {
                                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                                 decoration: BoxDecoration(
                                   color: isSelected
-                                      ? AppColors.terracottaPrimary.withOpacity(0.15)
+                                      ? AppColors.terracottaPrimary.withValues(alpha: 0.15)
                                       : AppColors.canvasIvory,
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(

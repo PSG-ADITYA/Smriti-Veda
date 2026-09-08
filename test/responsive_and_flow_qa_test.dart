@@ -4,6 +4,8 @@ import 'package:smriti_veda/providers/app_state.dart';
 import 'package:smriti_veda/screens/ai_game_generator_screen.dart';
 import 'package:smriti_veda/screens/attention_exercise_screen.dart';
 import 'package:smriti_veda/screens/daily_routine_recall_screen.dart';
+import 'package:smriti_veda/screens/dice_memory_screen.dart';
+import 'package:smriti_veda/screens/word_memory_puzzle_screen.dart';
 import 'package:smriti_veda/screens/everyday_memory_screen.dart';
 import 'package:smriti_veda/screens/fruit_memory_path_screen.dart';
 import 'package:smriti_veda/screens/home_tab.dart';
@@ -68,7 +70,7 @@ void main() {
         await tester.pumpWidget(_wrapWithScope(const PracticeTab(), size: size));
         await tester.pumpAndSettle(const Duration(milliseconds: 500));
 
-        expect(find.textContaining('Memory Melody'), findsWidgets);
+        expect(find.textContaining('Fruit Memory Path'), findsWidgets);
       });
 
       testWidgets('Flow 4: Memory Melody Screen renders at ', (tester) async {
@@ -215,6 +217,28 @@ void main() {
 
         expect(find.textContaining('My Data Hub'), findsWidgets);
         expect(find.textContaining('PROFILE & ACCOUNT INFORMATION'), findsWidgets);
+      });
+
+      testWidgets('Flow 17: 3D Dice Memory Screen renders at ', (tester) async {
+        tester.view.physicalSize = size;
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+
+        await tester.pumpWidget(_wrapWithScope(const DiceMemoryScreen(), size: size));
+        await tester.pumpAndSettle(const Duration(milliseconds: 500));
+
+        expect(find.textContaining('3D Dice Memory'), findsWidgets);
+      });
+
+      testWidgets('Flow 18: Word Memory Puzzle Screen renders at ', (tester) async {
+        tester.view.physicalSize = size;
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+
+        await tester.pumpWidget(_wrapWithScope(const WordMemoryPuzzleScreen(), size: size));
+        await tester.pumpAndSettle(const Duration(milliseconds: 500));
+
+        expect(find.textContaining('Word Memory Puzzle'), findsWidgets);
       });
     }
   });

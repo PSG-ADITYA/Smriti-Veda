@@ -1,3 +1,5 @@
+import 'dice_memory_screen.dart';
+import 'word_memory_puzzle_screen.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,7 +8,7 @@ import '../services/sound_service.dart';
 import '../theme/app_theme.dart';
 import 'cultural_pipeline_screen.dart';
 import 'main_screen.dart';
-import 'sequence_recall_screen.dart';
+import 'arranging_order_screen.dart';
 import 'story_memory_screen.dart';
 
 class GamesTab extends StatefulWidget {
@@ -273,12 +275,12 @@ class _GamesTabState extends State<GamesTab> {
                   children: [
                     Expanded(
                       child: _buildGameTile(
-                        title: '1. Sequential Order',
-                        subtitle: 'Remember numeric sequence',
-                        icon: Icons.format_list_numbered_rounded,
+                        title: '1. Arranging Order',
+                        subtitle: 'Drag & arrange correct sequence',
+                        icon: Icons.low_priority_rounded,
                         color: AppColors.secondary,
                         bgColor: AppColors.sageSoft,
-                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SequenceRecallScreen())),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ArrangingOrderScreen())),
                         fontScale: fontScale,
                       ),
                     ),
@@ -291,6 +293,34 @@ class _GamesTabState extends State<GamesTab> {
                         color: AppColors.tertiary,
                         bgColor: const Color(0xFFFFF3E0),
                         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StoryMemoryScreen())),
+                        fontScale: fontScale,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildGameTile(
+                        title: '3. 3D Dice Memory',
+                        subtitle: 'Tabletop dice recall',
+                        icon: Icons.casino_rounded,
+                        color: const Color(0xFF386641),
+                        bgColor: AppColors.sageSoft,
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DiceMemoryScreen())),
+                        fontScale: fontScale,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildGameTile(
+                        title: '4. Word Memory',
+                        subtitle: 'Sequence & order puzzle',
+                        icon: Icons.spellcheck_rounded,
+                        color: AppColors.terracottaPrimary,
+                        bgColor: AppColors.terracottaSoft,
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WordMemoryPuzzleScreen())),
                         fontScale: fontScale,
                       ),
                     ),
@@ -318,7 +348,7 @@ class _GamesTabState extends State<GamesTab> {
                               const Icon(Icons.style_rounded, color: AppColors.secondary),
                               const SizedBox(width: 8),
                               Text(
-                                '3. Memory Match (Interactive)',
+                                '5. Memory Match (Interactive)',
                                 style: GoogleFonts.newsreader(
                                   fontSize: 18 * fontScale,
                                   fontWeight: FontWeight.bold,

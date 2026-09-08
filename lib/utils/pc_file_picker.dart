@@ -24,28 +24,26 @@ class PcFilePicker {
 
   static Future<PickedPcFile?> pickFileFromPc() async {
     try {
-      final files = await FilePickerPlatform.instance.pickFiles(
+      final file = await FilePicker.pickFile(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
-        withData: true,
       );
 
-      if (files.isNotEmpty) {
-        final file = files.first;
+      if (file != null) {
         final path = file.path;
-        Uint8List? bytes = file.bytes;
-        int size = file.size;
+        Uint8List? bytes;
+        int size = 0;
 
-        // If bytes are not loaded directly (common on native Android/iOS), read from path
-        if ((bytes == null || bytes.isEmpty) && path != null && !kIsWeb) {
-          try {
-            final f = File(path);
-            if (await f.exists()) {
-              bytes = await f.readAsBytes();
-              size = await f.length();
-            }
-          } catch (e) {
-            debugPrint('Failed to read file bytes from path: $e');
+        try {
+          size = await file.length();
+        } catch (_) {
+          if (path != null && !kIsWeb) {
+            try {
+              final f = File(path);
+              if (await f.exists()) {
+                size = await f.length();
+              }
+            } catch (_) {}
           }
         }
 
@@ -54,8 +52,26 @@ class PcFilePicker {
           return null;
         }
 
+        try {
+          bytes = await file.readAsBytes();
+          if (size == 0) {
+            size = bytes.lengthInBytes;
+          }
+        } catch (e) {
+          debugPrint('Failed to read file bytes from PlatformFile: $e');
+          if (path != null && !kIsWeb) {
+            try {
+              final f = File(path);
+              if (await f.exists()) {
+                bytes = await f.readAsBytes();
+                size = await f.length();
+              }
+            } catch (_) {}
+          }
+        }
+
         final fileName = file.name;
-        final ext = (fileName.contains('.') ? fileName.split('.').last : '').toLowerCase();
+        final ext = (file.extension ?? (fileName.contains('.') ? fileName.split('.').last : '')).toLowerCase();
 
         return PickedPcFile(
           name: fileName,

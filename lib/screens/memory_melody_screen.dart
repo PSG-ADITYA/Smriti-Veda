@@ -1,24 +1,113 @@
+import '../services/session_engine/memory_session_generator.dart';
+import '../models/game_difficulty.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../models/exercise_attempt.dart';
 import '../providers/app_state.dart';
-import '../services/song_generation_service.dart';
 import '../services/sound_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/confetti_overlay.dart';
 
+class MusicalNote {
+  final String id;
+  final String westernName;
+  final String swaraName;
+  final double frequency;
+  final Color color;
+
+  const MusicalNote({
+    required this.id,
+    required this.westernName,
+    required this.swaraName,
+    required this.frequency,
+    required this.color,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MusicalNote && runtimeType == other.runtimeType && id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
+}
+
+const List<MusicalNote> kOctaveNotes = [
+  MusicalNote(id: 'c4', westernName: 'C', swaraName: 'Sa', frequency: 261.63, color: Color(0xFFD32F2F)),
+  MusicalNote(id: 'd4', westernName: 'D', swaraName: 'Re', frequency: 293.66, color: Color(0xFFE65100)),
+  MusicalNote(id: 'e4', westernName: 'E', swaraName: 'Ga', frequency: 329.63, color: Color(0xFFF9A825)),
+  MusicalNote(id: 'f4', westernName: 'F', swaraName: 'Ma', frequency: 349.23, color: Color(0xFF2E7D32)),
+  MusicalNote(id: 'g4', westernName: 'G', swaraName: 'Pa', frequency: 392.00, color: Color(0xFF1565C0)),
+  MusicalNote(id: 'a4', westernName: 'A', swaraName: 'Dha', frequency: 440.00, color: Color(0xFF6A1B9A)),
+  MusicalNote(id: 'b4', westernName: 'B', swaraName: 'Ni', frequency: 493.88, color: Color(0xFFAD1457)),
+  MusicalNote(id: 'c5', westernName: 'C5', swaraName: 'Taar Sa', frequency: 523.25, color: Color(0xFF00695C)),
+];
+
+class MelodyRoundConfig {
+  final int roundNumber;
+  final String title;
+  final String difficulty;
+  final List<String> noteIds;
+
+  const MelodyRoundConfig({
+    required this.roundNumber,
+    required this.title,
+    required this.difficulty,
+    required this.noteIds,
+  });
+}
+
+class MelodyDifficultyConfig {
+  final GameDifficulty difficulty;
+  final String title;
+  final List<String> noteIds;
+  final Duration noteDuration;
+  final Duration gapDuration;
+  final Duration stepDuration;
+
+  const MelodyDifficultyConfig({
+    required this.difficulty,
+    required this.title,
+    required this.noteIds,
+    required this.noteDuration,
+    required this.gapDuration,
+    required this.stepDuration,
+  });
+}
+
+const Map<GameDifficulty, MelodyDifficultyConfig> kMelodyDifficultyConfigs = {
+  GameDifficulty.easy: MelodyDifficultyConfig(
+    difficulty: GameDifficulty.easy,
+    title: 'Three-Tone Harmonic Chord (Sa - Ga - Pa)',
+    noteIds: ['c4', 'e4', 'g4'],
+    noteDuration: Duration(milliseconds: 650),
+    gapDuration: Duration(milliseconds: 250),
+    stepDuration: Duration(milliseconds: 900),
+  ),
+  GameDifficulty.medium: MelodyDifficultyConfig(
+    difficulty: GameDifficulty.medium,
+    title: 'Five-Tone Melodic Scale (Sa - Re - Ga - Pa - Taar Sa)',
+    noteIds: ['c4', 'd4', 'e4', 'g4', 'c5'],
+    noteDuration: Duration(milliseconds: 450),
+    gapDuration: Duration(milliseconds: 150),
+    stepDuration: Duration(milliseconds: 600),
+  ),
+  GameDifficulty.hard: MelodyDifficultyConfig(
+    difficulty: GameDifficulty.hard,
+    title: 'Seven-Tone Rhythmic Heritage Wave',
+    noteIds: ['c4', 'e4', 'g4', 'a4', 'g4', 'd4', 'c4'],
+    noteDuration: Duration(milliseconds: 320),
+    gapDuration: Duration(milliseconds: 100),
+    stepDuration: Duration(milliseconds: 420),
+  ),
+};
+
 enum MemoryMelodyPhase {
-  intro,
+  ready,
   playback,
-  taskItemRecall,
-  taskSequenceRecall,
-  taskEventOrdering,
-  taskAttention,
-  delayedInterlude,
-  taskDelayedRecall,
-  results,
+  reproduction,
+  evaluated,
 }
 
 class MemoryMelodyScreen extends StatefulWidget {
@@ -29,407 +118,247 @@ class MemoryMelodyScreen extends StatefulWidget {
   State<MemoryMelodyScreen> createState() => _MemoryMelodyScreenState();
 }
 
-class _MemoryMelodyScreenState extends State<MemoryMelodyScreen> with TickerProviderStateMixin {
-  MemoryMelodyPhase _phase = MemoryMelodyPhase.intro;
-  bool _isLoading = false;
+class _MemoryMelodyScreenState extends State<MemoryMelodyScreen> {
+  GameDifficulty _difficulty = GameDifficulty.easy;
+  MemoryMelodyPhase _phase = MemoryMelodyPhase.ready;
 
-  SongContent? _song;
-  int _currentLineIndex = 0;
+  // Stored immutable target sequence for this round
+  late List<MusicalNote> _targetSequence;
+
+  // User input sequence
+  final List<MusicalNote> _userSequence = [];
+
+  // Playback & Animation State
+  String? _currentlySoundingNoteId;
   Timer? _playbackTimer;
-  bool _isPlaying = false;
+  bool _isPlayingMelody = false;
 
-  // Multi-dimensional scoring
-  int _itemRecallScore = 0;
-  int _sequenceRecallScore = 0;
-  int _eventOrderingScore = 0;
-  int _attentionScore = 0;
-  int _delayedRecallScore = 0;
+  // Evaluation & Metrics
+  int _matchedNotesCount = 0;
+  final Stopwatch _stopwatch = Stopwatch();
+  int _cumulativeScore = 0;
 
-  // Selected answers for each question
-  String? _selectedItemAnswer;
-  String? _selectedSequenceAnswer;
-  String? _selectedAttentionAnswer;
-  String? _selectedDelayedAnswer;
-
-  // Event ordering state
-  List<EventOrderStep> _userOrderedEvents = [];
-
-  // Delayed interlude countdown
-  int _interludeRemainingSeconds = 8;
-  Timer? _interludeTimer;
-
-  // Voice Speech-To-Text
-  stt.SpeechToText? _speech;
-  bool _isSpeechInitialized = false;
-  bool _isListening = false;
-  String _voiceTranscript = '';
-  String? _voiceError;
-
-  final Stopwatch _totalStopwatch = Stopwatch();
+  MelodyDifficultyConfig get _currentRound => kMelodyDifficultyConfigs[_difficulty]!;
 
   @override
   void initState() {
     super.initState();
-    _initStt();
-    _loadSong();
-  }
-
-  void _initStt() async {
-    _speech = stt.SpeechToText();
-    try {
-      _isSpeechInitialized = await _speech!.initialize(
-        onError: (val) {
-          if (mounted) {
-            setState(() {
-              _isListening = false;
-              _voiceError = 'Voice note: ${val.errorMsg}';
-            });
-          }
-        },
-        onStatus: (val) {
-          if ((val == 'done' || val == 'notListening') && _isListening && mounted) {
-            setState(() => _isListening = false);
-          }
-        },
-      );
-    } catch (_) {
-      _isSpeechInitialized = false;
-    }
-  }
-
-  Future<void> _loadSong() async {
-    setState(() => _isLoading = true);
-    final songService = SongGenerationService();
-    final song = await songService.generateSong(
-      theme: widget.initialTheme ?? 'Morning Wellness',
-      difficulty: 'Medium',
-      patientName: 'Friend',
-    );
-
-    if (mounted) {
-      // Shuffle events for the ordering challenge
-      final shuffledEvents = List<EventOrderStep>.from(song.events)..shuffle();
-      setState(() {
-        _song = song;
-        _userOrderedEvents = shuffledEvents;
-        _isLoading = false;
-      });
-    }
+    _initRound();
   }
 
   @override
   void dispose() {
-    _playbackTimer?.cancel();
-    _interludeTimer?.cancel();
-    _speech?.stop();
-    _isListening = false;
-    SoundService.stop();
+    _cancelAudioAndTimers();
     super.dispose();
   }
 
-  // ── Speech Recognition ─────────────────────────────────────────────────────
-
-  void _startListening({required Function(String) onMatched}) async {
-    if (!_isSpeechInitialized || _speech == null) {
-      setState(() => _voiceError = "Microphone isn't available. Please tap your answer.");
-      return;
-    }
-
-    setState(() {
-      _isListening = true;
-      _voiceError = null;
-      _voiceTranscript = '';
-    });
-
-    try {
-      await _speech!.listen(
-        onResult: (result) {
-          if (mounted) {
-            setState(() {
-              _voiceTranscript = result.recognizedWords;
-            });
-            onMatched(result.recognizedWords);
-          }
-        },
-      );
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isListening = false;
-          _voiceError = 'Could not start microphone. Please tap your answer.';
-        });
-      }
-    }
+  void _cancelAudioAndTimers() {
+    _playbackTimer?.cancel();
+    _playbackTimer = null;
+    _isPlayingMelody = false;
+    _currentlySoundingNoteId = null;
   }
 
-  void _stopListening() async {
-    if (_speech?.isListening == true) {
-      await _speech?.stop();
-    }
-    _isListening = false;
-    if (mounted) {
-      setState(() {});
-    }
+  void _initRound() {
+    _cancelAudioAndTimers();
+    _phase = MemoryMelodyPhase.ready;
+    _userSequence.clear();
+    _matchedNotesCount = 0;
+
+    final noteMap = {for (final n in kOctaveNotes) n.id: n};
+    final session = MemorySessionGenerator.generateMelodySession(_difficulty);
+    _targetSequence = session.stimulus.noteIds.map((id) => noteMap[id] ?? kOctaveNotes.first).toList();
+
+    _stopwatch.reset();
+    setState(() {});
   }
 
-  // ── Playback Engine ────────────────────────────────────────────────────────
-
-  void _startPlayback() {
-    if (_song == null) return;
-    _totalStopwatch.start();
-    SoundService.stop();
+  // ── Synchronized Audio Melody Playback ─────────────────────────────────────
+  void _startMelodyPlayback() {
+    if (_isPlayingMelody) return;
+    _cancelAudioAndTimers();
 
     setState(() {
       _phase = MemoryMelodyPhase.playback;
-      _isPlaying = true;
-      _currentLineIndex = 0;
+      _isPlayingMelody = true;
+      _userSequence.clear();
     });
 
-    _playLine(0);
+    SoundService.speak('Listen carefully to the melody.');
+
+    // Give 1.2s before tones start so user gets ready
+    Timer(const Duration(milliseconds: 1200), () {
+      if (!mounted || !_isPlayingMelody) return;
+
+      int noteIdx = 0;
+      final stepDuration = _currentRound.stepDuration;
+      final noteDuration = _currentRound.noteDuration;
+      final gapDuration = _currentRound.gapDuration;
+
+      _playSingleStep(noteIdx, stepDuration, noteDuration, gapDuration);
+    });
   }
 
-  void _playLine(int index) {
-    if (!mounted || _song == null) return;
-    if (index >= _song!.lines.length) {
-      setState(() {
-        _isPlaying = false;
-      });
+  void _playSingleStep(int noteIdx, Duration stepDuration, Duration noteDuration, Duration gapDuration) {
+    if (!mounted || !_isPlayingMelody) return;
+
+    if (noteIdx >= _targetSequence.length) {
+      // Melody finished completely!
+      _onMelodyPlaybackComplete();
       return;
     }
 
+    final note = _targetSequence[noteIdx];
     setState(() {
-      _currentLineIndex = index;
+      _currentlySoundingNoteId = note.id;
     });
 
-    final line = _song!.lines[index];
-    SoundService.speak(line, languageCode: 'en-US');
-    SoundService.playTap();
+    SoundService.playNote(note.frequency, label: note.westernName);
 
-    // Line duration paced for seniors (6.0 seconds per stanza line)
-    _playbackTimer?.cancel();
-    _playbackTimer = Timer(const Duration(milliseconds: 6200), () {
-      if (mounted && _isPlaying) {
-        _playLine(index + 1);
+    // Turn off illumination after note duration
+    Timer(noteDuration, () {
+      if (mounted && _isPlayingMelody) {
+        setState(() {
+          _currentlySoundingNoteId = null;
+        });
       }
     });
-  }
 
-  void _replaySong() {
-    _startPlayback();
-  }
-
-  void _proceedToTasks() {
-    _playbackTimer?.cancel();
-    SoundService.stop();
-    setState(() {
-      _isPlaying = false;
-      _phase = MemoryMelodyPhase.taskItemRecall;
+    // Schedule next note with consistent timing
+    _playbackTimer = Timer(stepDuration, () {
+      _playSingleStep(noteIdx + 1, stepDuration, noteDuration, gapDuration);
     });
   }
 
-  // ── Answer Handling & Multi-Stage Scoring ──────────────────────────────────
-
-  void _handleItemAnswer(String answer) {
-    if (_song == null || _song!.questions.isEmpty) return;
-    _stopListening();
-    final q = _song!.questions[0];
-    final isCorrect = answer.trim().toLowerCase().contains(q.correctAnswer.toLowerCase());
+  void _onMelodyPlaybackComplete() {
+    _cancelAudioAndTimers();
+    if (!mounted) return;
 
     setState(() {
-      _selectedItemAnswer = answer;
-      _itemRecallScore = isCorrect ? 100 : 40;
+      _phase = MemoryMelodyPhase.reproduction;
     });
 
-    if (isCorrect) {
-      SoundService.playSuccess();
-    } else {
-      SoundService.playTap();
-    }
+    SoundService.playSuccess();
+    SoundService.speak('Now reproduce the melody in the same order.');
+    _stopwatch.reset();
+    _stopwatch.start();
+  }
 
-    Future.delayed(const Duration(milliseconds: 1400), () {
+  // ── User Input & Note Selection ───────────────────────────────────────────
+  void _onUserTapNote(MusicalNote note) {
+    // Only accept input during reproduction phase
+    if (_phase != MemoryMelodyPhase.reproduction) return;
+    if (_isPlayingMelody) return;
+    if (_userSequence.length >= _targetSequence.length) return;
+
+    // Play note immediately on touch
+    SoundService.playNote(note.frequency, label: note.westernName);
+
+    setState(() {
+      _currentlySoundingNoteId = note.id;
+      _userSequence.add(note);
+    });
+
+    Timer(const Duration(milliseconds: 300), () {
       if (mounted) {
-        setState(() => _phase = MemoryMelodyPhase.taskSequenceRecall);
+        setState(() {
+          _currentlySoundingNoteId = null;
+        });
       }
     });
-  }
 
-  void _handleSequenceAnswer(String answer) {
-    if (_song == null || _song!.questions.length < 2) return;
-    final q = _song!.questions[1];
-    final isCorrect = answer.trim().toLowerCase().contains(q.correctAnswer.toLowerCase());
-
-    setState(() {
-      _selectedSequenceAnswer = answer;
-      _sequenceRecallScore = isCorrect ? 100 : 35;
-    });
-
-    if (isCorrect) {
-      SoundService.playSuccess();
-    } else {
-      SoundService.playTap();
-    }
-
-    Future.delayed(const Duration(milliseconds: 1400), () {
-      if (mounted) {
-        setState(() => _phase = MemoryMelodyPhase.taskEventOrdering);
-      }
-    });
-  }
-
-  void _submitEventOrdering() {
-    int correctCount = 0;
-    for (int i = 0; i < _userOrderedEvents.length; i++) {
-      if (_userOrderedEvents[i].correctOrder == (i + 1)) {
-        correctCount++;
-      }
-    }
-
-    final score = ((correctCount / _userOrderedEvents.length) * 100).round();
-    setState(() {
-      _eventOrderingScore = score;
-    });
-
-    if (score >= 75) {
-      SoundService.playSuccess();
-    } else {
-      SoundService.playTap();
-    }
-
-    Future.delayed(const Duration(milliseconds: 1200), () {
-      if (mounted) {
-        setState(() => _phase = MemoryMelodyPhase.taskAttention);
-      }
-    });
-  }
-
-  void _handleAttentionAnswer(String answer) {
-    if (_song == null || _song!.questions.length < 3) return;
-    final q = _song!.questions[2];
-    final isCorrect = answer.trim().toLowerCase().contains(q.correctAnswer.toLowerCase());
-
-    setState(() {
-      _selectedAttentionAnswer = answer;
-      _attentionScore = isCorrect ? 100 : 30;
-    });
-
-    if (isCorrect) {
-      SoundService.playSuccess();
-    } else {
-      SoundService.playTap();
-    }
-
-    Future.delayed(const Duration(milliseconds: 1200), () {
-      if (mounted) {
-        _startDelayedInterlude();
-      }
-    });
-  }
-
-  void _startDelayedInterlude() {
-    setState(() {
-      _phase = MemoryMelodyPhase.delayedInterlude;
-      _interludeRemainingSeconds = 8;
-    });
-
-    _interludeTimer?.cancel();
-    _interludeTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) {
-        timer.cancel();
-        return;
-      }
-      if (_interludeRemainingSeconds <= 1) {
-        timer.cancel();
-        setState(() => _phase = MemoryMelodyPhase.taskDelayedRecall);
-      } else {
-        setState(() => _interludeRemainingSeconds--);
-      }
-    });
-  }
-
-  void _handleDelayedAnswer(String answer, AppState appState) {
-    if (_song == null) return;
-    final q = _song!.delayedQuestion;
-    final isCorrect = answer.trim().toLowerCase().contains(q.correctAnswer.toLowerCase());
-
-    setState(() {
-      _selectedDelayedAnswer = answer;
-      _delayedRecallScore = isCorrect ? 100 : 40;
-    });
-
-    if (isCorrect) {
-      SoundService.playSuccess();
-    } else {
-      SoundService.playTap();
-    }
-
-    Future.delayed(const Duration(milliseconds: 1400), () {
-      if (mounted) {
-        _finishGame(appState);
-      }
-    });
-  }
-
-  Future<void> _finishGame(AppState appState) async {
-    _totalStopwatch.stop();
-    final durationSeconds = _totalStopwatch.elapsed.inSeconds.clamp(15, 300);
-
-    // Compute combined weighted overall score
-    final double overall = (
-      _itemRecallScore * 0.25 +
-      _sequenceRecallScore * 0.25 +
-      _eventOrderingScore * 0.20 +
-      _attentionScore * 0.15 +
-      _delayedRecallScore * 0.15
-    );
-
-    final finalScore = overall.round().clamp(30, 100);
-
-    // Save Attempt with detailed sub-scores in metadata
-    final attempt = ExerciseAttempt(
-      id: 'melody_${DateTime.now().millisecondsSinceEpoch}',
-      userId: appState.credentialId,
-      domain: ExerciseDomain.universalCognitive,
-      type: ExerciseType.memoryMelody,
-      cognitiveDomain: CognitiveDomain.auditoryRecall,
-      exerciseId: 'memory_melody_${_song?.id ?? 'default'}',
-      responseMode: _voiceTranscript.isNotEmpty ? 'voice' : 'choice',
-      rawScore: finalScore.toDouble(),
-      maxScore: 100.0,
-      timeTakenMs: _totalStopwatch.elapsedMilliseconds,
-      metadata: {
-        'itemRecallScore': _itemRecallScore.toDouble(),
-        'sequenceRecallScore': _sequenceRecallScore.toDouble(),
-        'eventOrderingScore': _eventOrderingScore.toDouble(),
-        'attentionScore': _attentionScore.toDouble(),
-        'delayedRecallScore': _delayedRecallScore.toDouble(),
-        'songTheme': _song?.theme ?? 'Wellness',
-        'durationSeconds': durationSeconds,
-      },
-    );
-
-    await appState.attemptRepository.logAttempt(attempt);
-    SoundService.playFanfare();
-    if (mounted) {
-      ConfettiOverlay.show(
-        context,
-        title: 'Melody Master! 🎵',
-        subtitle: 'Scored $finalScore% across auditory & delayed memory tasks!',
-      );
-    }
-
-    if (mounted) {
-      setState(() {
-        _phase = MemoryMelodyPhase.results;
+    // If user filled all expected notes, evaluate immediately
+    if (_userSequence.length == _targetSequence.length) {
+      Timer(const Duration(milliseconds: 400), () {
+        if (mounted) {
+          final appState = AppStateScope.of(context);
+          _evaluateSequence(appState);
+        }
       });
     }
   }
 
-  // ── UI Builders ────────────────────────────────────────────────────────────
+  void _removeLastUserNote() {
+    if (_phase != MemoryMelodyPhase.reproduction || _userSequence.isEmpty) return;
+    SoundService.playTap();
+    setState(() {
+      _userSequence.removeLast();
+    });
+  }
+
+  // ── Deterministic Ordered Comparison ──────────────────────────────────────
+  void _evaluateSequence(AppState appState) async {
+    _stopwatch.stop();
+
+    int matches = 0;
+    for (int i = 0; i < _targetSequence.length; i++) {
+      if (i < _userSequence.length && _userSequence[i].id == _targetSequence[i].id) {
+        matches++;
+      }
+    }
+
+    final total = _targetSequence.length;
+    final accuracyPct = (matches / total * 100.0).round();
+    _matchedNotesCount = matches;
+    _cumulativeScore += accuracyPct;
+
+    setState(() {
+      _phase = MemoryMelodyPhase.evaluated;
+    });
+
+    if (matches == total) {
+      SoundService.playFanfare();
+      if (mounted) {
+        ConfettiOverlay.show(
+          context,
+          title: 'Harmonic Melody Master! 🎵',
+          subtitle: 'You reproduced all $total notes in the exact sequence!',
+        );
+      }
+    } else if (matches >= (total / 2)) {
+      SoundService.playSuccess();
+    } else {
+      SoundService.playError();
+    }
+
+    // Persist attempt into repository
+    await appState.attemptRepository.logAttempt(
+      ExerciseAttempt(
+        id: 'att_melody_${DateTime.now().millisecondsSinceEpoch}',
+        userId: appState.credentialId,
+        domain: ExerciseDomain.universalCognitive,
+        cognitiveDomain: CognitiveDomain.auditoryRecall,
+        type: ExerciseType.memoryMelody,
+        exerciseId: 'memory_melody_${_difficulty.name}',
+        responseMode: 'note_pads',
+        rawScore: matches.toDouble(),
+        maxScore: total.toDouble(),
+        timeTakenMs: _stopwatch.elapsedMilliseconds,
+      ),
+    );
+  }
+
+  void _tryAgain() {
+    SoundService.playTap();
+    _initRound();
+  }
+
+  void _nextRound() {
+    SoundService.playTap();
+    if (_difficulty == GameDifficulty.easy) {
+      setState(() => _difficulty = GameDifficulty.medium);
+    } else if (_difficulty == GameDifficulty.medium) {
+      setState(() => _difficulty = GameDifficulty.hard);
+    }
+    _initRound();
+  }
 
   @override
   Widget build(BuildContext context) {
     final appState = AppStateScope.of(context);
     final fontScale = appState.fontScale;
+    final total = _targetSequence.length;
+    final accuracy = total > 0 ? (_matchedNotesCount / total * 100).round() : 0;
 
     return Scaffold(
       backgroundColor: AppColors.canvasIvory,
@@ -438,182 +367,137 @@ class _MemoryMelodyScreenState extends State<MemoryMelodyScreen> with TickerProv
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: AppColors.charcoalText),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            _cancelAudioAndTimers();
+            Navigator.pop(context);
+          },
         ),
         title: Text(
           'Memory Melody',
           style: GoogleFonts.newsreader(
             fontSize: 22 * fontScale,
             fontWeight: FontWeight.bold,
-            color: const Color(0xFF8F5C86), // Warm Plum
+            color: AppColors.charcoalText,
           ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.volume_up_rounded, color: Color(0xFF8F5C86)),
-            tooltip: 'Audio Info',
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Memory Melody combines rhythmic auditory verses with synchronized multi-stage recall.'),
-                  duration: Duration(seconds: 3),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: _isLoading
-            ? _buildLoadingState(fontScale)
-            : _buildPhaseContent(appState, fontScale),
-      ),
-    );
-  }
-
-  Widget _buildLoadingState(double fontScale) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const CircularProgressIndicator(color: Color(0xFF8F5C86)),
-          const SizedBox(height: 20),
-          Text(
-            'Preparing Melodic Memory Verse...',
-            style: GoogleFonts.newsreader(
-              fontSize: 18 * fontScale,
-              fontWeight: FontWeight.w600,
-              color: AppColors.charcoalText,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Composing regional rhymes and cognitive probes',
-            style: GoogleFonts.atkinsonHyperlegible(
-              fontSize: 14 * fontScale,
-              color: AppColors.charcoalText.withValues(alpha: 0.7),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPhaseContent(AppState appState, double fontScale) {
-    switch (_phase) {
-      case MemoryMelodyPhase.intro:
-        return _buildIntroView(fontScale);
-      case MemoryMelodyPhase.playback:
-        return _buildPlaybackView(fontScale);
-      case MemoryMelodyPhase.taskItemRecall:
-        return _buildItemRecallView(fontScale);
-      case MemoryMelodyPhase.taskSequenceRecall:
-        return _buildSequenceRecallView(fontScale);
-      case MemoryMelodyPhase.taskEventOrdering:
-        return _buildEventOrderingView(fontScale);
-      case MemoryMelodyPhase.taskAttention:
-        return _buildAttentionView(fontScale);
-      case MemoryMelodyPhase.delayedInterlude:
-        return _buildDelayedInterludeView(fontScale);
-      case MemoryMelodyPhase.taskDelayedRecall:
-        return _buildDelayedRecallView(appState, fontScale);
-      case MemoryMelodyPhase.results:
-        return _buildResultsView(fontScale);
-    }
-  }
-
-  // 1. Intro View
-  Widget _buildIntroView(double fontScale) {
-    final song = _song!;
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
           Container(
-            padding: const EdgeInsets.all(22),
+            margin: const EdgeInsets.only(right: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: const Color(0xFF8F5C86).withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFF8F5C86).withValues(alpha: 0.25)),
+              color: const Color(0xFF8E24AA).withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: Column(
+            child: Row(
               children: [
-                const Icon(Icons.music_note_rounded, size: 54, color: Color(0xFF8F5C86)),
-                const SizedBox(height: 12),
+                const Icon(Icons.music_note_rounded, size: 16, color: Color(0xFF8E24AA)),
+                const SizedBox(width: 4),
                 Text(
-                  song.title,
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.newsreader(
-                    fontSize: 22 * fontScale,
+                  'Auditory Memory',
+                  style: GoogleFonts.atkinsonHyperlegible(
+                    fontSize: 12 * fontScale,
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFF8F5C86),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF8F5C86).withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    'Theme: ${song.theme} • Auditory Recall',
-                    style: GoogleFonts.atkinsonHyperlegible(
-                      fontSize: 13 * fontScale,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF8F5C86),
-                    ),
+                    color: const Color(0xFF8E24AA),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 24),
-          _buildInstructionBullet(Icons.hearing_rounded, 'Listen to the 25-second melodic verse carefully.', fontScale),
-          _buildInstructionBullet(Icons.menu_book_rounded, 'Remember the items mentioned, such as food or objects.', fontScale),
-          _buildInstructionBullet(Icons.format_list_numbered_rounded, 'Track the order of activities that took place.', fontScale),
-          _buildInstructionBullet(Icons.mic_rounded, 'You can speak your answers or simply tap the screen.', fontScale),
-          const SizedBox(height: 32),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF8F5C86),
-              foregroundColor: Colors.white,
-              minimumSize: const Size(double.infinity, 58),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              elevation: 3,
-            ),
-            onPressed: _startPlayback,
-            icon: const Icon(Icons.play_arrow_rounded, size: 28),
-            label: Text(
-              'Begin Listening',
-              style: GoogleFonts.atkinsonHyperlegible(
-                fontSize: 18 * fontScale,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
         ],
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(18, 8, 18, 30),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // ── Header Information Card ──
+              _buildHeaderCard(fontScale),
+              const SizedBox(height: 14),
+
+              // ── Melody Demonstration / Input Display Tray ──
+              _buildMelodyTray(fontScale),
+              const SizedBox(height: 16),
+
+              // ── Interactive Musical Pads ──
+              _buildMusicalNotePads(fontScale),
+              const SizedBox(height: 18),
+
+              // ── Bottom Action & Results ──
+              _buildActionArea(appState, fontScale, total, accuracy),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildInstructionBullet(IconData icon, String text, double fontScale) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: Row(
+  // ── Header Status Card ──
+  Widget _buildHeaderCard(double fontScale) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.sandalwoodGold.withValues(alpha: 0.4)),
+        boxShadow: const [BoxShadow(color: Color(0x06000000), blurRadius: 6)],
+      ),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 22, color: const Color(0xFF8F5C86)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              text,
-              style: GoogleFonts.atkinsonHyperlegible(
-                fontSize: 15 * fontScale,
-                color: AppColors.charcoalText,
-                height: 1.4,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 4,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3E5F5),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  '${_difficulty.label.toUpperCase()} DIFFICULTY • ${_targetSequence.length} NOTES',
+                  style: GoogleFonts.atkinsonHyperlegible(
+                    fontSize: 11 * fontScale,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.8,
+                    color: const Color(0xFF8E24AA),
+                  ),
+                ),
               ),
+              Text(
+                'Total Score: $_cumulativeScore',
+                style: GoogleFonts.atkinsonHyperlegible(
+                  fontSize: 13 * fontScale,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.sageSecondary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _currentRound.title,
+            style: GoogleFonts.newsreader(
+              fontSize: 18 * fontScale,
+              fontWeight: FontWeight.bold,
+              color: AppColors.charcoalText,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _phase == MemoryMelodyPhase.playback
+                ? 'Listen carefully as each note plays and illuminates...'
+                : _phase == MemoryMelodyPhase.reproduction
+                    ? 'Reproduce the melody notes by tapping the pads in exact order.'
+                    : _phase == MemoryMelodyPhase.evaluated
+                        ? 'Evaluation complete! Compare your notes with the target melody.'
+                        : 'Tap Play Melody to hear the musical notes sequence.',
+            style: GoogleFonts.atkinsonHyperlegible(
+              fontSize: 13 * fontScale,
+              color: AppColors.secondaryText,
             ),
           ),
         ],
@@ -621,642 +505,520 @@ class _MemoryMelodyScreenState extends State<MemoryMelodyScreen> with TickerProv
     );
   }
 
-  // 2. Playback View
-  Widget _buildPlaybackView(double fontScale) {
-    final song = _song!;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+  // ── Melody Display Tray ──
+  Widget _buildMelodyTray(double fontScale) {
+    final isPlayback = _phase == MemoryMelodyPhase.playback;
+    final isRepro = _phase == MemoryMelodyPhase.reproduction;
+    final isEval = _phase == MemoryMelodyPhase.evaluated;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isPlayback
+              ? const Color(0xFF8E24AA)
+              : AppColors.sandalwoodGold.withValues(alpha: 0.4),
+          width: isPlayback ? 1.8 : 1.0,
+        ),
+      ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Memory Phase: Listening',
-                style: GoogleFonts.atkinsonHyperlegible(
-                  fontSize: 14 * fontScale,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF8F5C86),
+              Expanded(
+                child: Text(
+                  isPlayback
+                      ? 'PLAYING MELODY (LISTEN CAREFULLY):'
+                      : isRepro
+                          ? 'YOUR REPRODUCED SEQUENCE (${_userSequence.length} OF ${_targetSequence.length}):'
+                          : isEval
+                              ? 'MELODY ACCURACY COMPARISON:'
+                              : 'TARGET MELODY SEQUENCE (${_targetSequence.length} NOTES):',
+                  style: GoogleFonts.atkinsonHyperlegible(
+                    fontSize: 11 * fontScale,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.8,
+                    color: isPlayback ? const Color(0xFF8E24AA) : AppColors.secondaryText,
+                  ),
                 ),
               ),
-              if (_isPlaying)
-                Row(
-                  children: [
-                    const Icon(Icons.graphic_eq_rounded, color: Color(0xFF8F5C86), size: 18),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Singing / Speaking...',
-                      style: GoogleFonts.atkinsonHyperlegible(
-                        fontSize: 12 * fontScale,
-                        color: const Color(0xFF8F5C86),
-                      ),
+              if (isRepro && _userSequence.isNotEmpty)
+                TextButton.icon(
+                  onPressed: _removeLastUserNote,
+                  icon: const Icon(Icons.backspace_outlined, size: 16, color: AppColors.terracottaPrimary),
+                  label: Text(
+                    'Undo',
+                    style: GoogleFonts.atkinsonHyperlegible(
+                      fontSize: 12 * fontScale,
+                      color: AppColors.terracottaPrimary,
                     ),
-                  ],
+                  ),
                 ),
             ],
           ),
           const SizedBox(height: 12),
-          Expanded(
-            child: ListView.builder(
-              itemCount: song.lines.length,
-              itemBuilder: (context, i) {
-                final isCurrent = i == _currentLineIndex && _isPlaying;
-                final isPast = i < _currentLineIndex;
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 350),
-                  margin: const EdgeInsets.only(bottom: 14),
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: isCurrent
-                        ? const Color(0xFF8F5C86).withValues(alpha: 0.16)
-                        : isPast
-                            ? Colors.white.withValues(alpha: 0.8)
-                            : Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: isCurrent
-                          ? const Color(0xFF8F5C86)
-                          : isPast
-                              ? Colors.grey.shade300
-                              : Colors.grey.shade200,
-                      width: isCurrent ? 2.5 : 1.0,
+
+          // Display notes in sequence
+          if (isRepro) ...[
+            // User notes entered so far
+            if (_userSequence.isEmpty)
+              Container(
+                height: 54,
+                alignment: Alignment.center,
+                child: Text(
+                  'Tap the note pads below to reproduce the melody.',
+                  style: GoogleFonts.atkinsonHyperlegible(
+                    fontSize: 13 * fontScale,
+                    fontStyle: FontStyle.italic,
+                    color: AppColors.secondaryText,
+                  ),
+                ),
+              )
+            else
+              Wrap(
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 8,
+                children: List.generate(_userSequence.length, (idx) {
+                  final note = _userSequence[idx];
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: note.color.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: note.color, width: 1.5),
                     ),
-                    boxShadow: isCurrent
-                        ? [
-                            BoxShadow(
-                              color: const Color(0xFF8F5C86).withValues(alpha: 0.15),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            )
-                          ]
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          note.westernName,
+                          style: GoogleFonts.atkinsonHyperlegible(
+                            fontSize: 16 * fontScale,
+                            fontWeight: FontWeight.bold,
+                            color: note.color,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '(${note.swaraName})',
+                          style: GoogleFonts.atkinsonHyperlegible(
+                            fontSize: 12 * fontScale,
+                            color: AppColors.secondaryText,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ),
+          ] else if (isEval) ...[
+            // Side-by-side comparison of Target vs User
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Target: ',
+                  style: GoogleFonts.atkinsonHyperlegible(
+                    fontSize: 12 * fontScale,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.secondaryText,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: _targetSequence.map((n) => _buildBadge(n, fontScale)).toList(),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'Your Input: ',
+                  style: GoogleFonts.atkinsonHyperlegible(
+                    fontSize: 12 * fontScale,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.secondaryText,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: List.generate(_userSequence.length, (i) {
+                    final note = _userSequence[i];
+                    final isCorrect = i < _targetSequence.length && note.id == _targetSequence[i].id;
+                    return _buildBadge(note, fontScale, isCorrect: isCorrect);
+                  }),
+                ),
+              ],
+            ),
+          ] else ...[
+            // Ready or Playback mode: Show note sequence tiles
+            Wrap(
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 8,
+              children: List.generate(_targetSequence.length, (idx) {
+                final note = _targetSequence[idx];
+                final isSoundingNow = _currentlySoundingNoteId == note.id && _isPlayingMelody;
+
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isSoundingNow
+                        ? note.color
+                        : note.color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: note.color,
+                      width: isSoundingNow ? 2.5 : 1.2,
+                    ),
+                    boxShadow: isSoundingNow
+                        ? [BoxShadow(color: note.color.withValues(alpha: 0.4), blurRadius: 10)]
                         : null,
                   ),
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: isCurrent
-                              ? const Color(0xFF8F5C86)
-                              : Colors.grey.shade200,
-                        ),
-                        child: Center(
-                          child: Text(
-                            '${i + 1}',
-                            style: GoogleFonts.atkinsonHyperlegible(
-                              fontWeight: FontWeight.bold,
-                              color: isCurrent ? Colors.white : Colors.grey.shade700,
-                            ),
-                          ),
+                      Text(
+                        note.westernName,
+                        style: GoogleFonts.atkinsonHyperlegible(
+                          fontSize: 18 * fontScale,
+                          fontWeight: FontWeight.bold,
+                          color: isSoundingNow ? Colors.white : note.color,
                         ),
                       ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Text(
-                          song.lines[i],
-                          style: GoogleFonts.newsreader(
-                            fontSize: 17 * fontScale,
-                            fontWeight: isCurrent ? FontWeight.bold : FontWeight.w500,
-                            color: isCurrent
-                                ? const Color(0xFF8F5C86)
-                                : AppColors.charcoalText,
-                            height: 1.35,
-                          ),
+                      const SizedBox(width: 4),
+                      Text(
+                        note.swaraName,
+                        style: GoogleFonts.atkinsonHyperlegible(
+                          fontSize: 13 * fontScale,
+                          fontWeight: FontWeight.w600,
+                          color: isSoundingNow ? Colors.white70 : AppColors.secondaryText,
                         ),
                       ),
                     ],
                   ),
                 );
-              },
+              }),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBadge(MusicalNote note, double fontScale, {bool? isCorrect}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: isCorrect == true
+            ? AppColors.sageSecondary.withValues(alpha: 0.2)
+            : isCorrect == false
+                ? Colors.redAccent.withValues(alpha: 0.2)
+                : note.color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isCorrect == true
+              ? AppColors.sageSecondary
+              : isCorrect == false
+                  ? Colors.redAccent
+                  : note.color,
+          width: 1.2,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '${note.westernName} (${note.swaraName})',
+            style: GoogleFonts.atkinsonHyperlegible(
+              fontSize: 12 * fontScale,
+              fontWeight: FontWeight.bold,
+              color: AppColors.charcoalText,
             ),
           ),
-          const SizedBox(height: 12),
+          if (isCorrect != null) ...[
+            const SizedBox(width: 4),
+            Icon(
+              isCorrect ? Icons.check_circle : Icons.cancel,
+              size: 14,
+              color: isCorrect ? AppColors.sageSecondary : Colors.redAccent,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // ── Musical Note Touch Pads (Piano / Indian Swara keyboard) ───────────────
+  Widget _buildMusicalNotePads(double fontScale) {
+    final isRepro = _phase == MemoryMelodyPhase.reproduction;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'MUSICAL NOTE PADS (TAP TO PLAY & REPRODUCE):',
+          style: GoogleFonts.atkinsonHyperlegible(
+            fontSize: 11 * fontScale,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.8,
+            color: AppColors.charcoalText,
+          ),
+        ),
+        const SizedBox(height: 10),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: kOctaveNotes.length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 4,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+            childAspectRatio: 0.95,
+          ),
+          itemBuilder: (context, index) {
+            final note = kOctaveNotes[index];
+            final isPlayingThis = _currentlySoundingNoteId == note.id;
+
+            return Material(
+              color: isPlayingThis
+                  ? note.color
+                  : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              elevation: isPlayingThis ? 4 : 1,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: isRepro ? () => _onUserTapNote(note) : null,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: note.color,
+                      width: isPlayingThis ? 2.5 : 1.5,
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            note.westernName,
+                            style: GoogleFonts.atkinsonHyperlegible(
+                              fontSize: 19 * fontScale,
+                              fontWeight: FontWeight.bold,
+                              color: isPlayingThis ? Colors.white : note.color,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            note.swaraName,
+                            style: GoogleFonts.atkinsonHyperlegible(
+                              fontSize: 12 * fontScale,
+                              fontWeight: FontWeight.bold,
+                              color: isPlayingThis ? Colors.white70 : AppColors.secondaryText,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  // ── Action Button & Results Card ──────────────────────────────────────────
+  Widget _buildActionArea(AppState appState, double fontScale, int total, int accuracy) {
+    if (_phase == MemoryMelodyPhase.ready) {
+      return ElevatedButton.icon(
+        onPressed: _startMelodyPlayback,
+        icon: const Icon(Icons.play_circle_filled_rounded, size: 24),
+        label: Text(
+          'Play Melody (Listen)',
+          style: GoogleFonts.atkinsonHyperlegible(
+            fontSize: 16 * fontScale,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF8E24AA),
+          foregroundColor: Colors.white,
+          minimumSize: const Size.fromHeight(54),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        ),
+      );
+    }
+
+    if (_phase == MemoryMelodyPhase.playback) {
+      return Container(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        alignment: Alignment.center,
+        child: Wrap(
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 10,
+          children: [
+            const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF8E24AA)),
+            ),
+            Text(
+              'Playing Melody Tones...',
+              style: GoogleFonts.atkinsonHyperlegible(
+                fontSize: 14 * fontScale,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF8E24AA),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_phase == MemoryMelodyPhase.reproduction) {
+      return Row(
+        children: [
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: _startMelodyPlayback,
+              icon: const Icon(Icons.volume_up_rounded, size: 18),
+              label: Text(
+                'Replay Melody',
+                style: GoogleFonts.atkinsonHyperlegible(fontWeight: FontWeight.bold),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.charcoalText,
+                minimumSize: const Size.fromHeight(48),
+                side: const BorderSide(color: AppColors.sandalwoodGold),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: _userSequence.length == _targetSequence.length
+                  ? () => _evaluateSequence(appState)
+                  : null,
+              icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
+              label: Text(
+                'Check Melody',
+                style: GoogleFonts.atkinsonHyperlegible(fontWeight: FontWeight.bold),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF8E24AA),
+                foregroundColor: Colors.white,
+                minimumSize: const Size.fromHeight(48),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Evaluated Phase
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: _matchedNotesCount == total ? AppColors.sageSecondary : const Color(0xFF8E24AA),
+          width: 1.5,
+        ),
+        boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 6)],
+      ),
+      child: Column(
+        children: [
+          Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            children: [
+              Icon(
+                _matchedNotesCount == total ? Icons.music_note_rounded : Icons.graphic_eq_rounded,
+                color: _matchedNotesCount == total ? AppColors.sageSecondary : const Color(0xFF8E24AA),
+                size: 28,
+              ),
+              Text(
+                _matchedNotesCount == total
+                    ? 'Perfect Melody Recall!'
+                    : '$_matchedNotesCount of $total notes correct.',
+                style: GoogleFonts.newsreader(
+                  fontSize: 18 * fontScale,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.charcoalText,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Accuracy: $accuracy%',
+            style: GoogleFonts.atkinsonHyperlegible(
+              fontSize: 14 * fontScale,
+              fontWeight: FontWeight.bold,
+              color: AppColors.secondaryText,
+            ),
+          ),
+          const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF8F5C86),
-                    side: const BorderSide(color: Color(0xFF8F5C86)),
-                    minimumSize: const Size(0, 52),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  onPressed: _tryAgain,
+                  icon: const Icon(Icons.replay_rounded, size: 18),
+                  label: Text(
+                    'Try Again',
+                    style: GoogleFonts.atkinsonHyperlegible(fontWeight: FontWeight.bold),
                   ),
-                  onPressed: _replaySong,
-                  icon: const Icon(Icons.replay_rounded),
-                  label: Text('Listen Again', style: GoogleFonts.atkinsonHyperlegible(fontWeight: FontWeight.bold)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.charcoalText,
+                    minimumSize: const Size.fromHeight(48),
+                    side: const BorderSide(color: AppColors.sandalwoodGold),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: ElevatedButton.icon(
+                  onPressed: _nextRound,
+                  icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                  label: Text(
+                    _difficulty != GameDifficulty.hard ? 'Next Difficulty' : 'Play Again',
+                    style: GoogleFonts.atkinsonHyperlegible(fontWeight: FontWeight.bold),
+                  ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF8F5C86),
+                    backgroundColor: const Color(0xFF8E24AA),
                     foregroundColor: Colors.white,
-                    minimumSize: const Size(0, 52),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    minimumSize: const Size.fromHeight(48),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  onPressed: _proceedToTasks,
-                  icon: const Icon(Icons.check_rounded),
-                  label: Text('Ready to Recall', style: GoogleFonts.atkinsonHyperlegible(fontWeight: FontWeight.bold)),
                 ),
               ),
             ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // 3. Task A: Item Recall View
-  Widget _buildItemRecallView(double fontScale) {
-    final q = _song!.questions[0];
-    return _buildQuestionScaffold(
-      stepTitle: 'Task 1 of 4 • Item Recall',
-      question: q.question,
-      hint: q.hint,
-      options: q.options,
-      selectedAnswer: _selectedItemAnswer,
-      onSelect: _handleItemAnswer,
-      fontScale: fontScale,
-      allowVoice: true,
-    );
-  }
-
-  // 4. Task B: Sequence Recall View
-  Widget _buildSequenceRecallView(double fontScale) {
-    final q = _song!.questions[1];
-    return _buildQuestionScaffold(
-      stepTitle: 'Task 2 of 4 • Sequence Recall',
-      question: q.question,
-      hint: q.hint,
-      options: q.options,
-      selectedAnswer: _selectedSequenceAnswer,
-      onSelect: _handleSequenceAnswer,
-      fontScale: fontScale,
-      allowVoice: false,
-    );
-  }
-
-  // 5. Task C: Event Ordering View
-  Widget _buildEventOrderingView(double fontScale) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Task 3 of 4 • Event Ordering',
-            style: GoogleFonts.atkinsonHyperlegible(
-              fontSize: 14 * fontScale,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF8F5C86),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Arrange these events in the exact order they happened:',
-            style: GoogleFonts.newsreader(
-              fontSize: 18 * fontScale,
-              fontWeight: FontWeight.bold,
-              color: AppColors.charcoalText,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Expanded(
-            child: ReorderableListView.builder(
-              itemCount: _userOrderedEvents.length,
-              onReorder: (oldIndex, newIndex) {
-                setState(() {
-                  if (newIndex > oldIndex) newIndex--;
-                  final item = _userOrderedEvents.removeAt(oldIndex);
-                  _userOrderedEvents.insert(newIndex, item);
-                });
-                SoundService.playTap();
-              },
-              itemBuilder: (context, index) {
-                final step = _userOrderedEvents[index];
-                return Card(
-                  key: ValueKey(step.id),
-                  margin: const EdgeInsets.only(bottom: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  elevation: 1,
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    leading: CircleAvatar(
-                      backgroundColor: const Color(0xFF8F5C86).withValues(alpha: 0.15),
-                      child: Text(
-                        '${index + 1}',
-                        style: GoogleFonts.atkinsonHyperlegible(
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF8F5C86),
-                        ),
-                      ),
-                    ),
-                    title: Text(
-                      step.text,
-                      style: GoogleFonts.atkinsonHyperlegible(
-                        fontSize: 15 * fontScale,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.charcoalText,
-                      ),
-                    ),
-                    trailing: const Icon(Icons.drag_handle_rounded, color: Colors.grey),
-                  ),
-                );
-              },
-            ),
-          ),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF8F5C86),
-              foregroundColor: Colors.white,
-              minimumSize: const Size(double.infinity, 54),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-            ),
-            onPressed: _submitEventOrdering,
-            icon: const Icon(Icons.check_circle_rounded),
-            label: Text(
-              'Submit Event Order',
-              style: GoogleFonts.atkinsonHyperlegible(
-                fontSize: 16 * fontScale,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // 6. Task D: Attention View
-  Widget _buildAttentionView(double fontScale) {
-    final q = _song!.questions[2];
-    return _buildQuestionScaffold(
-      stepTitle: 'Task 4 of 4 • Attention to Detail',
-      question: q.question,
-      hint: q.hint,
-      options: q.options,
-      selectedAnswer: _selectedAttentionAnswer,
-      onSelect: _handleAttentionAnswer,
-      fontScale: fontScale,
-      allowVoice: false,
-    );
-  }
-
-  // 7. Delayed Interlude View (Buffer phase)
-  Widget _buildDelayedInterludeView(double fontScale) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFF8F5C86).withValues(alpha: 0.12),
-                border: Border.all(color: const Color(0xFF8F5C86), width: 2),
-              ),
-              child: Center(
-                child: Text(
-                  '$_interludeRemainingSeconds',
-                  style: GoogleFonts.newsreader(
-                    fontSize: 42 * fontScale,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF8F5C86),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Gentle Breathing Pause...',
-              style: GoogleFonts.newsreader(
-                fontSize: 22 * fontScale,
-                fontWeight: FontWeight.bold,
-                color: AppColors.charcoalText,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Breathe in calmly and rest your eyes.\nA surprise delayed memory recall question will appear next.',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.atkinsonHyperlegible(
-                fontSize: 15 * fontScale,
-                color: AppColors.charcoalText.withValues(alpha: 0.75),
-                height: 1.4,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // 8. Task E: Delayed Recall View
-  Widget _buildDelayedRecallView(AppState appState, double fontScale) {
-    final q = _song!.delayedQuestion;
-    return _buildQuestionScaffold(
-      stepTitle: 'Final Challenge • Delayed Recall',
-      question: q.question,
-      hint: q.hint,
-      options: q.options,
-      selectedAnswer: _selectedDelayedAnswer,
-      onSelect: (ans) => _handleDelayedAnswer(ans, appState),
-      fontScale: fontScale,
-      allowVoice: true,
-    );
-  }
-
-  // Shared Question Builder
-  Widget _buildQuestionScaffold({
-    required String stepTitle,
-    required String question,
-    required String hint,
-    required List<String> options,
-    required String? selectedAnswer,
-    required Function(String) onSelect,
-    required double fontScale,
-    required bool allowVoice,
-  }) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            stepTitle,
-            style: GoogleFonts.atkinsonHyperlegible(
-              fontSize: 13 * fontScale,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF8F5C86),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            question,
-            style: GoogleFonts.newsreader(
-              fontSize: 20 * fontScale,
-              fontWeight: FontWeight.bold,
-              color: AppColors.charcoalText,
-              height: 1.3,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Hint: $hint',
-            style: GoogleFonts.atkinsonHyperlegible(
-              fontSize: 13 * fontScale,
-              fontStyle: FontStyle.italic,
-              color: AppColors.charcoalText.withValues(alpha: 0.65),
-            ),
-          ),
-          const SizedBox(height: 20),
-          if (allowVoice) ...[
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.grey.shade300),
-              ),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: Icon(
-                      _isListening ? Icons.mic_rounded : Icons.mic_none_rounded,
-                      color: _isListening ? Colors.red : const Color(0xFF8F5C86),
-                      size: 28,
-                    ),
-                    onPressed: () {
-                      if (_isListening) {
-                        _stopListening();
-                      } else {
-                        _startListening(onMatched: onSelect);
-                      }
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      _isListening
-                          ? 'Listening... speak your answer'
-                          : (_voiceTranscript.isNotEmpty
-                              ? 'Heard: "$_voiceTranscript"'
-                              : 'Tap microphone to speak answer'),
-                      style: GoogleFonts.atkinsonHyperlegible(
-                        fontSize: 14 * fontScale,
-                        color: _isListening ? Colors.red : AppColors.charcoalText,
-                        fontWeight: _isListening ? FontWeight.bold : FontWeight.normal,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (_voiceError != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child: Text(
-                  _voiceError!,
-                  style: GoogleFonts.atkinsonHyperlegible(fontSize: 12 * fontScale, color: Colors.orange.shade800),
-                ),
-              ),
-            const SizedBox(height: 16),
-          ],
-          ...options.map((opt) {
-            final isChosen = selectedAnswer == opt;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: InkWell(
-                onTap: selectedAnswer == null ? () => onSelect(opt) : null,
-                borderRadius: BorderRadius.circular(14),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-                  decoration: BoxDecoration(
-                    color: isChosen ? const Color(0xFF8F5C86).withValues(alpha: 0.15) : Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: isChosen ? const Color(0xFF8F5C86) : Colors.grey.shade300,
-                      width: isChosen ? 2.0 : 1.0,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        isChosen ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
-                        color: isChosen ? const Color(0xFF8F5C86) : Colors.grey,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          opt,
-                          style: GoogleFonts.atkinsonHyperlegible(
-                            fontSize: 16 * fontScale,
-                            fontWeight: isChosen ? FontWeight.bold : FontWeight.w500,
-                            color: isChosen ? const Color(0xFF8F5C86) : AppColors.charcoalText,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }),
-        ],
-      ),
-    );
-  }
-
-  // 9. Results View
-  Widget _buildResultsView(double fontScale) {
-    final overall = (
-      _itemRecallScore * 0.25 +
-      _sequenceRecallScore * 0.25 +
-      _eventOrderingScore * 0.20 +
-      _attentionScore * 0.15 +
-      _delayedRecallScore * 0.15
-    ).round();
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Icon(Icons.celebration_rounded, size: 64, color: Color(0xFF8F5C86)),
-          const SizedBox(height: 12),
-          Text(
-            'Memory Melody Complete!',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.newsreader(
-              fontSize: 24 * fontScale,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF8F5C86),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Overall Cognitive Score: $overall%',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.atkinsonHyperlegible(
-              fontSize: 18 * fontScale,
-              fontWeight: FontWeight.bold,
-              color: AppColors.charcoalText,
-            ),
-          ),
-          const SizedBox(height: 24),
-          Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey.shade200),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Cognitive Dimension Breakdown',
-                  style: GoogleFonts.atkinsonHyperlegible(
-                    fontSize: 15 * fontScale,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.charcoalText,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                _buildDimensionRow('🎵 Item Recall', _itemRecallScore, fontScale),
-                _buildDimensionRow('🔢 Sequence Recall', _sequenceRecallScore, fontScale),
-                _buildDimensionRow('📋 Event Ordering', _eventOrderingScore, fontScale),
-                _buildDimensionRow('🎯 Attention to Detail', _attentionScore, fontScale),
-                _buildDimensionRow('⏳ Delayed Recall', _delayedRecallScore, fontScale),
-              ],
-            ),
-          ),
-          const SizedBox(height: 28),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF8F5C86),
-              foregroundColor: Colors.white,
-              minimumSize: const Size(double.infinity, 54),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-            ),
-            onPressed: () {
-              setState(() {
-                _phase = MemoryMelodyPhase.intro;
-                _selectedItemAnswer = null;
-                _selectedSequenceAnswer = null;
-                _selectedAttentionAnswer = null;
-                _selectedDelayedAnswer = null;
-              });
-              _loadSong();
-            },
-            icon: const Icon(Icons.refresh_rounded),
-            label: Text(
-              'Play Another Melody',
-              style: GoogleFonts.atkinsonHyperlegible(fontSize: 16 * fontScale, fontWeight: FontWeight.bold),
-            ),
-          ),
-          const SizedBox(height: 12),
-          OutlinedButton(
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.charcoalText,
-              minimumSize: const Size(double.infinity, 50),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-            ),
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(
-              'Return to Sanctuary',
-              style: GoogleFonts.atkinsonHyperlegible(fontSize: 15 * fontScale, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDimensionRow(String label, int score, double fontScale) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                label,
-                style: GoogleFonts.atkinsonHyperlegible(
-                  fontSize: 13 * fontScale,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.charcoalText,
-                ),
-              ),
-              Text(
-                '$score%',
-                style: GoogleFonts.atkinsonHyperlegible(
-                  fontSize: 13 * fontScale,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF8F5C86),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: score / 100.0,
-              minHeight: 6,
-              backgroundColor: Colors.grey.shade200,
-              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF8F5C86)),
-            ),
           ),
         ],
       ),

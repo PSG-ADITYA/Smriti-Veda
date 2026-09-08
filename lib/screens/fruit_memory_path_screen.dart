@@ -1,3 +1,6 @@
+import '../services/session_engine/memory_session_generator.dart';
+import '../models/game_difficulty.dart';
+import '../widgets/difficulty_selector.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -22,14 +25,16 @@ class FruitItem {
 }
 
 const List<FruitItem> kAvailableFruits = [
-  FruitItem(id: 'apple', name: 'Apple', emoji: '🍎', color: Color(0xFFE63946)),
-  FruitItem(id: 'banana', name: 'Banana', emoji: '🍌', color: Color(0xFFE9C46A)),
-  FruitItem(id: 'mango', name: 'Mango', emoji: '🥭', color: Color(0xFFF4A261)),
-  FruitItem(id: 'grapes', name: 'Grapes', emoji: '🍇', color: Color(0xFF7209B7)),
-  FruitItem(id: 'orange', name: 'Orange', emoji: '🍊', color: Color(0xFFFB8500)),
-  FruitItem(id: 'strawberry', name: 'Strawberry', emoji: '🍓', color: Color(0xFFD90429)),
-  FruitItem(id: 'coconut', name: 'Coconut', emoji: '🥥', color: Color(0xFF6C584C)),
-  FruitItem(id: 'pomegranate', name: 'Pomegranate', emoji: '🫐', color: Color(0xFF3A0CA3)),
+  FruitItem(id: 'apple', name: 'Apple', emoji: '🍎', color: Color(0xFFD32F2F)),
+  FruitItem(id: 'banana', name: 'Banana', emoji: '🍌', color: Color(0xFFF57F17)),
+  FruitItem(id: 'grapes', name: 'Grapes', emoji: '🍇', color: Color(0xFF7B1FA2)),
+  FruitItem(id: 'orange', name: 'Orange', emoji: '🍊', color: Color(0xFFE65100)),
+  FruitItem(id: 'watermelon', name: 'Watermelon', emoji: '🍉', color: Color(0xFF2E7D32)),
+  FruitItem(id: 'mango', name: 'Mango', emoji: '🥭', color: Color(0xFFEF6C00)),
+  FruitItem(id: 'pineapple', name: 'Pineapple', emoji: '🍍', color: Color(0xFFF9A825)),
+  FruitItem(id: 'strawberry', name: 'Strawberry', emoji: '🍓', color: Color(0xFFC2185B)),
+  FruitItem(id: 'coconut', name: 'Coconut', emoji: '🥥', color: Color(0xFF5D4037)),
+  FruitItem(id: 'guava', name: 'Guava', emoji: '🍐', color: Color(0xFF558B2F)),
 ];
 
 enum FruitGamePhase {
@@ -40,19 +45,45 @@ enum FruitGamePhase {
   gameSummary,
 }
 
-class FruitLevelConfig {
-  final int level;
+class FruitDifficultyConfig {
+  final GameDifficulty difficulty;
   final int gridSize; // 3 for 3x3, 4 for 4x4
   final int fruitCount;
   final int previewSeconds;
+  final String description;
 
-  const FruitLevelConfig({
-    required this.level,
+  const FruitDifficultyConfig({
+    required this.difficulty,
     required this.gridSize,
     required this.fruitCount,
     required this.previewSeconds,
+    required this.description,
   });
 }
+
+const Map<GameDifficulty, FruitDifficultyConfig> kFruitDifficultyConfigs = {
+  GameDifficulty.easy: FruitDifficultyConfig(
+    difficulty: GameDifficulty.easy,
+    gridSize: 3,
+    fruitCount: 3,
+    previewSeconds: 6,
+    description: '3 fruits on a 3x3 garden path (6s memorization)',
+  ),
+  GameDifficulty.medium: FruitDifficultyConfig(
+    difficulty: GameDifficulty.medium,
+    gridSize: 4,
+    fruitCount: 5,
+    previewSeconds: 5,
+    description: '5 fruits on a 4x4 garden path (5s memorization)',
+  ),
+  GameDifficulty.hard: FruitDifficultyConfig(
+    difficulty: GameDifficulty.hard,
+    gridSize: 4,
+    fruitCount: 7,
+    previewSeconds: 4,
+    description: '7 fruits on a 4x4 garden path (4s memorization)',
+  ),
+};
 
 class FruitMemoryPathScreen extends StatefulWidget {
   const FruitMemoryPathScreen({super.key});
@@ -62,17 +93,12 @@ class FruitMemoryPathScreen extends StatefulWidget {
 }
 
 class _FruitMemoryPathScreenState extends State<FruitMemoryPathScreen> {
-  final List<FruitLevelConfig> _levels = const [
-    FruitLevelConfig(level: 1, gridSize: 3, fruitCount: 3, previewSeconds: 5),
-    FruitLevelConfig(level: 2, gridSize: 3, fruitCount: 4, previewSeconds: 4),
-    FruitLevelConfig(level: 3, gridSize: 4, fruitCount: 5, previewSeconds: 4),
-    FruitLevelConfig(level: 4, gridSize: 4, fruitCount: 6, previewSeconds: 3),
-  ];
-
-  int _currentLevelIdx = 0;
+  GameDifficulty _difficulty = GameDifficulty.easy;
   FruitGamePhase _phase = FruitGamePhase.ready;
 
-  // Level State
+  FruitDifficultyConfig get _currentConfig => kFruitDifficultyConfigs[_difficulty]!;
+
+  // Level State (Stored Internally & Immutable during round)
   late int _gridSize;
   late int _cellCount;
   late List<int> _targetPathIndices;
@@ -80,11 +106,12 @@ class _FruitMemoryPathScreenState extends State<FruitMemoryPathScreen> {
   late Map<int, FruitItem> _gridFruitMap;
 
   // Gameplay State
-  int _avatarPosition = 0;
-  int _nextFruitIndex = 0;
+  int _userStep = 0; // Current position in the sequence user needs to find
   final Set<int> _discoveredCells = {};
+  int? _lastTappedIndex;
+  bool _lastTapWasError = false;
   int _mistakesCount = 0;
-  int _previewSecondsRemaining = 0;
+  int _previewSecondsRemaining = 6;
   Timer? _countdownTimer;
   final Stopwatch _stopwatch = Stopwatch();
 
@@ -93,12 +120,12 @@ class _FruitMemoryPathScreenState extends State<FruitMemoryPathScreen> {
   int _totalMistakes = 0;
   int _cumulativeScore = 0;
 
-  FruitLevelConfig get _currentConfig => _levels[_currentLevelIdx];
+
 
   @override
   void initState() {
     super.initState();
-    _initLevel();
+    _initRound();
   }
 
   @override
@@ -107,30 +134,31 @@ class _FruitMemoryPathScreenState extends State<FruitMemoryPathScreen> {
     super.dispose();
   }
 
-  void _initLevel() {
+  void _initRound() {
     _countdownTimer?.cancel();
-    final config = _currentConfig;
-    _gridSize = config.gridSize;
+    final session = MemorySessionGenerator.generateFruitSession(_difficulty);
+    _gridSize = session.stimulus.gridSize;
     _cellCount = _gridSize * _gridSize;
+    _targetPathIndices = session.stimulus.pathIndices;
 
-    // Generate non-overlapping random cells for path
-    final allIndices = List<int>.generate(_cellCount, (i) => i)..shuffle();
-    _targetPathIndices = allIndices.take(config.fruitCount).toList();
-
-    // Pick distinct fruits
-    final shuffledFruits = List<FruitItem>.from(kAvailableFruits)..shuffle();
-    _targetFruits = shuffledFruits.take(config.fruitCount).toList();
+    _targetFruits = session.stimulus.fruits.map((f) => FruitItem(
+      id: f.id,
+      name: f.name,
+      emoji: f.emoji,
+      color: f.color,
+    )).toList();
 
     _gridFruitMap = {};
-    for (int i = 0; i < config.fruitCount; i++) {
+    for (int i = 0; i < _targetPathIndices.length; i++) {
       _gridFruitMap[_targetPathIndices[i]] = _targetFruits[i];
     }
 
-    _avatarPosition = _targetPathIndices.first;
-    _nextFruitIndex = 0;
+    _userStep = 0;
     _discoveredCells.clear();
+    _lastTappedIndex = null;
+    _lastTapWasError = false;
     _mistakesCount = 0;
-    _previewSecondsRemaining = config.previewSeconds;
+    _previewSecondsRemaining = _currentConfig.previewSeconds; // Strict 5s memorization
     _phase = FruitGamePhase.ready;
     setState(() {});
   }
@@ -142,10 +170,9 @@ class _FruitMemoryPathScreenState extends State<FruitMemoryPathScreen> {
       _previewSecondsRemaining = _currentConfig.previewSeconds;
     });
 
-    SoundService.speak(
-      'Memorize the fruit locations. You have ${_currentConfig.previewSeconds} seconds.',
-    );
+    SoundService.speak('Memorize the fruit path. You have 5 seconds.');
 
+    _countdownTimer?.cancel();
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) return;
       if (_previewSecondsRemaining > 1) {
@@ -164,59 +191,59 @@ class _FruitMemoryPathScreenState extends State<FruitMemoryPathScreen> {
     setState(() {
       _phase = FruitGamePhase.navigation;
       _discoveredCells.clear();
-      _nextFruitIndex = 0;
+      _userStep = 0;
+      _lastTappedIndex = null;
+      _lastTapWasError = false;
       _stopwatch.reset();
       _stopwatch.start();
     });
 
-    SoundService.speak(
-      'Now navigate your character. Find the ${_targetFruits.first.name} first.',
-    );
+    SoundService.speak('Now reproduce the fruit sequence from memory.');
   }
 
   void _onCellTapped(int index) {
     if (_phase != FruitGamePhase.navigation) return;
+    if (_discoveredCells.contains(index)) return; // Already solved
 
-    final targetCell = _targetPathIndices[_nextFruitIndex];
-    final expectedFruit = _targetFruits[_nextFruitIndex];
+    final targetCell = _targetPathIndices[_userStep];
 
     setState(() {
-      _avatarPosition = index;
+      _lastTappedIndex = index;
     });
 
     if (index == targetCell) {
       // Correct step!
       SoundService.playTap();
       setState(() {
+        _lastTapWasError = false;
         _discoveredCells.add(index);
-        _nextFruitIndex++;
+        _userStep++;
         _totalCorrectSteps++;
       });
 
-      if (_nextFruitIndex >= _targetFruits.length) {
-        // Level complete!
+      if (_userStep >= _targetFruits.length) {
+        // Level completely solved!
         _stopwatch.stop();
         _handleLevelSuccess();
-      } else {
-        SoundService.speak('Good! Next find the ${_targetFruits[_nextFruitIndex].name}.');
       }
     } else {
-      // Mistake
+      // Mistake: Wrong cell tapped
       SoundService.playError();
       setState(() {
+        _lastTapWasError = true;
         _mistakesCount++;
         _totalMistakes++;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          duration: const Duration(milliseconds: 900),
-          backgroundColor: AppColors.terracottaPrimary,
-          content: Text(
-            'Not there! Look for ${expectedFruit.emoji} ${expectedFruit.name}.',
-            style: GoogleFonts.atkinsonHyperlegible(fontWeight: FontWeight.bold, color: Colors.white),
-          ),
-        ),
-      );
+
+      // Clear error flash after 500ms
+      Timer(const Duration(milliseconds: 600), () {
+        if (mounted && _lastTappedIndex == index) {
+          setState(() {
+            _lastTapWasError = false;
+            _lastTappedIndex = null;
+          });
+        }
+      });
     }
   }
 
@@ -231,47 +258,43 @@ class _FruitMemoryPathScreenState extends State<FruitMemoryPathScreen> {
   }
 
   Future<void> _advanceOrFinish(AppState appState) async {
-    if (_currentLevelIdx < _levels.length - 1) {
-      _currentLevelIdx++;
-      _initLevel();
-    } else {
-      // Game completely finished!
-      _phase = FruitGamePhase.gameSummary;
-      final totalSteps = _totalCorrectSteps + _totalMistakes;
-      final accuracy = totalSteps > 0 ? (_totalCorrectSteps / totalSteps * 100.0) : 100.0;
-      final maxPossibleScore = _levels.length * 100.0;
+    _phase = FruitGamePhase.gameSummary;
+    final maxPossibleScore = _targetFruits.length * 100.0;
 
-      // Log real attempt into repository
-      await appState.attemptRepository.logAttempt(
-        ExerciseAttempt(
-          id: 'att_fruit_${DateTime.now().millisecondsSinceEpoch}',
-          userId: appState.credentialId,
-          domain: ExerciseDomain.universalCognitive,
-          cognitiveDomain: CognitiveDomain.spatialMemory,
-          type: ExerciseType.fruitMemoryPath,
-          exerciseId: 'fruit_memory_path_flagship',
-          responseMode: 'action',
-          rawScore: _cumulativeScore.toDouble(),
-          maxScore: maxPossibleScore,
-          timeTakenMs: _stopwatch.elapsedMilliseconds,
-          metadata: {
-            'levelsCompleted': _levels.length,
-            'accuracy': accuracy.toInt(),
-            'mistakes': _totalMistakes,
-          },
-        ),
+    if (mounted) {
+      ConfettiOverlay.show(
+        context,
+        title: 'Fruit Path Champion! 🍎',
+        subtitle: 'Completed ${_difficulty.label} path with $_totalCorrectSteps correct path steps!',
       );
-
-      setState(() {});
-
-      if (mounted) {
-        ConfettiOverlay.show(
-          context,
-          title: 'Spatial Master! 🏆',
-          subtitle: 'Completed all ${_levels.length} levels with ${accuracy.toInt()}% accuracy!',
-        );
-      }
     }
+    await appState.attemptRepository.logAttempt(
+      ExerciseAttempt(
+        id: 'att_fruit_${DateTime.now().millisecondsSinceEpoch}',
+        userId: appState.credentialId,
+        domain: ExerciseDomain.universalCognitive,
+        cognitiveDomain: CognitiveDomain.spatialMemory,
+        type: ExerciseType.fruitMemoryPath,
+        exerciseId: 'fruit_memory_path_${_difficulty.name}',
+        responseMode: 'action',
+        rawScore: _cumulativeScore.toDouble(),
+        maxScore: maxPossibleScore,
+        timeTakenMs: _stopwatch.elapsedMilliseconds,
+        metadata: {
+          'difficulty': _difficulty.name,
+          'mistakesCount': _totalMistakes,
+        },
+      ),
+    );
+    setState(() {});
+  }
+
+  void _restartWholeGame() {
+    SoundService.playTap();
+    _cumulativeScore = 0;
+    _totalCorrectSteps = 0;
+    _totalMistakes = 0;
+    _initRound();
   }
 
   @override
@@ -285,15 +308,15 @@ class _FruitMemoryPathScreenState extends State<FruitMemoryPathScreen> {
         backgroundColor: AppColors.canvasIvory,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.charcoalText),
+          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.charcoalText),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           'Fruit Memory Path',
           style: GoogleFonts.newsreader(
-            fontSize: 20 * fontScale,
+            fontSize: 22 * fontScale,
             fontWeight: FontWeight.bold,
-            color: AppColors.terracottaPrimary,
+            color: AppColors.charcoalText,
           ),
         ),
         actions: [
@@ -301,15 +324,15 @@ class _FruitMemoryPathScreenState extends State<FruitMemoryPathScreen> {
             margin: const EdgeInsets.only(right: 16),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.terracottaPrimary.withOpacity(0.12),
+              color: AppColors.terracottaPrimary.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
               children: [
-                const Icon(Icons.explore_rounded, size: 16, color: AppColors.terracottaPrimary),
+                const Icon(Icons.route_rounded, size: 16, color: AppColors.terracottaPrimary),
                 const SizedBox(width: 4),
                 Text(
-                  'Spatial Memory',
+                  'Spatial Recall',
                   style: GoogleFonts.atkinsonHyperlegible(
                     fontSize: 12 * fontScale,
                     fontWeight: FontWeight.bold,
@@ -323,23 +346,16 @@ class _FruitMemoryPathScreenState extends State<FruitMemoryPathScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+          padding: const EdgeInsets.fromLTRB(18, 8, 18, 30),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Header Card: Level & Instructions
-              _buildHeaderCard(fontScale),
+              _buildHeaderStatusCard(fontScale),
               const SizedBox(height: 14),
-
-              // Target Path Sequence Ribbon
-              _buildTargetSequenceRibbon(fontScale),
+              _buildSequenceBar(fontScale),
+              const SizedBox(height: 14),
+              _buildGameBoard(fontScale),
               const SizedBox(height: 16),
-
-              // The Main Interactive Grid
-              _buildGrid(fontScale),
-              const SizedBox(height: 18),
-
-              // Bottom Action Area
               _buildBottomControls(appState, fontScale),
             ],
           ),
@@ -348,193 +364,222 @@ class _FruitMemoryPathScreenState extends State<FruitMemoryPathScreen> {
     );
   }
 
-  Widget _buildHeaderCard(double fontScale) {
+  // ── Header Status Card ──
+  Widget _buildHeaderStatusCard(double fontScale) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.terracottaPrimary.withOpacity(0.2)),
-        boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 4)],
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.sandalwoodGold.withValues(alpha: 0.4)),
+        boxShadow: const [BoxShadow(color: Color(0x06000000), blurRadius: 6)],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'LEVEL ${_currentLevelIdx + 1} OF ${_levels.length}',
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 4,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppColors.terracottaSoft,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text('${_difficulty.label.toUpperCase()} DIFFICULTY • ${_currentConfig.gridSize}×${_currentConfig.gridSize} GARDEN',
                   style: GoogleFonts.atkinsonHyperlegible(
                     fontSize: 11 * fontScale,
                     fontWeight: FontWeight.bold,
-                    letterSpacing: 1.0,
+                    letterSpacing: 0.8,
                     color: AppColors.terracottaPrimary,
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  '${_currentConfig.gridSize}x${_currentConfig.gridSize} Garden Path (${_currentConfig.fruitCount} Fruits)',
-                  style: GoogleFonts.newsreader(
-                    fontSize: 16 * fontScale,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.charcoalText,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          if (_phase == FruitGamePhase.preview)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: AppColors.terracottaPrimary,
-                borderRadius: BorderRadius.circular(12),
               ),
-              child: Row(
-                children: [
-                  const Icon(Icons.timer, size: 18, color: Colors.white),
-                  const SizedBox(width: 6),
-                  Text(
-                    '${_previewSecondsRemaining}s',
-                    style: GoogleFonts.atkinsonHyperlegible(
-                      fontSize: 18 * fontScale,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            )
-          else
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: AppColors.sageSecondary.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
+              Text(
                 'Score: $_cumulativeScore',
                 style: GoogleFonts.atkinsonHyperlegible(
-                  fontSize: 14 * fontScale,
+                  fontSize: 13 * fontScale,
                   fontWeight: FontWeight.bold,
                   color: AppColors.sageSecondary,
                 ),
               ),
+            ],
+          ),
+          if (_phase == FruitGamePhase.ready) ...[
+            const SizedBox(height: 10),
+            DifficultySelector(
+              selected: _difficulty,
+              onChanged: (d) {
+                setState(() {
+                  _difficulty = d;
+                  _initRound();
+                });
+              },
             ),
+          ],
+          const SizedBox(height: 8),
+          Text(
+            _phase == FruitGamePhase.preview
+                ? 'Memorize the path of fruits! (${_previewSecondsRemaining}s left)'
+                : _phase == FruitGamePhase.navigation
+                    ? 'Step along the garden pavers in the exact fruit sequence.'
+                    : 'Study the fruit path for 5 seconds, then tap each fruit in order.',
+            style: GoogleFonts.atkinsonHyperlegible(
+              fontSize: 14 * fontScale,
+              fontWeight: FontWeight.w600,
+              color: AppColors.charcoalText,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildTargetSequenceRibbon(double fontScale) {
+  // ── Sequence Indicator (Shows fruits with arrows: 🍎 → 🍌 → 🍇, NEVER NUMBERS) ──
+  Widget _buildSequenceBar(double fontScale) {
+    final isPreview = _phase == FruitGamePhase.preview;
+    final isNav = _phase == FruitGamePhase.navigation;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.canvasIvory,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.sandalwoodGold.withOpacity(0.4)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isPreview
+              ? AppColors.terracottaPrimary
+              : AppColors.sandalwoodGold.withValues(alpha: 0.4),
+          width: isPreview ? 1.5 : 1.0,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Icon(Icons.route_rounded, size: 16, color: AppColors.sandalwoodGold),
-              const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  'TARGET PATH SEQUENCE (IN ORDER):',
-                  style: GoogleFonts.atkinsonHyperlegible(
-                    fontSize: 11 * fontScale,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.8,
-                    color: AppColors.charcoalText,
-                  ),
+                  isPreview
+                      ? 'FRUIT PATH SEQUENCE (5-SEC PREVIEW):'
+                      : 'REPRODUCE SEQUENCE IN ORDER:',
+                style: GoogleFonts.atkinsonHyperlegible(
+                  fontSize: 11 * fontScale,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.8,
+                  color: isPreview ? AppColors.terracottaPrimary : AppColors.secondaryText,
                 ),
               ),
+              ),
+              if (isPreview)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.terracottaPrimary,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    '$_previewSecondsRemaining s',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
             ],
           ),
-          const SizedBox(height: 8),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: List.generate(_targetFruits.length, (i) {
-                final fruit = _targetFruits[i];
-                final isDone = _discoveredCells.contains(_targetPathIndices[i]);
-                final isCurrent = _phase == FruitGamePhase.navigation && _nextFruitIndex == i;
+          const SizedBox(height: 10),
 
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 250),
+          // Fruit Sequence Flow: 🍎 → 🍌 → 🍇 (NO numbers on the fruits)
+          Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 6,
+            runSpacing: 6,
+            children: List.generate(_targetFruits.length, (idx) {
+              final fruit = _targetFruits[idx];
+              final isDiscovered = _userStep > idx;
+              final isCurrent = _userStep == idx && isNav;
+
+              // What icon to display: during preview, show all fruits. During nav, show discovered ones or ❓
+              final showFruit = isPreview || isDiscovered;
+
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: isDone
-                          ? AppColors.sageSecondary
+                      color: isDiscovered
+                          ? AppColors.sageSecondary.withValues(alpha: 0.15)
                           : isCurrent
-                              ? AppColors.terracottaPrimary
-                              : Colors.white,
+                              ? AppColors.terracottaPrimary.withValues(alpha: 0.15)
+                              : isPreview
+                                  ? fruit.color.withValues(alpha: 0.12)
+                                  : const Color(0xFFF3F1ED),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                        color: isCurrent ? AppColors.terracottaPrimary : Colors.black12,
-                        width: isCurrent ? 2 : 1,
+                        color: isDiscovered
+                            ? AppColors.sageSecondary
+                            : isCurrent
+                                ? AppColors.terracottaPrimary
+                                : isPreview
+                                    ? fruit.color
+                                    : AppColors.borderSubtle,
+                        width: (isCurrent || isPreview) ? 1.5 : 1.0,
                       ),
-                      boxShadow: isCurrent
-                          ? [BoxShadow(color: AppColors.terracottaPrimary.withOpacity(0.3), blurRadius: 6)]
-                          : null,
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          '${i + 1}. ',
-                          style: TextStyle(
-                            fontSize: 12 * fontScale,
-                            fontWeight: FontWeight.bold,
-                            color: (isDone || isCurrent) ? Colors.white : AppColors.secondaryText,
-                          ),
-                        ),
-                        Text(
-                          fruit.emoji,
-                          style: const TextStyle(fontSize: 16),
+                          showFruit ? fruit.emoji : '❓',
+                          style: const TextStyle(fontSize: 20),
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          fruit.name,
+                          showFruit ? fruit.name : 'Secret',
                           style: GoogleFonts.atkinsonHyperlegible(
-                            fontSize: 13 * fontScale,
+                            fontSize: 12 * fontScale,
                             fontWeight: FontWeight.bold,
-                            color: (isDone || isCurrent) ? Colors.white : AppColors.charcoalText,
+                            color: showFruit ? AppColors.charcoalText : AppColors.secondaryText,
                           ),
                         ),
-                        if (isDone) ...[
+                        if (isDiscovered) ...[
                           const SizedBox(width: 4),
-                          const Icon(Icons.check_circle, size: 14, color: Colors.white),
+                          const Icon(Icons.check, size: 14, color: AppColors.sageSecondary),
                         ],
                       ],
                     ),
                   ),
-                );
-              }),
-            ),
+                  if (idx < _targetFruits.length - 1) ...[
+                    const SizedBox(width: 4),
+                    const Icon(Icons.arrow_forward_rounded, size: 14, color: Colors.black26),
+                  ],
+                ],
+              );
+            }),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildGrid(double fontScale) {
+  // ── Game Board (Paver Garden Grid) ──
+  Widget _buildGameBoard(double fontScale) {
     return AspectRatio(
       aspectRatio: 1.0,
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: const Color(0xFFF7F2E7), // Warm sandstone paver surface
+          color: const Color(0xFFF7F2E7), // Warm sandstone paver ground
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.sandalwoodGold.withOpacity(0.4), width: 2),
+          border: Border.all(color: AppColors.sandalwoodGold.withValues(alpha: 0.4), width: 2),
         ),
         child: GridView.builder(
           physics: const NeverScrollableScrollPhysics(),
@@ -547,114 +592,79 @@ class _FruitMemoryPathScreenState extends State<FruitMemoryPathScreen> {
           itemBuilder: (context, index) {
             final fruit = _gridFruitMap[index];
             final hasFruit = fruit != null;
+            final isPreview = _phase == FruitGamePhase.preview;
             final isDiscovered = _discoveredCells.contains(index);
-            final isAvatarHere = _avatarPosition == index && _phase == FruitGamePhase.navigation;
-            final isPreviewing = _phase == FruitGamePhase.preview;
+            final isErrorTap = _lastTappedIndex == index && _lastTapWasError;
 
             return GestureDetector(
               onTap: () => _onCellTapped(index),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 decoration: BoxDecoration(
-                  color: (isPreviewing && hasFruit)
-                      ? fruit.color.withOpacity(0.18)
-                      : isDiscovered
-                          ? AppColors.sageSecondary.withOpacity(0.2)
-                          : Colors.white,
+                  color: isErrorTap
+                      ? Colors.redAccent.withValues(alpha: 0.2)
+                      : (isPreview && hasFruit)
+                          ? fruit.color.withValues(alpha: 0.18)
+                          : isDiscovered
+                              ? AppColors.sageSecondary.withValues(alpha: 0.2)
+                              : Colors.white,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: isAvatarHere
-                        ? AppColors.terracottaPrimary
-                        : (isPreviewing && hasFruit)
+                    color: isErrorTap
+                        ? Colors.redAccent
+                        : (isPreview && hasFruit)
                             ? fruit.color
                             : isDiscovered
                                 ? AppColors.sageSecondary
-                                : AppColors.sandalwoodGold.withOpacity(0.3),
-                    width: (isAvatarHere || (isPreviewing && hasFruit)) ? 2.5 : 1.2,
+                                : AppColors.sandalwoodGold.withValues(alpha: 0.35),
+                    width: (isPreview && hasFruit) || isDiscovered || isErrorTap ? 2.0 : 1.2,
                   ),
-                  boxShadow: [
+                  boxShadow: const [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
+                      color: Color(0x04000000),
                       blurRadius: 4,
-                      offset: const Offset(0, 2),
+                      offset: Offset(0, 2),
                     ),
                   ],
                 ),
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    // Preview Mode: Display the fruit and its sequence badge
-                    if (isPreviewing && hasFruit) ...[
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(fruit.emoji, style: TextStyle(fontSize: _gridSize == 3 ? 32 : 24)),
-                          const SizedBox(height: 2),
-                          Text(
-                            fruit.name,
-                            style: GoogleFonts.atkinsonHyperlegible(
-                              fontSize: (_gridSize == 3 ? 12 : 10) * fontScale,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.charcoalText,
+                child: Center(
+                  child: isPreview && hasFruit
+                      // NO NUMBERS! The fruit emoji and name represent the sequence itself
+                      ? Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              fruit.emoji,
+                              style: TextStyle(fontSize: _gridSize == 3 ? 34 : 26),
                             ),
-                          ),
-                        ],
-                      ),
-                      Positioned(
-                        top: 4,
-                        left: 6,
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: fruit.color,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Text(
-                            '${_targetPathIndices.indexOf(index) + 1}',
-                            style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-                    ]
-                    // Discovered during navigation
-                    else if (isDiscovered && hasFruit) ...[
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(fruit.emoji, style: TextStyle(fontSize: _gridSize == 3 ? 30 : 22)),
-                          const SizedBox(height: 2),
-                          const Icon(Icons.check_circle_rounded, color: AppColors.sageSecondary, size: 16),
-                        ],
-                      ),
-                    ]
-                    // Hidden paver during navigation
-                    else ...[
-                      Icon(
-                        Icons.yard_outlined,
-                        color: Colors.black.withOpacity(0.08),
-                        size: _gridSize == 3 ? 28 : 20,
-                      ),
-                    ],
-
-                    // Avatar Pin (Always visible on current cell during navigation)
-                    if (isAvatarHere)
-                      Positioned(
-                        bottom: 4,
-                        right: 4,
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: const BoxDecoration(
-                            color: AppColors.terracottaPrimary,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.directions_walk_rounded,
-                            size: 16,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                  ],
+                            const SizedBox(height: 2),
+                            Text(
+                              fruit.name,
+                              style: GoogleFonts.atkinsonHyperlegible(
+                                fontSize: (_gridSize == 3 ? 12 : 10) * fontScale,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.charcoalText,
+                              ),
+                            ),
+                          ],
+                        )
+                      : isDiscovered && hasFruit
+                          ? Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  fruit.emoji,
+                                  style: TextStyle(fontSize: _gridSize == 3 ? 32 : 24),
+                                ),
+                                const SizedBox(height: 2),
+                                const Icon(Icons.check_circle_rounded, color: AppColors.sageSecondary, size: 16),
+                              ],
+                            )
+                          : Icon(
+                              Icons.yard_outlined,
+                              color: Colors.black.withValues(alpha: 0.08),
+                              size: _gridSize == 3 ? 28 : 20,
+                            ),
                 ),
               ),
             );
@@ -664,237 +674,202 @@ class _FruitMemoryPathScreenState extends State<FruitMemoryPathScreen> {
     );
   }
 
+  // ── Bottom Controls & Feedback ──
   Widget _buildBottomControls(AppState appState, double fontScale) {
     if (_phase == FruitGamePhase.ready) {
-      return Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.sandalwoodGold.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.lightbulb_outline_rounded, color: AppColors.sandalwoodGold),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Observe the fruit path for ${_currentConfig.previewSeconds} seconds, then guide your character across them in order.',
-                    style: GoogleFonts.atkinsonHyperlegible(
-                      fontSize: 13 * fontScale,
-                      color: AppColors.charcoalText,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+      return ElevatedButton.icon(
+        onPressed: _startPreviewPhase,
+        icon: const Icon(Icons.visibility_rounded, size: 22),
+        label: Text(
+          'Start 5-Second Memorization',
+          style: GoogleFonts.atkinsonHyperlegible(
+            fontSize: 16 * fontScale,
+            fontWeight: FontWeight.bold,
           ),
-          const SizedBox(height: 14),
-          ElevatedButton.icon(
-            onPressed: _startPreviewPhase,
-            icon: const Icon(Icons.play_arrow_rounded, size: 24),
-            label: Text(
-              'Start ${_currentConfig.previewSeconds}s Memory Preview',
-              style: GoogleFonts.atkinsonHyperlegible(fontSize: 16 * fontScale, fontWeight: FontWeight.bold),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.terracottaPrimary,
-              foregroundColor: Colors.white,
-              minimumSize: const Size.fromHeight(54),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-            ),
-          ),
-        ],
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.terracottaPrimary,
+          foregroundColor: Colors.white,
+          minimumSize: const Size.fromHeight(54),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        ),
       );
     }
 
     if (_phase == FruitGamePhase.preview) {
-      return Center(
+      return Container(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        alignment: Alignment.center,
         child: Text(
-          'Memorize positions! Navigation starts automatically...',
+          'Memorize the fruits! Pavers will hide in $_previewSecondsRemaining seconds...',
           style: GoogleFonts.atkinsonHyperlegible(
             fontSize: 14 * fontScale,
-            fontStyle: FontStyle.italic,
-            color: AppColors.secondaryText,
+            fontWeight: FontWeight.bold,
+            color: AppColors.terracottaPrimary,
           ),
         ),
       );
     }
 
     if (_phase == FruitGamePhase.navigation) {
-      final currentExpectedFruit = _targetFruits[_nextFruitIndex];
-      return Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.terracottaPrimary.withOpacity(0.25)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppColors.terracottaPrimary.withOpacity(0.12),
-                shape: BoxShape.circle,
-              ),
-              child: Text(currentExpectedFruit.emoji, style: const TextStyle(fontSize: 24)),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Step ${_nextFruitIndex + 1} of ${_targetFruits.length}',
-                    style: GoogleFonts.atkinsonHyperlegible(
-                      fontSize: 12 * fontScale,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.terracottaPrimary,
-                    ),
-                  ),
-                  Text(
-                    'Tap the cell where ${currentExpectedFruit.name} was placed',
-                    style: GoogleFonts.newsreader(
-                      fontSize: 15 * fontScale,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.charcoalText,
-                    ),
-                  ),
-                ],
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Text(
+              'Found: $_userStep of ${_targetFruits.length} fruits',
+              style: GoogleFonts.atkinsonHyperlegible(
+                fontSize: 14 * fontScale,
+                fontWeight: FontWeight.bold,
+                color: AppColors.charcoalText,
               ),
             ),
-          ],
-        ),
+          ),
+          TextButton.icon(
+            onPressed: () {
+              SoundService.playTap();
+              _initRound();
+            },
+            icon: const Icon(Icons.refresh_rounded, size: 16, color: AppColors.secondaryText),
+            label: Text(
+              'Restart Round',
+              style: GoogleFonts.atkinsonHyperlegible(
+                fontSize: 13 * fontScale,
+                color: AppColors.secondaryText,
+              ),
+            ),
+          ),
+        ],
       );
     }
 
     if (_phase == FruitGamePhase.levelComplete) {
-      final isLastLevel = _currentLevelIdx >= _levels.length - 1;
       return Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.sageSecondary, width: 2),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.sageSecondary, width: 1.5),
+          boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 6)],
         ),
         child: Column(
           children: [
+            Wrap(
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              children: [
+                const Icon(Icons.stars_rounded, color: AppColors.sageSecondary, size: 28),
+                Text(
+                  'Round Mastered!',
+                  style: GoogleFonts.newsreader(
+                    fontSize: 20 * fontScale,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.charcoalText,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'You navigated all ${_targetFruits.length} fruits in sequence from memory! (Mistakes: $_mistakesCount)',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.atkinsonHyperlegible(
+                fontSize: 13 * fontScale,
+                color: AppColors.secondaryText,
+              ),
+            ),
+            const SizedBox(height: 16),
             Row(
               children: [
-                const Icon(Icons.check_circle_rounded, color: AppColors.sageSecondary, size: 28),
-                const SizedBox(width: 10),
                 Expanded(
-                  child: Text(
-                    'Level ${_currentLevelIdx + 1} Path Cleared! 🌟',
-                    style: GoogleFonts.newsreader(
-                      fontSize: 18 * fontScale,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.charcoalText,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      SoundService.playTap();
+                      _initRound();
+                    },
+                    icon: const Icon(Icons.replay_rounded, size: 18),
+                    label: Text(
+                      'Replay Round',
+                      style: GoogleFonts.atkinsonHyperlegible(fontWeight: FontWeight.bold),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.charcoalText,
+                      minimumSize: const Size.fromHeight(48),
+                      side: const BorderSide(color: AppColors.sandalwoodGold),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => _advanceOrFinish(appState),
+                    icon: const Icon(Icons.emoji_events_rounded, size: 18),
+                    label: Text(
+                      'View Summary',
+                      style: GoogleFonts.atkinsonHyperlegible(fontWeight: FontWeight.bold),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.terracottaPrimary,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size.fromHeight(48),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 10),
-            Text(
-              'Mistakes made: $_mistakesCount • Time: ${(_stopwatch.elapsedMilliseconds / 1000).toStringAsFixed(1)}s',
-              style: GoogleFonts.atkinsonHyperlegible(
-                fontSize: 14 * fontScale,
-                color: AppColors.secondaryText,
-              ),
-            ),
-            const SizedBox(height: 14),
-            ElevatedButton(
-              onPressed: () => _advanceOrFinish(appState),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.sageSecondary,
-                foregroundColor: Colors.white,
-                minimumSize: const Size.fromHeight(50),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: Text(
-                isLastLevel ? 'View Final Results' : 'Proceed to Level ${_currentLevelIdx + 2}',
-                style: GoogleFonts.atkinsonHyperlegible(fontSize: 15 * fontScale, fontWeight: FontWeight.bold),
-              ),
-            ),
           ],
         ),
       );
     }
 
-    // Summary Phase
+
+
+    // Game Summary
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppColors.terracottaPrimary, width: 2),
       ),
       child: Column(
         children: [
-          const Icon(Icons.military_tech_rounded, size: 48, color: AppColors.sandalwoodGold),
+          const Icon(Icons.emoji_events_rounded, color: AppColors.terracottaPrimary, size: 48),
           const SizedBox(height: 8),
           Text(
-            'Exercise Completed!',
+            'Fruit Memory Path Complete! 🍎',
             style: GoogleFonts.newsreader(
               fontSize: 22 * fontScale,
-              fontWeight: FontWeight.bold,
-              color: AppColors.terracottaPrimary,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Final Score: $_cumulativeScore / ${_levels.length * 100}',
-            style: GoogleFonts.atkinsonHyperlegible(
-              fontSize: 16 * fontScale,
               fontWeight: FontWeight.bold,
               color: AppColors.charcoalText,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text(
-            'Your Spatial Memory & Working Memory scores have been updated in your profile.',
-            textAlign: TextAlign.center,
+            'Total Score: $_cumulativeScore • Total Mistakes: $_totalMistakes',
             style: GoogleFonts.atkinsonHyperlegible(
-              fontSize: 13 * fontScale,
+              fontSize: 14 * fontScale,
+              fontWeight: FontWeight.bold,
               color: AppColors.secondaryText,
             ),
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () {
-                    _currentLevelIdx = 0;
-                    _cumulativeScore = 0;
-                    _totalCorrectSteps = 0;
-                    _totalMistakes = 0;
-                    _initLevel();
-                  },
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(48),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: const Text('Replay'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.terracottaPrimary,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size.fromHeight(48),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: const Text('Done'),
-                ),
-              ),
-            ],
+          const SizedBox(height: 18),
+          ElevatedButton.icon(
+            onPressed: _restartWholeGame,
+            icon: const Icon(Icons.replay_rounded, size: 20),
+            label: Text(
+              'Play Again',
+              style: GoogleFonts.atkinsonHyperlegible(fontSize: 15 * fontScale, fontWeight: FontWeight.bold),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.terracottaPrimary,
+              foregroundColor: Colors.white,
+              minimumSize: const Size.fromHeight(50),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
           ),
         ],
       ),

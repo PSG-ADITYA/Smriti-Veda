@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/exercise_attempt.dart';
-import '../models/patient_info.dart';
 import '../providers/app_state.dart';
 import '../services/abdm_health_data_service.dart';
 import '../services/db_service.dart';

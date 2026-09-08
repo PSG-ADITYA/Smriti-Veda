@@ -223,6 +223,13 @@ class DbService {
     _setPersistentItem('user_profile_$targetUid', jsonEncode(profileData));
   }
 
+  void updateUserProfile(String userId, Map<String, dynamic> updates) {
+    final existing = getUserProfile(userId) ?? {};
+    existing.addAll(updates);
+    existing['updatedAt'] = DateTime.now().toIso8601String();
+    _setPersistentItem('user_profile_$userId', jsonEncode(existing));
+  }
+
   Map<String, dynamic>? getUserProfile([String? userId]) {
     final targetUid = userId ?? activeUserId;
     if (targetUid.isEmpty) return null;
@@ -299,6 +306,9 @@ class DbService {
       'localPath': f.localPath,
       'originalFileName': f.originalFileName,
       'fileSize': f.fileSize,
+      'base64Bytes': (f.fileBytes != null && f.fileBytes!.length <= 10 * 1024 * 1024)
+          ? base64Encode(f.fileBytes!)
+          : null,
     }).toList();
 
     _setPersistentItem('patient_files_db_$targetUid', jsonEncode(serializable));
@@ -573,6 +583,27 @@ class DbService {
   }
 
   // ── Exercise Attempts Persistence (Keyed per user) ──────────────────────
+  void saveExerciseAttempt(dynamic attempt) {
+    saveAttempt({
+      'id': attempt.id,
+      'userId': attempt.userId,
+      'domain': attempt.domain.toString().split('.').last,
+      'type': attempt.type.toString().split('.').last,
+      'cognitiveDomain': attempt.cognitiveDomain.toString().split('.').last,
+      'exerciseId': attempt.exerciseId,
+      'timestamp': attempt.timestamp.toIso8601String(),
+      'stage': attempt.stage,
+      'responseMode': attempt.responseMode,
+      'rawScore': attempt.rawScore,
+      'maxScore': attempt.maxScore,
+      'timeTakenMs': attempt.timeTakenMs,
+      'hintsUsed': attempt.hintsUsed,
+      'delayIntervalMinutes': attempt.delayIntervalMinutes,
+      'transcript': attempt.transcript,
+      'metadata': attempt.metadata,
+    }, attempt.userId);
+  }
+
   void saveAttempt(Map<String, dynamic> attemptJson, [String? userId]) {
     final targetUid = userId ?? (attemptJson['userId'] as String? ?? activeUserId);
     if (targetUid.isEmpty) return;
@@ -793,6 +824,23 @@ class DbService {
       } catch (e) {
         debugPrint('Error decoding caregiver connected seniors: $e');
       }
+    }
+    // Safe default seeding for demo/evaluation caregiver account
+    if (caregiverId == 'caregiver' || caregiverId == 'uid_demo_caregiver') {
+      final defaultSenior = [
+        {
+          'patientId': 'uid_demo_sih',
+          'name': 'Aditya Verma (Demo Senior)',
+          'relationship': 'Father',
+          'email': 'aditya.verma@demo.in',
+          'connectedAt': DateTime.now().subtract(const Duration(days: 14)).toIso8601String(),
+          'lastActiveAt': DateTime.now().toIso8601String(),
+          'isAuthorized': true,
+        },
+      ];
+      saveCaregiverConnectedSeniors(caregiverId, defaultSenior);
+      saveAuthorizedElderlyIds(caregiverId, ['uid_demo_sih', 'patient123']);
+      return defaultSenior;
     }
     return [];
   }

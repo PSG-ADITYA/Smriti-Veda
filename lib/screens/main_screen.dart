@@ -1,3 +1,4 @@
+import '../widgets/smritiveda_assistant_fab.dart';
 import 'caregiver_dashboard_screen.dart';
 import 'connected_seniors_screen.dart';
 import 'caregiver_insights_screen.dart';
@@ -64,6 +65,7 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
           child: Scaffold(
             backgroundColor: AppColors.surface,
             extendBody: true,
+            floatingActionButton: isCaregiver ? null : const SmritiVedaAssistantFab(),
             body: IndexedStack(
               index: currentIndex,
               children: tabs,
@@ -339,7 +341,7 @@ class SmritiAppBar extends StatelessWidget implements PreferredSizeWidget {
                     width: 30,
                     height: 30,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
+                    errorBuilder: (context, child, extra) => Container(
                       width: 30,
                       height: 30,
                       decoration: BoxDecoration(

@@ -1,3 +1,5 @@
+import '../services/session_engine/memory_session_generator.dart';
+import '../models/game_difficulty.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/exercise_attempt.dart';
@@ -20,32 +22,40 @@ class SequenceRound {
   });
 }
 
-const List<SequenceRound> kSequenceRounds = [
-  SequenceRound(
-    level: 1,
-    title: 'Level 1: Three Sacred Rivers',
+class SequenceDifficultyConfig {
+  final GameDifficulty difficulty;
+  final String title;
+  final List<String> targetSequence;
+  final int previewSeconds;
+
+  const SequenceDifficultyConfig({
+    required this.difficulty,
+    required this.title,
+    required this.targetSequence,
+    required this.previewSeconds,
+  });
+}
+
+const Map<GameDifficulty, SequenceDifficultyConfig> kSequenceDifficultyConfigs = {
+  GameDifficulty.easy: SequenceDifficultyConfig(
+    difficulty: GameDifficulty.easy,
+    title: 'Three Sacred Rivers',
     targetSequence: ['Ganga 🌊', 'Yamuna 🌿', 'Brahmaputra 🏔️'],
-    previewSeconds: 5,
+    previewSeconds: 6,
   ),
-  SequenceRound(
-    level: 2,
-    title: 'Level 2: Four Seasonal Fruits',
-    targetSequence: ['Mango 🥭', 'Guava 🍐', 'Coconut 🥥', 'Pomegranate 🍎'],
-    previewSeconds: 5,
-  ),
-  SequenceRound(
-    level: 3,
-    title: 'Level 3: Five Morning Steps',
+  GameDifficulty.medium: SequenceDifficultyConfig(
+    difficulty: GameDifficulty.medium,
+    title: 'Five Morning Routine Steps',
     targetSequence: ['Dawn 🌅', 'Prayer 🪔', 'Water 💧', 'Walk 🚶', 'Tea ☕'],
-    previewSeconds: 6,
+    previewSeconds: 5,
   ),
-  SequenceRound(
-    level: 4,
-    title: 'Level 4: Six Memory Digits',
+  GameDifficulty.hard: SequenceDifficultyConfig(
+    difficulty: GameDifficulty.hard,
+    title: 'Six Memory Digits',
     targetSequence: ['7️⃣', '2️⃣', '9️⃣', '4️⃣', '1️⃣', '8️⃣'],
-    previewSeconds: 6,
+    previewSeconds: 5,
   ),
-];
+};
 
 enum SequencePhase {
   preview,
@@ -61,7 +71,7 @@ class SequenceRecallScreen extends StatefulWidget {
 }
 
 class _SequenceRecallScreenState extends State<SequenceRecallScreen> {
-  int _roundIndex = 0;
+  GameDifficulty _difficulty = GameDifficulty.easy;
   SequencePhase _phase = SequencePhase.preview;
 
   late List<String> _shuffledPool;
@@ -70,7 +80,6 @@ class _SequenceRecallScreenState extends State<SequenceRecallScreen> {
   double _scorePct = 0.0;
   int _cumulativeScore = 0;
 
-  SequenceRound get _currentRound => kSequenceRounds[_roundIndex];
 
   @override
   void initState() {
@@ -78,10 +87,16 @@ class _SequenceRecallScreenState extends State<SequenceRecallScreen> {
     _initRound();
   }
 
+  late List<String> _currentTargetSequence;
+  String _currentSequenceTitle = '';
+
   void _initRound() {
     _phase = SequencePhase.preview;
     _userSequence.clear();
-    _shuffledPool = List.from(_currentRound.targetSequence)..shuffle();
+    final session = MemorySessionGenerator.generateSequenceSession(_difficulty);
+    _currentTargetSequence = session.stimulus.targetSequence;
+    _currentSequenceTitle = session.stimulus.title;
+    _shuffledPool = List.from(_currentTargetSequence)..shuffle();
     _stopwatch.reset();
     _stopwatch.start();
     setState(() {});
@@ -98,7 +113,7 @@ class _SequenceRecallScreenState extends State<SequenceRecallScreen> {
 
   void _addItem(String item) {
     if (_phase != SequencePhase.recall) return;
-    if (_userSequence.length >= _currentRound.targetSequence.length) return;
+    if (_userSequence.length >= _currentTargetSequence.length) return;
 
     SoundService.playTap();
     setState(() {
@@ -119,12 +134,12 @@ class _SequenceRecallScreenState extends State<SequenceRecallScreen> {
 
     int correctPositions = 0;
     for (int i = 0; i < _userSequence.length; i++) {
-      if (i < _currentRound.targetSequence.length && _userSequence[i] == _currentRound.targetSequence[i]) {
+      if (i < _currentTargetSequence.length && _userSequence[i] == _currentTargetSequence[i]) {
         correctPositions++;
       }
     }
 
-    final total = _currentRound.targetSequence.length;
+    final total = _currentTargetSequence.length;
     _scorePct = (correctPositions / total * 100.0);
     _cumulativeScore += _scorePct.toInt();
 
@@ -134,11 +149,11 @@ class _SequenceRecallScreenState extends State<SequenceRecallScreen> {
 
     if (_scorePct >= 70.0) {
       SoundService.playFanfare();
-      if (mounted && _roundIndex == kSequenceRounds.length - 1) {
+      if (mounted && _difficulty == GameDifficulty.hard) {
         ConfettiOverlay.show(
           context,
           title: 'Sequential Mastery! 🌟',
-          subtitle: 'Completed all 4 sequence tiers with precision chaining!',
+          subtitle: 'Completed Hard sequence with precision chaining!',
         );
       }
     } else {
@@ -153,7 +168,7 @@ class _SequenceRecallScreenState extends State<SequenceRecallScreen> {
         domain: ExerciseDomain.universalCognitive,
         cognitiveDomain: CognitiveDomain.sequentialMemory,
         type: ExerciseType.sequenceRecall,
-        exerciseId: 'sequence_recall_tier_${_roundIndex + 1}',
+        exerciseId: 'sequence_recall_${_difficulty.name}',
         responseMode: 'choice',
         rawScore: correctPositions.toDouble(),
         maxScore: total.toDouble(),
@@ -163,11 +178,10 @@ class _SequenceRecallScreenState extends State<SequenceRecallScreen> {
   }
 
   void _nextRoundOrReset() {
-    if (_roundIndex < kSequenceRounds.length - 1) {
-      _roundIndex++;
-    } else {
-      _roundIndex = 0;
-      _cumulativeScore = 0;
+    if (_difficulty == GameDifficulty.easy) {
+      _difficulty = GameDifficulty.medium;
+    } else if (_difficulty == GameDifficulty.medium) {
+      _difficulty = GameDifficulty.hard;
     }
     _initRound();
   }
@@ -199,7 +213,7 @@ class _SequenceRecallScreenState extends State<SequenceRecallScreen> {
             margin: const EdgeInsets.only(right: 16),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.sageSecondary.withOpacity(0.15),
+              color: AppColors.sageSecondary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
@@ -231,7 +245,7 @@ class _SequenceRecallScreenState extends State<SequenceRecallScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.sandalwoodGold.withOpacity(0.4)),
+                  border: Border.all(color: AppColors.sandalwoodGold.withValues(alpha: 0.4)),
                   boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 4)],
                 ),
                 child: Row(
@@ -241,8 +255,7 @@ class _SequenceRecallScreenState extends State<SequenceRecallScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'TIER ${_roundIndex + 1} OF ${kSequenceRounds.length}',
+                          Text('${_difficulty.label.toUpperCase()} DIFFICULTY',
                             style: GoogleFonts.atkinsonHyperlegible(
                               fontSize: 11 * fontScale,
                               fontWeight: FontWeight.bold,
@@ -252,7 +265,7 @@ class _SequenceRecallScreenState extends State<SequenceRecallScreen> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            _currentRound.title,
+                            _currentSequenceTitle,
                             style: GoogleFonts.newsreader(
                               fontSize: 17 * fontScale,
                               fontWeight: FontWeight.bold,
@@ -266,7 +279,7 @@ class _SequenceRecallScreenState extends State<SequenceRecallScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.sageSecondary.withOpacity(0.15),
+                        color: AppColors.sageSecondary.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -300,18 +313,18 @@ class _SequenceRecallScreenState extends State<SequenceRecallScreen> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: AppColors.terracottaPrimary.withOpacity(0.4), width: 1.5),
+                    border: Border.all(color: AppColors.terracottaPrimary.withValues(alpha: 0.4), width: 1.5),
                   ),
                   child: Wrap(
                     spacing: 12,
                     runSpacing: 12,
                     alignment: WrapAlignment.center,
-                    children: List.generate(_currentRound.targetSequence.length, (idx) {
-                      final item = _currentRound.targetSequence[idx];
+                    children: List.generate(_currentTargetSequence.length, (idx) {
+                      final item = _currentTargetSequence[idx];
                       return Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         decoration: BoxDecoration(
-                          color: AppColors.terracottaPrimary.withOpacity(0.1),
+                          color: AppColors.terracottaPrimary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: AppColors.terracottaPrimary),
                         ),
@@ -363,7 +376,7 @@ class _SequenceRecallScreenState extends State<SequenceRecallScreen> {
               // Phase 2: Recall & Summary
               if (_phase == SequencePhase.recall || _phase == SequencePhase.summary) ...[
                 Text(
-                  'YOUR ASSEMBLED SEQUENCE (${_userSequence.length} of ${_currentRound.targetSequence.length}):',
+                  'YOUR ASSEMBLED SEQUENCE (${_userSequence.length} of ${_currentTargetSequence.length}):',
                   style: GoogleFonts.atkinsonHyperlegible(
                     fontSize: 12 * fontScale,
                     fontWeight: FontWeight.bold,
@@ -397,8 +410,8 @@ class _SequenceRecallScreenState extends State<SequenceRecallScreen> {
                           children: List.generate(_userSequence.length, (idx) {
                             final item = _userSequence[idx];
                             final isSummary = _phase == SequencePhase.summary;
-                            final isCorrect = isSummary && _currentRound.targetSequence[idx] == item;
-                            final isWrong = isSummary && _currentRound.targetSequence[idx] != item;
+                            final isCorrect = isSummary && _currentTargetSequence[idx] == item;
+                            final isWrong = isSummary && _currentTargetSequence[idx] != item;
 
                             return GestureDetector(
                               onTap: isSummary ? null : () => _removeItem(idx),
@@ -406,9 +419,9 @@ class _SequenceRecallScreenState extends State<SequenceRecallScreen> {
                                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                                 decoration: BoxDecoration(
                                   color: isCorrect
-                                      ? AppColors.sageSecondary.withOpacity(0.15)
+                                      ? AppColors.sageSecondary.withValues(alpha: 0.15)
                                       : isWrong
-                                          ? AppColors.terracottaPrimary.withOpacity(0.15)
+                                          ? AppColors.terracottaPrimary.withValues(alpha: 0.15)
                                           : AppColors.canvasIvory,
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
@@ -496,7 +509,7 @@ class _SequenceRecallScreenState extends State<SequenceRecallScreen> {
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton.icon(
-                    onPressed: _userSequence.length == _currentRound.targetSequence.length
+                    onPressed: _userSequence.length == _currentTargetSequence.length
                         ? () => _submit(appState)
                         : null,
                     icon: const Icon(Icons.check_circle_outline, size: 22),
@@ -545,7 +558,7 @@ class _SequenceRecallScreenState extends State<SequenceRecallScreen> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
                           child: Text(
-                            _roundIndex < kSequenceRounds.length - 1 ? 'Next Sequence Tier ➔' : 'Play Again',
+                            _difficulty != GameDifficulty.hard ? 'Next Difficulty ➔' : 'Play Again',
                             style: GoogleFonts.atkinsonHyperlegible(fontSize: 15 * fontScale, fontWeight: FontWeight.bold),
                           ),
                         ),

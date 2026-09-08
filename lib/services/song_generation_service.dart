@@ -123,6 +123,7 @@ class SongContent {
 }
 
 class SongGenerationService {
+  static final Map<String, SongContent> _songCache = {};
   static final SongGenerationService _instance = SongGenerationService._internal();
   factory SongGenerationService() => _instance;
   SongGenerationService._internal();
@@ -290,28 +291,33 @@ class SongGenerationService {
     String difficulty = 'Medium',
     String patientName = 'Friend',
   }) async {
+    final cacheKey = '$patientName|$theme|$language|$difficulty';
+    if (_songCache.containsKey(cacheKey)) {
+      return _songCache[cacheKey]!;
+    }
+
     final apiKey = DbService().geminiApiKey;
     final isAiEnabled = DbService().isAiEnabled;
 
     if (isAiEnabled && apiKey.isNotEmpty) {
       try {
         final uri = Uri.parse(
-          'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + apiKey,
+          'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey',
         );
 
         final prompt = '''
 You are the Cognitive Music & Rhythmic Memory Specialist in Smriti Veda (SIH26003).
-Generate a memorable 4-line rhythmic song/story and associated cognitive recall questions for elderly patient "''' + patientName + '''".
-Theme: ''' + theme + '''
-Language: ''' + language + '''
-Difficulty: ''' + difficulty + '''
+Generate a memorable 4-line rhythmic song/story and associated cognitive recall questions for elderly patient "$patientName".
+Theme: $theme
+Language: $language
+Difficulty: $difficulty
 
 Output ONLY a single valid JSON object with NO markdown ticks or backticks:
 {
-  "title": "Morning Melody for ''' + patientName + '''",
-  "theme": "''' + theme + '''",
-  "language": "''' + language + '''",
-  "difficulty": "''' + difficulty + '''",
+  "title": "Morning Melody for $patientName",
+  "theme": "$theme",
+  "language": "$language",
+  "difficulty": "$difficulty",
   "lyrics": "4-line rhyming verse (20-25 seconds length) mentioning at least 2 distinct items and 3 sequential actions",
   "lines": ["Line 1", "Line 2", "Line 3", "Line 4"],
   "events": [
@@ -374,7 +380,10 @@ Output ONLY a single valid JSON object with NO markdown ticks or backticks:
 
             final parsed = jsonDecode(rawText) as Map<String, dynamic>;
             final song = _parseAiSong(parsed);
-            if (song != null) return song;
+            if (song != null) {
+              _songCache[cacheKey] = song;
+              return song;
+            }
           }
         }
       } catch (e) {
@@ -401,7 +410,7 @@ Output ONLY a single valid JSON object with NO markdown ticks or backticks:
       if (delayedJson == null || questions.length < 2 || events.length < 3) return null;
 
       return SongContent(
-        id: 'ai_song_' + DateTime.now().millisecondsSinceEpoch.toString(),
+        id: 'ai_song_${DateTime.now().millisecondsSinceEpoch}',
         title: json['title'] ?? 'Morning Melody',
         theme: json['theme'] ?? 'Daily Wellness',
         language: json['language'] ?? 'English',

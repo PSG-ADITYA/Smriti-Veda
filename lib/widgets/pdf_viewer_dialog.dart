@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
@@ -9,6 +11,13 @@ class PDFViewerDialog extends StatefulWidget {
   final PatientFile file;
 
   const PDFViewerDialog({super.key, required this.file});
+
+  static Future<void> show(BuildContext context, PatientFile file) {
+    return showDialog(
+      context: context,
+      builder: (_) => PDFViewerDialog(file: file),
+    );
+  }
 
   @override
   State<PDFViewerDialog> createState() => _PDFViewerDialogState();
@@ -21,24 +30,84 @@ class _PDFViewerDialogState extends State<PDFViewerDialog> {
   double _zoomLevel = 1.0;
   String? _errorMessage;
   bool _isLoading = true;
+  Uint8List? _activeBytes;
+  String? _resolvedPath;
 
   @override
   void initState() {
     super.initState();
     _pdfViewerController = PdfViewerController();
-    _checkFileAvailability();
+    _activeBytes = widget.file.fileBytes;
+    _resolvedPath = widget.file.localPath;
+    _loadFileContent();
   }
 
-  void _checkFileAvailability() {
+  Future<void> _loadFileContent() async {
     final file = widget.file;
-    final hasBytes = file.fileBytes != null && file.fileBytes!.isNotEmpty;
-    final hasValidPath = file.localPath != null && File(file.localPath!).existsSync();
+    if (_activeBytes != null && _activeBytes!.isNotEmpty) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+      return;
+    }
 
-    if (!hasBytes && !hasValidPath) {
-      _errorMessage = 'The file could not be found on this device.\n'
-          'Expected path: ${file.localPath ?? 'Local file system'}\n'
-          'The document may have been deleted or moved externally.';
-      _isLoading = false;
+    // Try primary path
+    if (_resolvedPath != null && _resolvedPath!.isNotEmpty) {
+      try {
+        final f = File(_resolvedPath!);
+        if (await f.exists()) {
+          final bytes = await f.readAsBytes();
+          if (bytes.isNotEmpty) {
+            if (mounted) {
+              setState(() {
+                _activeBytes = bytes;
+                _isLoading = false;
+              });
+            }
+            return;
+          }
+        }
+      } catch (e) {
+        debugPrint('Direct file read note: $e');
+      }
+    }
+
+    // Try app documents directory fallback
+    try {
+      final docDir = await getApplicationDocumentsDirectory();
+      final reportsDir = Directory('${docDir.path}/medical_reports');
+      if (await reportsDir.exists()) {
+        final candidateName = file.originalFileName ?? file.title;
+        final entries = reportsDir.listSync();
+        for (final entry in entries) {
+          if (entry is File && (entry.path.contains(candidateName) || (file.localPath != null && entry.path.endsWith(file.localPath!.split(Platform.pathSeparator).last)))) {
+            final bytes = await entry.readAsBytes();
+            if (bytes.isNotEmpty) {
+              if (mounted) {
+                setState(() {
+                  _activeBytes = bytes;
+                  _resolvedPath = entry.path;
+                  _isLoading = false;
+                });
+              }
+              return;
+            }
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Fallback search note: $e');
+    }
+
+    if (mounted) {
+      setState(() {
+        _errorMessage = 'The file could not be found on this device storage.\n'
+            'Expected path: ${file.localPath ?? 'Local file system'}\n'
+            'The document may have been deleted or moved externally.';
+        _isLoading = false;
+      });
     }
   }
 
@@ -281,7 +350,7 @@ class _PDFViewerDialogState extends State<PDFViewerDialog> {
 
   Widget _buildPdfView(PatientFile file) {
     final hasValidPath = file.localPath != null && File(file.localPath!).existsSync();
-    final hasBytes = file.fileBytes != null && file.fileBytes!.isNotEmpty;
+    final hasBytes = _activeBytes != null && _activeBytes!.isNotEmpty;
 
     if (!hasValidPath && !hasBytes) {
       return _buildErrorCard(file, 'PDF file not accessible on this device storage.');
@@ -321,7 +390,7 @@ class _PDFViewerDialogState extends State<PDFViewerDialog> {
       );
     } else {
       pdfWidget = SfPdfViewer.memory(
-        file.fileBytes!,
+        _activeBytes!,
         controller: _pdfViewerController,
         canShowScrollHead: true,
         canShowScrollStatus: true,
@@ -365,14 +434,14 @@ class _PDFViewerDialogState extends State<PDFViewerDialog> {
 
   Widget _buildImageView(PatientFile file) {
     final hasValidPath = file.localPath != null && File(file.localPath!).existsSync();
-    final hasBytes = file.fileBytes != null && file.fileBytes!.isNotEmpty;
+    final hasBytes = _activeBytes != null && _activeBytes!.isNotEmpty;
 
     Widget imageWidget;
     if (hasBytes) {
       imageWidget = Image.memory(
-        file.fileBytes!,
+        _activeBytes!,
         fit: BoxFit.contain,
-        errorBuilder: (_, error, __) {
+        errorBuilder: (_, error, stackTrace) {
           return _buildErrorCard(file, 'Image decoding error: $error');
         },
       );
@@ -380,7 +449,7 @@ class _PDFViewerDialogState extends State<PDFViewerDialog> {
       imageWidget = Image.file(
         File(file.localPath!),
         fit: BoxFit.contain,
-        errorBuilder: (_, error, __) {
+        errorBuilder: (_, error, stackTrace) {
           return _buildErrorCard(file, 'Could not read image file from path: $error');
         },
       );
@@ -504,3 +573,5 @@ class _PDFViewerDialogState extends State<PDFViewerDialog> {
     );
   }
 }
+
+typedef PdfViewerDialog = PDFViewerDialog;

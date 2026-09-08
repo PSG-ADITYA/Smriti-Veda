@@ -34,6 +34,7 @@ class _AiGameGeneratorScreenState extends State<AiGameGeneratorScreen> {
   AiGameTemplate? _generatedGame;
   int _currentStep = 0; // 0 = Study/Memorize, 1 = Quiz Challenge
   final Set<String> _selectedItems = {};
+  List<String> _shuffledOptions = [];
 
   @override
   void initState() {
@@ -112,6 +113,7 @@ class _AiGameGeneratorScreenState extends State<AiGameGeneratorScreen> {
       setState(() {
         _isGenerating = false;
         _generatedGame = game;
+        _shuffledOptions = [...game.targetItems, ...game.distractorItems]..shuffle();
       });
       SoundService().playSuccessSound();
     }
@@ -386,7 +388,12 @@ class _AiGameGeneratorScreenState extends State<AiGameGeneratorScreen> {
                               ElevatedButton.icon(
                                 onPressed: () {
                                   SoundService().playFlipSound();
-                                  setState(() => _currentStep = 1);
+                                  setState(() {
+                                    _currentStep = 1;
+                                    if (_shuffledOptions.isEmpty && _generatedGame != null) {
+                                      _shuffledOptions = [..._generatedGame!.targetItems, ..._generatedGame!.distractorItems]..shuffle();
+                                    }
+                                  });
                                 },
                                 icon: const Icon(Icons.play_circle_fill),
                                 label: const Text('Start Recall Challenge ➔'),
@@ -404,31 +411,26 @@ class _AiGameGeneratorScreenState extends State<AiGameGeneratorScreen> {
                               ),
                               const SizedBox(height: 14),
 
-                              Builder(
-                                builder: (context) {
-                                  final allOptions = [..._generatedGame!.targetItems, ..._generatedGame!.distractorItems]..shuffle();
-                                  return Wrap(
-                                    spacing: 10,
-                                    runSpacing: 10,
-                                    children: allOptions.map((opt) {
-                                      final isSelected = _selectedItems.contains(opt);
-                                      return FilterChip(
-                                        selected: isSelected,
-                                        label: Text(opt, style: GoogleFonts.atkinsonHyperlegible(fontWeight: FontWeight.w600)),
-                                        onSelected: (selected) {
-                                          SoundService().playTapSound();
-                                          setState(() {
-                                            if (selected) {
-                                              _selectedItems.add(opt);
-                                            } else {
-                                              _selectedItems.remove(opt);
-                                            }
-                                          });
-                                        },
-                                      );
-                                    }).toList(),
+                              Wrap(
+                                spacing: 10,
+                                runSpacing: 10,
+                                children: _shuffledOptions.map((opt) {
+                                  final isSelected = _selectedItems.contains(opt);
+                                  return FilterChip(
+                                    selected: isSelected,
+                                    label: Text(opt, style: GoogleFonts.atkinsonHyperlegible(fontWeight: FontWeight.w600)),
+                                    onSelected: (selected) {
+                                      SoundService().playTapSound();
+                                      setState(() {
+                                        if (selected) {
+                                          _selectedItems.add(opt);
+                                        } else {
+                                          _selectedItems.remove(opt);
+                                        }
+                                      });
+                                    },
                                   );
-                                },
+                                }).toList(),
                               ),
 
                               const SizedBox(height: 24),

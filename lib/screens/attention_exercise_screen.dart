@@ -1,5 +1,6 @@
+import '../models/game_difficulty.dart';
+import '../services/session_engine/memory_session_generator.dart';
 import 'dart:async';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/exercise_attempt.dart';
@@ -93,7 +94,6 @@ class _AttentionExerciseScreenState extends State<AttentionExerciseScreen> {
 
   int _cumulativeScore = 0;
 
-  AttentionTheme get _currentRound => kAttentionRounds[_roundIndex];
 
   @override
   void initState() {
@@ -107,19 +107,27 @@ class _AttentionExerciseScreenState extends State<AttentionExerciseScreen> {
     super.dispose();
   }
 
+  AttentionTheme? _dynamicRound;
+  AttentionTheme get _activeTheme => _dynamicRound ?? kAttentionRounds.first;
+
   void _setupRound() {
     _timer?.cancel();
-    final round = _currentRound;
-    _secondsLeft = round.timeLimitSeconds;
+    final session = MemorySessionGenerator.generateAttentionSession(GameDifficulty.medium);
+    _dynamicRound = AttentionTheme(
+      title: session.stimulus.theme.title,
+      targetName: session.stimulus.theme.targetName,
+      targetEmoji: session.stimulus.theme.targetEmoji,
+      distractorName: session.stimulus.theme.distractorName,
+      distractorEmoji: session.stimulus.theme.distractorEmoji,
+      totalCount: session.stimulus.totalCount,
+      targetCount: session.stimulus.targetCount,
+      timeLimitSeconds: session.stimulus.timeLimitSeconds,
+    );
+    _secondsLeft = _activeTheme.timeLimitSeconds;
     _isPlaying = false;
     _isFinished = false;
     _selectedIndices.clear();
-
-    // Generate random target positions
-    final all = List<int>.generate(round.totalCount, (i) => i)..shuffle(Random());
-    final targetSet = all.take(round.targetCount).toSet();
-
-    _cellIsTarget = List<bool>.generate(round.totalCount, (i) => targetSet.contains(i));
+    _cellIsTarget = session.stimulus.targetLocations;
     setState(() {});
   }
 
@@ -133,7 +141,7 @@ class _AttentionExerciseScreenState extends State<AttentionExerciseScreen> {
       _stopwatch.start();
     });
 
-    SoundService.speak('Find and tap all ${_currentRound.targetCount} ${_currentRound.targetName}s.');
+    SoundService.speak('Find and tap all ${_activeTheme.targetCount} ${_activeTheme.targetName}s.');
 
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (!mounted) return;
@@ -169,7 +177,7 @@ class _AttentionExerciseScreenState extends State<AttentionExerciseScreen> {
     for (final idx in _selectedIndices) {
       if (_cellIsTarget[idx]) targetsFound++;
     }
-    if (targetsFound >= _currentRound.targetCount) {
+    if (targetsFound >= _activeTheme.targetCount) {
       _timer?.cancel();
       _finishRound(AppStateScope.of(context));
     }
@@ -190,8 +198,8 @@ class _AttentionExerciseScreenState extends State<AttentionExerciseScreen> {
       }
     }
 
-    final double rawScore = (correct - falseClicks).clamp(0, _currentRound.targetCount).toDouble();
-    final double maxScore = _currentRound.targetCount.toDouble();
+    final double rawScore = (correct - falseClicks).clamp(0, _activeTheme.targetCount).toDouble();
+    final double maxScore = _activeTheme.targetCount.toDouble();
     final double pct = (rawScore / maxScore) * 100.0;
     _cumulativeScore += pct.toInt();
 
@@ -272,7 +280,7 @@ class _AttentionExerciseScreenState extends State<AttentionExerciseScreen> {
             margin: const EdgeInsets.only(right: 16),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.sandalwoodGold.withOpacity(0.15),
+              color: AppColors.sandalwoodGold.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
@@ -304,7 +312,7 @@ class _AttentionExerciseScreenState extends State<AttentionExerciseScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.sandalwoodGold.withOpacity(0.4)),
+                  border: Border.all(color: AppColors.sandalwoodGold.withValues(alpha: 0.4)),
                   boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 4)],
                 ),
                 child: Row(
@@ -325,7 +333,7 @@ class _AttentionExerciseScreenState extends State<AttentionExerciseScreen> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            _currentRound.title,
+                            _activeTheme.title,
                             style: GoogleFonts.newsreader(
                               fontSize: 17 * fontScale,
                               fontWeight: FontWeight.bold,
@@ -358,7 +366,7 @@ class _AttentionExerciseScreenState extends State<AttentionExerciseScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: AppColors.sandalwoodGold.withOpacity(0.2),
+                          color: AppColors.sandalwoodGold.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -381,15 +389,15 @@ class _AttentionExerciseScreenState extends State<AttentionExerciseScreen> {
                 decoration: BoxDecoration(
                   color: AppColors.canvasIvory,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.sandalwoodGold.withOpacity(0.4)),
+                  border: Border.all(color: AppColors.sandalwoodGold.withValues(alpha: 0.4)),
                 ),
                 child: Row(
                   children: [
-                    Text(_currentRound.targetEmoji, style: const TextStyle(fontSize: 24)),
+                    Text(_activeTheme.targetEmoji, style: const TextStyle(fontSize: 24)),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Find all ${_currentRound.targetCount} ${_currentRound.targetName}s ($correctSelected found)',
+                        'Find all ${_activeTheme.targetCount} ${_activeTheme.targetName}s ($correctSelected found)',
                         style: GoogleFonts.atkinsonHyperlegible(
                           fontSize: 14 * fontScale,
                           fontWeight: FontWeight.bold,
@@ -406,7 +414,7 @@ class _AttentionExerciseScreenState extends State<AttentionExerciseScreen> {
               GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: _currentRound.totalCount,
+                itemCount: _activeTheme.totalCount,
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 4,
                   crossAxisSpacing: 10,
@@ -421,8 +429,8 @@ class _AttentionExerciseScreenState extends State<AttentionExerciseScreen> {
 
                   if (_isPlaying && isSelected) {
                     bg = isTarget
-                        ? AppColors.sageSecondary.withOpacity(0.2)
-                        : AppColors.terracottaPrimary.withOpacity(0.2);
+                        ? AppColors.sageSecondary.withValues(alpha: 0.2)
+                        : AppColors.terracottaPrimary.withValues(alpha: 0.2);
                     border = Border.all(
                       color: isTarget ? AppColors.sageSecondary : AppColors.terracottaPrimary,
                       width: 2,
@@ -431,13 +439,13 @@ class _AttentionExerciseScreenState extends State<AttentionExerciseScreen> {
 
                   if (_isFinished) {
                     if (isTarget && isSelected) {
-                      bg = AppColors.sageSecondary.withOpacity(0.25);
+                      bg = AppColors.sageSecondary.withValues(alpha: 0.25);
                       border = Border.all(color: AppColors.sageSecondary, width: 2);
                     } else if (!isTarget && isSelected) {
-                      bg = AppColors.terracottaPrimary.withOpacity(0.25);
+                      bg = AppColors.terracottaPrimary.withValues(alpha: 0.25);
                       border = Border.all(color: AppColors.terracottaPrimary, width: 2);
                     } else if (isTarget && !isSelected) {
-                      bg = AppColors.sandalwoodGold.withOpacity(0.25);
+                      bg = AppColors.sandalwoodGold.withValues(alpha: 0.25);
                       border = Border.all(color: AppColors.sandalwoodGold, width: 2);
                     }
                   }
@@ -451,12 +459,12 @@ class _AttentionExerciseScreenState extends State<AttentionExerciseScreen> {
                         borderRadius: BorderRadius.circular(14),
                         border: border,
                         boxShadow: [
-                          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 4),
+                          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 4),
                         ],
                       ),
                       child: Center(
                         child: Text(
-                          isTarget ? _currentRound.targetEmoji : _currentRound.distractorEmoji,
+                          isTarget ? _activeTheme.targetEmoji : _activeTheme.distractorEmoji,
                           style: const TextStyle(fontSize: 28),
                         ),
                       ),
@@ -473,7 +481,7 @@ class _AttentionExerciseScreenState extends State<AttentionExerciseScreen> {
                   onPressed: _startRound,
                   icon: const Icon(Icons.play_arrow_rounded, size: 24),
                   label: Text(
-                    'Start Round (${_currentRound.timeLimitSeconds}s Timer)',
+                    'Start Round (${_activeTheme.timeLimitSeconds}s Timer)',
                     style: GoogleFonts.atkinsonHyperlegible(fontSize: 16 * fontScale, fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
@@ -488,7 +496,7 @@ class _AttentionExerciseScreenState extends State<AttentionExerciseScreen> {
                   onPressed: () => _finishRound(appState),
                   icon: const Icon(Icons.done_all_rounded),
                   label: Text(
-                    'Done / Finish Now ($correctSelected of ${_currentRound.targetCount})',
+                    'Done / Finish Now ($correctSelected of ${_activeTheme.targetCount})',
                     style: GoogleFonts.atkinsonHyperlegible(fontSize: 15 * fontScale, fontWeight: FontWeight.bold),
                   ),
                   style: OutlinedButton.styleFrom(
@@ -516,7 +524,7 @@ class _AttentionExerciseScreenState extends State<AttentionExerciseScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Found $correctSelected of ${_currentRound.targetCount} targets accurately.',
+                        'Found $correctSelected of ${_activeTheme.targetCount} targets accurately.',
                         style: GoogleFonts.atkinsonHyperlegible(fontSize: 13 * fontScale, color: AppColors.secondaryText),
                       ),
                       const SizedBox(height: 14),

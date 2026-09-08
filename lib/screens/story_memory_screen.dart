@@ -1,3 +1,5 @@
+import '../models/game_difficulty.dart';
+import '../services/session_engine/memory_session_generator.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/exercise_attempt.dart';
@@ -134,7 +136,8 @@ class _StoryMemoryScreenState extends State<StoryMemoryScreen> {
   final Stopwatch _stopwatch = Stopwatch();
   double _scorePct = 0.0;
 
-  MemoryStory get _currentStory => kMemoryStories[_storyIndex];
+  late MemoryStory _dynamicStory;
+  MemoryStory get _currentStory => _dynamicStory;
 
   @override
   void initState() {
@@ -150,6 +153,13 @@ class _StoryMemoryScreenState extends State<StoryMemoryScreen> {
 
   void _loadStory() {
     SoundService.stop();
+    final session = MemorySessionGenerator.generateStorySession(GameDifficulty.medium);
+    _dynamicStory = MemoryStory(
+      title: session.stimulus.story.title,
+      region: session.stimulus.story.region,
+      body: session.stimulus.story.body,
+      questions: session.stimulus.questions,
+    );
     _phase = StoryPhase.reading;
     _isSpeaking = false;
     _userAnswers.clear();
@@ -269,7 +279,7 @@ class _StoryMemoryScreenState extends State<StoryMemoryScreen> {
             margin: const EdgeInsets.only(right: 16),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.sageSecondary.withOpacity(0.15),
+              color: AppColors.sageSecondary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
@@ -301,7 +311,7 @@ class _StoryMemoryScreenState extends State<StoryMemoryScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.sandalwoodGold.withOpacity(0.4)),
+                  border: Border.all(color: AppColors.sandalwoodGold.withValues(alpha: 0.4)),
                   boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 4)],
                 ),
                 child: Column(
@@ -316,7 +326,7 @@ class _StoryMemoryScreenState extends State<StoryMemoryScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: AppColors.terracottaPrimary.withOpacity(0.12),
+                            color: AppColors.terracottaPrimary.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -454,7 +464,7 @@ class _StoryMemoryScreenState extends State<StoryMemoryScreen> {
                                   margin: const EdgeInsets.only(bottom: 8),
                                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                                   decoration: BoxDecoration(
-                                    color: isSelected ? AppColors.terracottaPrimary.withOpacity(0.12) : AppColors.canvasIvory,
+                                    color: isSelected ? AppColors.terracottaPrimary.withValues(alpha: 0.12) : AppColors.canvasIvory,
                                     borderRadius: BorderRadius.circular(10),
                                     border: Border.all(
                                       color: isSelected ? AppColors.terracottaPrimary : Colors.black12,

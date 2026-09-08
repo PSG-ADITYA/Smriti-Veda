@@ -1,3 +1,4 @@
+import '../utils/sanskrit_pronunciation_preprocessor.dart';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -5,6 +6,9 @@ import 'package:flutter_tts/flutter_tts.dart';
 import '../utils/web_sound_helper.dart';
 
 class SoundService extends ChangeNotifier {
+  // In-memory cache for preprocessed TTS strings to avoid repeated regex & latency
+  final Map<String, String> _preprocessedTtsCache = {};
+
   static final SoundService _instance = SoundService._internal();
   factory SoundService() => _instance;
 
@@ -83,6 +87,28 @@ class SoundService extends ChangeNotifier {
       }
     });
   }
+
+  /// Plays an individual musical tone (C, D, E, F, G, A, B or Sa, Re, Ga...)
+  void playMusicalTone({
+    required double frequency,
+    double durationSeconds = 0.45,
+    double volume = 0.22,
+    String noteLabel = '',
+  }) {
+    if (kIsWeb) {
+      _playTone(
+        frequency: frequency,
+        durationSeconds: durationSeconds,
+        volume: volume,
+      );
+    } else {
+      SystemSound.play(SystemSoundType.click);
+      HapticFeedback.selectionClick();
+    }
+  }
+
+  static void playNote(double frequency, {String label = ''}) =>
+      _instance.playMusicalTone(frequency: frequency, noteLabel: label);
 
   // ── Real Sound Effects (Click, Success, Error, Fanfare, Flip) ─────────────
 
@@ -269,14 +295,23 @@ class SoundService extends ChangeNotifier {
       targetLang = code.contains('-') ? code : '$code-IN';
     }
 
+    // Preprocess text using Sanskrit phonological rules & check cache
+    final cacheKey = '$targetLang::$text';
+    final processedText = _preprocessedTtsCache.putIfAbsent(
+      cacheKey,
+      () => SanskritPronunciationPreprocessor.preprocessForTts(text, languageCode: languageCode),
+    );
+
+    final speechRate = SanskritPronunciationPreprocessor.getRecommendedSpeechRate(languageCode: languageCode);
+
     if (kIsWeb) {
-      speakWeb(text, targetLang);
+      speakWeb(processedText, targetLang);
       return;
     }
 
     try {
       await _tts.setLanguage(targetLang);
-      await _tts.setSpeechRate(0.40);
+      await _tts.setSpeechRate(speechRate);
       try {
         final voices = await _tts.getVoices;
         if (voices is List) {
@@ -297,7 +332,7 @@ class SoundService extends ChangeNotifier {
           }
         }
       } catch (_) {}
-      await _tts.speak(text);
+      await _tts.speak(processedText);
     } catch (e) {
       debugPrint('FlutterTts speak error: $e');
     }

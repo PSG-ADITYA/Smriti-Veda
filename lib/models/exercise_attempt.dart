@@ -116,6 +116,8 @@ enum ExerciseType {
   reminderCheck,
   routineStepCheck,
   delayedRecall,
+  diceMemory,
+  wordMemoryPuzzle,
 }
 
 class ExerciseAttempt {
@@ -185,6 +187,10 @@ class ExerciseAttempt {
         return CognitiveDomain.auditoryRecall;
       case ExerciseType.delayedRecall:
         return CognitiveDomain.visualMemory;
+      case ExerciseType.diceMemory:
+        return CognitiveDomain.spatialMemory;
+      case ExerciseType.wordMemoryPuzzle:
+        return CognitiveDomain.semanticMemory;
     }
   }
 

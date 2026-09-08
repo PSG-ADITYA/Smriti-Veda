@@ -1,3 +1,5 @@
+import '../models/game_difficulty.dart';
+import '../services/session_engine/memory_session_generator.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/exercise_attempt.dart';
@@ -161,7 +163,8 @@ class _DailyRoutineRecallScreenState extends State<DailyRoutineRecallScreen> {
   double _score = 0.0;
   final Stopwatch _stopwatch = Stopwatch();
 
-  RoutineScenario get _currentScenario => kRoutineScenarios[_scenarioIndex];
+  late RoutineScenario _dynamicScenario;
+  RoutineScenario get _currentScenario => _dynamicScenario;
 
   @override
   void initState() {
@@ -170,7 +173,23 @@ class _DailyRoutineRecallScreenState extends State<DailyRoutineRecallScreen> {
   }
 
   void _loadScenario() {
-    _shuffledSteps = List<RoutineRecallStep>.from(_currentScenario.steps)..shuffle();
+    final session = MemorySessionGenerator.generateRoutineSession(GameDifficulty.medium);
+    final rawSteps = session.stimulus.steps;
+    final converted = rawSteps.map((m) => RoutineRecallStep(
+      correctOrder: m['order'] as int,
+      title: m['title'] as String,
+      timeText: m['time'] as String,
+      icon: m['icon'] as IconData,
+      tip: m['tip'] as String,
+    )).toList();
+
+    _dynamicScenario = RoutineScenario(
+      title: session.stimulus.routine.title,
+      subtitle: session.stimulus.routine.subtitle,
+      steps: converted,
+    );
+
+    _shuffledSteps = List<RoutineRecallStep>.from(converted)..shuffle();
     _selectedOrder.clear();
     _isSubmitted = false;
     _score = 0.0;
@@ -266,7 +285,7 @@ class _DailyRoutineRecallScreenState extends State<DailyRoutineRecallScreen> {
             margin: const EdgeInsets.only(right: 16),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.terracottaPrimary.withOpacity(0.12),
+              color: AppColors.terracottaPrimary.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
@@ -298,7 +317,7 @@ class _DailyRoutineRecallScreenState extends State<DailyRoutineRecallScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.sandalwoodGold.withOpacity(0.4)),
+                  border: Border.all(color: AppColors.sandalwoodGold.withValues(alpha: 0.4)),
                   boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 4)],
                 ),
                 child: Column(
@@ -350,7 +369,7 @@ class _DailyRoutineRecallScreenState extends State<DailyRoutineRecallScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.03),
+                    color: Colors.black.withValues(alpha: 0.03),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.black12, style: BorderStyle.solid),
                   ),
@@ -377,9 +396,9 @@ class _DailyRoutineRecallScreenState extends State<DailyRoutineRecallScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       decoration: BoxDecoration(
                         color: isCorrect
-                            ? AppColors.sageSecondary.withOpacity(0.15)
+                            ? AppColors.sageSecondary.withValues(alpha: 0.15)
                             : isWrong
-                                ? AppColors.terracottaPrimary.withOpacity(0.15)
+                                ? AppColors.terracottaPrimary.withValues(alpha: 0.15)
                                 : Colors.white,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
@@ -465,7 +484,7 @@ class _DailyRoutineRecallScreenState extends State<DailyRoutineRecallScreen> {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: AppColors.sandalwoodGold.withOpacity(0.15),
+                                color: AppColors.sandalwoodGold.withValues(alpha: 0.15),
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(step.icon, color: AppColors.sandalwoodGold, size: 20),
@@ -529,8 +548,8 @@ class _DailyRoutineRecallScreenState extends State<DailyRoutineRecallScreen> {
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: _score >= 70.0
-                            ? AppColors.sageSecondary.withOpacity(0.12)
-                            : AppColors.terracottaPrimary.withOpacity(0.12),
+                            ? AppColors.sageSecondary.withValues(alpha: 0.12)
+                            : AppColors.terracottaPrimary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Text(

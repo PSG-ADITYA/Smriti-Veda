@@ -40,6 +40,10 @@ class ExerciseRecommendation {
 }
 
 class PersonalizationEngine {
+  static ExerciseRecommendation evaluateAttempt(ExerciseAttempt attempt) {
+    return getRecommendation([attempt]);
+  }
+
   /// Analyzes recent attempts and computes domain scores across all cognitive domains
   static Map<CognitiveDomain, CognitiveDomainScore> computeDomainScores(
     List<ExerciseAttempt> attempts,
@@ -121,7 +125,7 @@ class PersonalizationEngine {
           reason: targetScore != null && targetScore.hasSufficientData
               ? 'Spatial memory score is currently ${targetScore.averagePercentage.toInt()}%. Practice navigation to reinforce working landmarks.'
               : 'Recommended today to establish your baseline spatial and path memory.',
-          difficultyLabel: 'Level 1 (Adaptive)',
+          difficultyLabel: 'Easy (Recommended)',
           icon: Icons.map_rounded,
           color: const Color(0xFFE07A5F),
         );
@@ -223,6 +227,37 @@ class PersonalizationEngine {
           icon: Icons.menu_book_rounded,
           color: const Color(0xFF386641),
         );
+    }
+  }
+
+  /// Recommends exercise difficulty based on recent accuracy without medical or diagnostic labels
+  static String recommendDifficultyForDomain(
+    CognitiveDomain domain,
+    List<ExerciseAttempt> attempts,
+  ) {
+    final domainAttempts = attempts.where((a) => a.cognitiveDomain == domain).toList();
+    if (domainAttempts.isEmpty) return 'Easy';
+
+    final recent = domainAttempts.take(5).toList();
+    final avgAccuracy = recent.map((a) => a.scorePercentage).reduce((a, b) => a + b) / recent.length;
+
+    if (avgAccuracy >= 85.0) {
+      return 'Hard';
+    } else if (avgAccuracy >= 65.0) {
+      return 'Medium';
+    } else {
+      return 'Easy';
+    }
+  }
+
+  /// Generates positive, supportive non-diagnostic practice guidance
+  static String getDifficultyFeedbackMessage(double recentAccuracy) {
+    if (recentAccuracy >= 85.0) {
+      return 'You seem comfortable with this difficulty based on recent exercise accuracy. Would you like to try a harder exercise?';
+    } else if (recentAccuracy < 60.0) {
+      return 'Let\'s try an easier exercise to build confidence with recall practice.';
+    } else {
+      return 'Great steady practice. You are maintaining a healthy, balanced recall rhythm.';
     }
   }
 }

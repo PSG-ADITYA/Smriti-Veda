@@ -55,6 +55,23 @@ class AppState extends ChangeNotifier {
   String? _medicalNotes;
   int _currentTab = 0;
 
+  // Accessibility: Senior High-Contrast Mode
+  bool _highContrastEnabled = false;
+  bool get highContrastEnabled => _highContrastEnabled;
+  bool get isHighContrastEnabled => _highContrastEnabled;
+
+  void toggleHighContrast() {
+    _highContrastEnabled = !_highContrastEnabled;
+    notifyListeners();
+  }
+
+  void setHighContrast(bool value) {
+    if (_highContrastEnabled != value) {
+      _highContrastEnabled = value;
+      notifyListeners();
+    }
+  }
+
   // Profile Avatar & Customization State
   String _profileAvatarEmoji = '👴';
   Uint8List? _customProfileImageBytes;
@@ -191,6 +208,16 @@ class AppState extends ChangeNotifier {
   String get credentialId => _credentialId;
   String get userRole => _userRole;
   String get selectedLanguage => _selectedLanguage;
+
+  void setSelectedLanguage(String languageCode) {
+    if (_selectedLanguage != languageCode) {
+      _selectedLanguage = languageCode;
+      if (_credentialId.isNotEmpty) {
+        DbService().updateUserProfile(_credentialId, {'language': languageCode});
+      }
+      notifyListeners();
+    }
+  }
   int? get userAge => _userAge;
   String? get emergencyContact => _emergencyContact;
   String? get medicalNotes => _medicalNotes;
@@ -671,6 +698,10 @@ class AppStateScope extends InheritedWidget {
     required this.state,
     required super.child,
   });
+
+  static AppState? maybeOf(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<AppStateScope>()?.state;
+  }
 
   static AppState of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<AppStateScope>();

@@ -6,7 +6,6 @@ import '../providers/app_state.dart';
 import '../services/caregiver_service.dart';
 import '../services/sound_service.dart';
 import '../theme/app_theme.dart';
-import 'connected_seniors_screen.dart';
 
 class CaregiverDashboardScreen extends StatefulWidget {
   final ValueChanged<int>? onNavigateTab;
@@ -245,6 +244,39 @@ class _CaregiverDashboardScreenState extends State<CaregiverDashboardScreen> {
                 elevation: 2,
               ),
               onPressed: () => showConnectSeniorModal(context, caregiverId),
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            height: 46,
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.person_add_alt_1_rounded, size: 18, color: AppColors.sageSecondary),
+              label: Text(
+                '1-Tap Connect: Aditya Verma (Demo)',
+                style: GoogleFonts.atkinsonHyperlegible(
+                  fontSize: 14 * fontScale,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.sageSecondary,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: AppColors.sageSecondary, width: 1.5),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+              onPressed: () async {
+                await CaregiverService().connectSenior(
+                  caregiverId,
+                  patientId: 'uid_demo_sih',
+                  relationship: 'Father',
+                  customName: 'Aditya Verma (Demo Senior)',
+                );
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Connected to Aditya Verma successfully!')),
+                  );
+                }
+              },
             ),
           ),
         ],

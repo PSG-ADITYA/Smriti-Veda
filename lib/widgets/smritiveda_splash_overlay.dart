@@ -178,7 +178,7 @@ class _SmritiVedaSplashOverlayState extends State<SmritiVedaSplashOverlay>
                                             width: 72,
                                             height: 72,
                                             fit: BoxFit.contain,
-                                            errorBuilder: (_, __, ___) => const Icon(
+                                            errorBuilder: (context, child, extra) => const Icon(
                                               Icons.psychology_rounded,
                                               size: 64,
                                               color: AppColors.terracottaPrimary,

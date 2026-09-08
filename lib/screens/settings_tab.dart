@@ -126,6 +126,17 @@ class SettingsTab extends StatelessWidget {
                       value: appState.themeMode == ThemeMode.dark,
                       onChanged: (val) => appState.toggleTheme(),
                     ),
+                    const Divider(height: 1),
+                    SwitchListTile(
+                      title: Text(
+                        'Senior High-Contrast Mode',
+                        style: GoogleFonts.atkinsonHyperlegible(fontWeight: FontWeight.w600),
+                      ),
+                      subtitle: const Text('High visibility borders, bold text, and stark contrast for elderly vision'),
+                      secondary: const Icon(Icons.contrast, color: AppColors.primaryGold),
+                      value: appState.highContrastEnabled,
+                      onChanged: (val) => appState.setHighContrast(val),
+                    ),
                   ],
                 ),
               ),

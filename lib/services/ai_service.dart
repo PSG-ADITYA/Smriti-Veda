@@ -71,6 +71,8 @@ class GeminiOmniRouteAiService implements AIService {
   GeminiOmniRouteAiService._internal();
 
   String get _apiKey => DbService().geminiApiKey;
+  static final Map<String, String> _planCache = {};
+  static final Map<String, String> _caregiverCache = {};
   bool get _isAiEnabled => DbService().isAiEnabled;
 
   @override
@@ -82,6 +84,13 @@ class GeminiOmniRouteAiService implements AIService {
     required String relatives,
     required String memoriesAndHobbies,
   }) async {
+    final cacheKey = '$patientName|$age|$cognitiveGoal|$language|$relatives|$memoriesAndHobbies';
+    if (_planCache.containsKey(cacheKey)) {
+      return _planCache[cacheKey]!;
+    }
+
+
+
     if (_isAiEnabled && _apiKey.isNotEmpty) {
       try {
         final uri = Uri.parse(
@@ -122,7 +131,11 @@ Format clearly with emojis:
           final candidates = json['candidates'] as List?;
           if (candidates != null && candidates.isNotEmpty) {
             final text = candidates.first['content']['parts'][0]['text'] as String?;
-            if (text != null && text.isNotEmpty) return text.trim();
+            if (text != null && text.isNotEmpty) {
+              final res = text.trim();
+              _planCache[cacheKey] = res;
+              return res;
+            }
           }
         }
       } catch (e) {
@@ -131,7 +144,7 @@ Format clearly with emojis:
     }
 
     // High-Quality Deterministic Offline Fallback
-    return '''🧠 PERSONALIZED COGNITIVE FOCUS
+    final fallbackPlan = '''🧠 PERSONALIZED COGNITIVE FOCUS
 • Target Area: $cognitiveGoal
 • Strategy: Adaptive Spatial Navigation & Family Episodic Anchors tailored for $patientName (Age: $age).
 
@@ -147,6 +160,8 @@ Format clearly with emojis:
 • 08:00 AM — Morning Water, Routine Check & 3-Chunk Recitation
 • 02:30 PM — Interactive Game (Fruit Memory Path or Object Recall)
 • 06:00 PM — Evening Family Memory & Word Association Practice''';
+    _planCache[cacheKey] = fallbackPlan;
+    return fallbackPlan;
   }
 
   @override
@@ -157,6 +172,11 @@ Format clearly with emojis:
     required String primaryLanguage,
     Map<CognitiveDomain, double>? domainScores,
   }) async {
+    final cacheKey = '$patientName|$streakDays|$completedExercises|$primaryLanguage';
+    if (_caregiverCache.containsKey(cacheKey)) {
+      return _caregiverCache[cacheKey]!;
+    }
+
     if (_isAiEnabled && _apiKey.isNotEmpty) {
       try {
         final uri = Uri.parse(
@@ -188,7 +208,11 @@ Maintain an encouraging tone focused on engagement and cognitive vitality. Do no
           final candidates = json['candidates'] as List?;
           if (candidates != null && candidates.isNotEmpty) {
             final text = candidates.first['content']['parts'][0]['text'] as String?;
-            if (text != null && text.isNotEmpty) return text.trim();
+            if (text != null && text.isNotEmpty) {
+              final res = text.trim();
+              _caregiverCache[cacheKey] = res;
+              return res;
+            }
           }
         }
       } catch (e) {
@@ -196,7 +220,9 @@ Maintain an encouraging tone focused on engagement and cognitive vitality. Do no
       }
     }
 
-    return '$patientName has shown steady cognitive engagement with a $streakDays-day active practice streak and $completedExercises exercises completed. Rhythmic auditory recitation and spatial navigation on Fruit Memory Path show good consistency. For the upcoming days, continuing familiar $primaryLanguage regional folk stories and morning routine sequencing will provide enjoyable mental stimulation.';
+    final fallback = '$patientName has shown steady cognitive engagement with a $streakDays-day active practice streak and $completedExercises exercises completed. Rhythmic auditory recitation and spatial navigation on Fruit Memory Path show good consistency. For the upcoming days, continuing familiar $primaryLanguage regional folk stories and morning routine sequencing will provide enjoyable mental stimulation.';
+    _caregiverCache[cacheKey] = fallback;
+    return fallback;
   }
 
   @override
